@@ -1,0 +1,23 @@
+Package: eldoradosim
+Type: Package
+Title: Healthcare trajectory simulation framework.
+Version: 0.0.1
+Date: 2025-10-24
+Author: Pete Dodd, Robert Chisholm
+Maintainer: Pete Dodd <p.j.dodd@sheffield.ac.uk>
+Authors@R:
+  c(person("Pete", "Dodd",
+           role = c("aut", "cre"),
+           email = "p.j.dodd@sheffield.ac.uk",
+           comment = c(ORCID = "0000-0001-5825-9347")),
+    person("Robert", "Chisholm",
+           role = c("aut"),
+           email = "robert.chisholm@sheffield.ac.uk",
+           comment = c(ORCID = "0000-0002-6983-2759")))
+Description: More about what it does (maybe more than one line).
+License: GPL (>= 2)
+Imports: Rcpp (>= 1.1.0)
+LinkingTo: Rcpp
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
