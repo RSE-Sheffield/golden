@@ -1,0 +1,90 @@
+# Build and Test Package on Windows
+name: Windows
+
+on:
+  # Branch pushes that do not only modify other workflow files
+  push:
+    branches:
+      - '**'
+    paths:
+      - "**"
+      - "!.github/**"
+      - ".github/scripts/**"
+      - ".github/workflows/windows.yml"
+  # Allow manual invocation.
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+    
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      # Multiplicative build matrix
+      matrix:
+        # https://github.com/actions/runner-images
+        os:
+          - windows-latest # windows-2025
+          - windows-2022
+        r:
+          - "4.5.1"
+          - "4.3.0"
+           
+    # Name the job based on matrix
+    name: "Build & Test (${{ matrix.os }}, R ${{ matrix.r }})"
+    
+    # Define job-wide env constants, and promote matrix elements to env constants for portable steps.
+    env:
+      # Workflow specific constants for building a specific example
+      # ...
+      # Port matrix options to environment, for more portability.
+      OS: ${{ matrix.os }}
+      R_VERSION: ${{ matrix.r }}
+      
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+         
+      # See https://github.com/r-lib/actions/tree/v2-branch/setup-r#inputs
+      - name: "Install R"
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r }}
+          install-r: true
+      
+      # See: https://github.com/r-lib/actions/tree/v2-branch/setup-r-dependencies#usage
+      - name: "Install Package Dependencies"
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            devtools
+            tinytex
+          cache: "always"
+      
+      ## Output R version in user
+      - name: "Print R Version"
+        run: "R --version"
+      
+      # This step may be redundant, these dynamic files are normally commit
+      # In future run this in pull requests and modify the PR?
+      - name: "Build Package (devtools)"
+        run: Rscript ".github/scripts/build.R"
+        
+      - name: "Install Package (devtools)"
+        run: Rscript ".github/scripts/install.R"
+        
+      - name: "Test Package"
+        run: Rscript ".github/scripts/test.R"
+        
+      - name: "Build Package (R CMD)"
+        run: R CMD build .
+      
+      # Don't bother trying to build manual with latex on Windows
+      - name: "Check Package (R CMD)"
+        run: R CMD check . --no-manual
+        
+      # Could then have an upload artifact step
+  
