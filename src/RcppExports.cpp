@@ -21,9 +21,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// is_odd_vector
+LogicalVector is_odd_vector(IntegerVector x);
+RcppExport SEXP _eldoradosim_is_odd_vector(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(is_odd_vector(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_eldoradosim_is_odd", (DL_FUNC) &_eldoradosim_is_odd, 1},
+    {"_eldoradosim_is_odd_vector", (DL_FUNC) &_eldoradosim_is_odd_vector, 1},
     {NULL, NULL, 0}
 };
 

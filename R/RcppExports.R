@@ -5,3 +5,7 @@ is_odd <- function(d) {
     .Call(`_eldoradosim_is_odd`, d)
 }
 
+is_odd_vector <- function(x) {
+    .Call(`_eldoradosim_is_odd_vector`, x)
+}
+
