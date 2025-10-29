@@ -78,7 +78,7 @@ List run_simulation(List initPop, List parms) {
                 NumericVector c_0 = initPop[p_0];  // This may be making a copy of the vector, as changes to c_0 are not reflected in initPop[p_0]
                 Function fn = hazard["fn"];
                 initPop[p_0] = fn(c_0); // Have to explicitly store column back
-                Rcout << initPop[p_0] << "\n";
+                Rcout << as<NumericVector>(initPop[p_0]) << "\n";
             }
         }
     }
