@@ -9,3 +9,7 @@ is_odd_vector <- function(x) {
     .Call(`_eldoradosim_is_odd_vector`, x)
 }
 
+run_simulation <- function(initPop, parms) {
+    .Call(`_eldoradosim_run_simulation`, initPop, parms)
+}
+

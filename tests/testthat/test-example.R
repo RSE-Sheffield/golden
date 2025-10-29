@@ -23,11 +23,12 @@ test_that("calling run_simulation()", {
     )
     # Mock parameters
     parms <- list(
-      column_names = c("age", "is_male", "bmi"),
-      hazards = c(list(fn = ln, parms=c("age"), freq = 1),
-                  list(fn = lg, parms=c("bmi"), freq = 5))
-      steps = 100L
-      random_seed = 12
+      hazards = list(list(fn = ln, parms=c("age"), freq = 1),
+                     list(fn = lg, parms=c("bmi"), freq = 5)),
+      steps = 100L,
+      random_seed = 12L
     )
+    print(initpop$age)
     run_simulation(initpop, parms)
+    print(initpop$age)
 })

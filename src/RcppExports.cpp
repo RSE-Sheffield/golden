@@ -32,10 +32,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// run_simulation
+List run_simulation(List initPop, List parms);
+RcppExport SEXP _eldoradosim_run_simulation(SEXP initPopSEXP, SEXP parmsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type initPop(initPopSEXP);
+    Rcpp::traits::input_parameter< List >::type parms(parmsSEXP);
+    rcpp_result_gen = Rcpp::wrap(run_simulation(initPop, parms));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_eldoradosim_is_odd", (DL_FUNC) &_eldoradosim_is_odd, 1},
     {"_eldoradosim_is_odd_vector", (DL_FUNC) &_eldoradosim_is_odd_vector, 1},
+    {"_eldoradosim_run_simulation", (DL_FUNC) &_eldoradosim_run_simulation, 2},
     {NULL, NULL, 0}
 };
 
