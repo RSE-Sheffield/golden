@@ -14,6 +14,23 @@ test_that("id_odd() Even Numbers", {
 })
 
 test_that("calling run_simulation()", {
+    # Load demographics csv
+    # File path is relative to current file
+    Sys.setenv(RCPP_DEVEL_DEBUG = "1")
+    demographics <- read.csv("tests/data/pop.csv")
+    demographics$AgeGrp <- as.integer(demographics$AgeGrp)
+    demographics$PopMale <- as.numeric(demographics$PopMale)
+    demographics$PopFemale <- as.numeric(demographics$PopFemale)
+    demographics$PopTotal <- as.numeric(demographics$PopTotal)
+    
+    # From demographic data, create N people
+    # We currently assume column names are always consistent
+    tryCatch({
+      initPop <- create_cohort(demographics, N=1e4)
+    }, error = function(e) {
+      message("R error: ", conditionMessage(e))
+    })
+
     # Mock population
     initpop <- data.table(
       id = 1:10,

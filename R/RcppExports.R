@@ -9,6 +9,10 @@ is_odd_vector <- function(x) {
     .Call(`_eldoradosim_is_odd_vector`, x)
 }
 
+create_cohort <- function(demog, N) {
+    .Call(`_eldoradosim_create_cohort`, demog, N)
+}
+
 run_simulation <- function(initPop, parms) {
     .Call(`_eldoradosim_run_simulation`, initPop, parms)
 }

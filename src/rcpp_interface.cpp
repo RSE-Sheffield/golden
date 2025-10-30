@@ -25,6 +25,75 @@ LogicalVector is_odd_vector(IntegerVector x) {
     return result;
 }
 
+/**
+ * Convenience function returning the inclusive prefix sum of x
+ */
+NumericVector prefix_sum(NumericVector x) {
+    NumericVector out(x.size());
+    std::partial_sum(x.begin(), x.end(), out.begin());
+    return out;
+}
+
+/**
+ * Temporary testing method, probably replaced in future with R's simdata package or similar
+ */
+// [[Rcpp::export]]
+List create_cohort(List demog, unsigned int N) {
+    // Validate demog contains the required columns
+    if (!demog.containsElementNamed("AgeGrp"))
+        throw std::invalid_argument("List 'demog' expected to contain vector 'AgeGrp'\n");
+    if (!demog.containsElementNamed("PopMale"))
+        throw std::invalid_argument("List 'demog' expected to contain vector 'PopMale'\n");
+    if (!demog.containsElementNamed("PopFemale"))
+        throw std::invalid_argument("List 'demog' expected to contain vector 'PopFemale'\n");
+    if (!demog.containsElementNamed("PopTotal"))
+        throw std::invalid_argument("List 'demog' expected to contain vector 'PopTotal'\n");
+    
+    // Calculate the scale factor
+    NumericVector pTot = demog["PopTotal"];
+    const double SCALE_FACTOR = static_cast<double>(N) / pTot[pTot.size() - 1];
+    
+    // Scale the male and female vectors
+    NumericVector mTot = demog["PopMale"];
+    NumericVector fTot = demog["PopFemale"];
+    mTot = mTot * SCALE_FACTOR;
+    fTot = fTot * SCALE_FACTOR;
+    
+    // Create and fill the output vector
+    IntegerVector out_male = IntegerVector::create(N);
+    NumericVector out_age = NumericVector::create(N);
+    IntegerVector ages = demog["AgeGrp"];
+    unsigned int i_i = 0;
+    double d_i = 0;
+    // Setup males
+    for (unsigned int m_i = 0; m_i < mTot.size(); ++m_i) {
+        while(d_i < mTot[m_i]) {
+            out_male[i_i] = 1;
+            out_age[i_i] = ages[m_i];
+            i_i+=1;
+            d_i+=1;
+        }
+        d_i -= mTot[m_i];
+    }
+    // Setup females
+    for (unsigned int f_i = 0; f_i < fTot.size(); ++f_i) {
+        while(d_i < fTot[f_i]) {
+            out_male[i_i] = 0;
+            out_age[i_i] = ages[f_i];
+            i_i+=1;
+            d_i+=1;
+        }
+        d_i -= fTot[f_i];
+    }
+    // Debug testing
+    printf("i_i: %d, N: %d\n", (int)i_i, (int)N);
+    
+    return List::create(
+        _["male"] = out_male,
+        _["age"] = out_age,
+        _["dead"] = IntegerVector(N) // zero init, everyone begins alive
+    );
+}
 
 
 // [[Rcpp::export]]
