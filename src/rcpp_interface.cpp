@@ -51,23 +51,25 @@ List create_cohort(List demog, unsigned int N) {
     
     // Calculate the scale factor
     NumericVector pTot = demog["PopTotal"];
-    const double SCALE_FACTOR = static_cast<double>(N) / pTot[pTot.size() - 1];
+    const double SCALE_FACTOR = static_cast<double>(N) / sum(pTot);
     
     // Scale the male and female vectors
     NumericVector mTot = demog["PopMale"];
     NumericVector fTot = demog["PopFemale"];
     mTot = mTot * SCALE_FACTOR;
     fTot = fTot * SCALE_FACTOR;
-    
+    // Floor final value to avoid exceeding (this is naive, need to essentially make the total floored)
+    fTot[fTot.size()-1] = floor(fTot[fTot.size()-1]);
     // Create and fill the output vector
-    IntegerVector out_male = IntegerVector::create(N);
-    NumericVector out_age = NumericVector::create(N);
+    IntegerVector out_male = IntegerVector(N);
+    NumericVector out_age = NumericVector(N);
     IntegerVector ages = demog["AgeGrp"];
-    unsigned int i_i = 0;
-    double d_i = 0;
+    unsigned int i_i = 0; // Index counter
+    double d_i = 0; // double counter to track the shape of the demographic bins
+    
     // Setup males
     for (unsigned int m_i = 0; m_i < mTot.size(); ++m_i) {
-        while(d_i < mTot[m_i]) {
+        while(d_i < (double)mTot[m_i]) {
             out_male[i_i] = 1;
             out_age[i_i] = ages[m_i];
             i_i+=1;
@@ -91,7 +93,7 @@ List create_cohort(List demog, unsigned int N) {
     return List::create(
         _["male"] = out_male,
         _["age"] = out_age,
-        _["dead"] = IntegerVector(N) // zero init, everyone begins alive
+        _["dead"] = IntegerVector(N, 0) // zero init, everyone begins alive
     );
 }
 
