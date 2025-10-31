@@ -2,6 +2,7 @@
 #include <random>
 #include <stdexcept>
 #include <sstream>
+#include <set>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -87,14 +88,37 @@ List create_cohort(List demog, unsigned int N) {
         }
         d_i -= fTot[f_i];
     }
-    // Debug testing
-    printf("i_i: %d, N: %d\n", (int)i_i, (int)N);
     
     return List::create(
         _["male"] = out_male,
         _["age"] = out_age,
-        _["dead"] = IntegerVector(N, 0) // zero init, everyone begins alive
+        _["death"] = IntegerVector(N, -1) // invalid init, gets set to time of death
     );
+}
+
+/**
+ * Dynamically call an R function from cpp
+ *
+ * R functions may require any number of arguments
+ * The RCPP Function::operator() cannot be called in a varadic manner
+ * (e.g. dynamically changing the number of arguments at runtime)
+ * Hence this method instead acts as a wrapper, whereby a vector of arguments can be passed to the function
+ * @param f The R function to be called
+ * @param args A List of arguments to be passed.
+ */
+SEXP dynamic_call(Function f, List args) {
+    // Create a call object
+    Language call(f);
+
+    // Append all arguments dynamically
+    for (R_xlen_t i = 0; i < args.size(); ++i) {
+        call.push_back(args[i]);
+        // @note To support named arguments a PairList(<name>, args[i]) would be pushed back here.
+    }
+
+    // Evaluate the call
+    // @todo what happens if the call is stored and eval'd twice?
+    return call.eval();
 }
 
 
@@ -103,7 +127,8 @@ List run_simulation(List initPop, List parms) {
     // Load parameters, or use default if not present
     const int STEPS = parms.containsElementNamed("steps") ? parms["steps"] : 1;
     const uint64_t RANDOM_SEED = parms.containsElementNamed("random_seed") ? static_cast<uint64_t>(parms["random_seed"]) : 2999569345;
-    
+    const int MAX_AGE = parms.containsElementNamed("max_age") ? parms["max_age"] : 100;
+    std::set<std::string> special_args = {"~STEP", "~AGE"};
     // Validate initPop has columns required by hazard functions
     if (!parms.containsElementNamed("hazards"))
         throw std::invalid_argument("List 'parms' expected to contain vector 'hazards'\n");
@@ -124,34 +149,79 @@ List run_simulation(List initPop, List parms) {
         }
         StringVector hazardParms = h["parms"];
         // Check that listed parameters are found inside initPop columns
-        for (const auto &hp : hazardParms) {
-            if(!initPop.containsElementNamed(hp)) {
-                std::stringstream err;
-                err << "Columns '" << hp <<"' expected inside data.table 'initPop'\n";
-                throw std::invalid_argument(err.str());
+        for (const String hp : hazardParms) {
+            const std::string hp_string = hp.get_cstring();
+            if (hp_string.length() > 1 && hp_string[0] == '~') {
+                // Special internal arg
+                if (special_args.find(hp_string) == special_args.end()) {
+                    std::stringstream err;
+                    err << "Unrecognised special arg '" << hp_string <<"'.\n";
+                    throw std::invalid_argument(err.str());
+                }
+            } else {
+                // Arg from population datatable
+                if(!initPop.containsElementNamed(hp_string.c_str())) {
+                    std::stringstream err;
+                    err << "Columns '" << hp_string <<"' expected inside data.table 'initPop'\n";
+                    throw std::invalid_argument(err.str());
+                }
             }
         }
     }
+    // @todo Validate data table has other mandatory columns
     
-    // Init R Rng
-    std::mt19937_64 rng(RANDOM_SEED);
-    
+    // Init Random (currently using runif)
+    //std::mt19937_64 rng(RANDOM_SEED);
+    //std::uniform_real_distribution<float> norm_rng(0,1);
+    // @todo seed runif
+    // Create a temporary age buffer to be used instead of modifying initPop["age"]
+    IntegerVector ageBuffer = initPop["age"];
     // Simulation loop
-    for (int i = 0; i< STEPS; ++i) {
+    for (int i = 0; i < STEPS; ++i) {
         // Execute hazards in order, if required at current step
         for (List hazard : hazards) {
             // If hazard is active this step
             const unsigned int freq = hazard.containsElementNamed("freq") ? hazard["freq"] : 1;
             if(i % freq == 0) {
-                // Execute hazard functions
+                // Build arg list
                 StringVector p = hazard["parms"];
-                std::string p_0 = as<std::string>(p[0]);
-                NumericVector c_0 = initPop[p_0];  // This may be making a copy of the vector, as changes to c_0 are not reflected in initPop[p_0]
-                Function fn = hazard["fn"];
-                initPop[p_0] = fn(c_0); // Have to explicitly store column back
-                Rcout << as<NumericVector>(initPop[p_0]) << "\n";
+                List call_args;
+                for (const String arg:p) {
+                    const std::string arg_string = arg.get_cstring();
+                    if (arg_string.length() > 1 && arg_string[0] == '~') {
+                        // Map a special arg
+                        if (arg_string == "~STEP") {
+                            // Special arg corresponds to the step at runtime
+                            call_args.push_back(i);
+                        } else if (arg_string == "~AGE") {
+                            // Special arg corresponds to age buffer
+                            call_args.push_back(ageBuffer);
+                        } else {
+                            // This should never be hit
+                            std::stringstream err;
+                            err << "Special arg '" << arg_string <<"' not yet implemented.\n";
+                            throw std::runtime_error(err.str());
+                        }
+                    } else {
+                        call_args.push_back(initPop[arg]);
+                    }
+                }
+                // Execute hazard function and process results
+                // Result should be a vector of death chance, need to process these as a vector vs random
+                // Then update the death flag for affected agents
+                NumericVector result = dynamic_call(hazard["fn"], call_args);
+                // This may be faster unvectorised cpp?
+                NumericVector chance = runif(result.size());
+                LogicalVector dead = result < chance;
+                IntegerVector death_time = initPop["death"];
+                initPop["death"] = ifelse(dead & (death_time == -1), rep(i, death_time.size()), death_time);
+                printf("Step %d complete\n", i);
             }
         }
+        // After hazards, everyone's age must increase
+        ageBuffer = ageBuffer + rep(1, ageBuffer.size());
+        // Cap max age, to avoid life_fn's going out of bounds
+        ageBuffer = ifelse(ageBuffer > MAX_AGE, rep(MAX_AGE, ageBuffer.size()), ageBuffer);
     }
     return List();
 }
