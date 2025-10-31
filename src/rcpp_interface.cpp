@@ -192,7 +192,7 @@ List run_simulation(List initPop, List parms) {
                         // Map a special arg
                         if (arg_string == "~STEP") {
                             // Special arg corresponds to the step at runtime
-                            call_args.push_back(i);
+                            call_args.push_back(i);  // When this reches the R function it always evaluates 1?
                         } else if (arg_string == "~AGE") {
                             // Special arg corresponds to age buffer
                             call_args.push_back(ageBuffer);
@@ -209,12 +209,13 @@ List run_simulation(List initPop, List parms) {
                 // Execute hazard function and process results
                 // Result should be a vector of death chance, need to process these as a vector vs random
                 // Then update the death flag for affected agents
-                NumericVector result = dynamic_call(hazard["fn"], call_args);
+                NumericVector result = dynamic_call(hazard["fn"], call_args); // This is returning vector length 0?
                 // This may be faster unvectorised cpp?
                 NumericVector chance = runif(result.size());
-                LogicalVector dead = result < chance;
+                LogicalVector dead = result >= chance;
                 IntegerVector death_time = initPop["death"];
                 initPop["death"] = ifelse(dead & (death_time == -1), rep(i, death_time.size()), death_time);
+                //initPop["death"] = result;
                 printf("Step %d complete\n", i);
             }
         }

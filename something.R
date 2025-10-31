@@ -20,7 +20,8 @@ n_years <- length(life_qx) / rows_per_year
 qx_mat <- matrix(life_qx, nrow = rows_per_year, ncol = n_years)
 
 life_fn <- function(age, year) {
-  qx_mat[age, year]
+  # Params are 0-indexed, R matrix is 1-indexed
+  return(qx_mat[age + 1, year + 1])
 }
 
 # Mock parameters
@@ -30,4 +31,7 @@ parms <- list(
   random_seed = 12L
 )
 
-results <- run_simulation(initPop, parms)
+results <- run_simulation(initPop, parms) # Currently returns empty list
+
+library(data.table)
+fwrite(initPop, "output.csv")
