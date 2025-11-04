@@ -26,12 +26,12 @@ life_fn <- function(age, year) {
 
 # Mock parameters
 parms <- list(
-  hazards = list(list(fn = life_fn, parms=c("~AGE", "~STEP"), freq = 1)),
+  hazards = list(list(fn = life_fn, parms=c("age", "~STEP"), freq = 1)),
   steps = n_years,
   random_seed = 12L
 )
 
-results <- run_simulation(initPop, parms) # Currently returns empty list
+outPop <- run_simulation(initPop, parms) # Currently returns empty list
 
 library(data.table)
-fwrite(initPop, "output.csv")
+fwrite(outPop, "outPop.csv")

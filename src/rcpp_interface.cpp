@@ -133,7 +133,7 @@ List run_simulation(List initPop, List parms) {
     if (!parms.containsElementNamed("hazards"))
         throw std::invalid_argument("List 'parms' expected to contain vector 'hazards'\n");
     List hazards = parms["hazards"];
-    for (int h_i = 0; h_i < hazards.size(); ++h_i) {
+    for (int h_i = 0; h_i < Rf_length(hazards); ++h_i) {
         List h = hazards[h_i];
         // Check hazard actually contains 'parms'
         if (!h.containsElementNamed("parms")) {
@@ -170,12 +170,20 @@ List run_simulation(List initPop, List parms) {
     }
     // @todo Validate data table has other mandatory columns
     
+    // Create a deep-copy of the initial pop, that we will return with changes at the end
+    // @todo create other columns, to log last hazard score?
+    List outPop = clone(initPop);
+    // Add/init required columns
+    if (!outPop.containsElementNamed("death")) {
+        IntegerVector death_col(Rf_length(outPop[0]), -1);
+        outPop.push_back(death_col);
+    } else {
+        IntegerVector death_col(Rf_length(outPop[0]), -1);
+        outPop["death"] = death_col;
+    }
+    // Create "death" column if it's not present
     // Init Random (currently using runif)
-    //std::mt19937_64 rng(RANDOM_SEED);
-    //std::uniform_real_distribution<float> norm_rng(0,1);
     // @todo seed runif
-    // Create a temporary age buffer to be used instead of modifying initPop["age"]
-    IntegerVector ageBuffer = initPop["age"];
     // Simulation loop
     for (int i = 0; i < STEPS; ++i) {
         // Execute hazards in order, if required at current step
@@ -193,9 +201,6 @@ List run_simulation(List initPop, List parms) {
                         if (arg_string == "~STEP") {
                             // Special arg corresponds to the step at runtime
                             call_args.push_back(i);  // When this reches the R function it always evaluates 1?
-                        } else if (arg_string == "~AGE") {
-                            // Special arg corresponds to age buffer
-                            call_args.push_back(ageBuffer);
                         } else {
                             // This should never be hit
                             std::stringstream err;
@@ -203,26 +208,26 @@ List run_simulation(List initPop, List parms) {
                             throw std::runtime_error(err.str());
                         }
                     } else {
-                        call_args.push_back(initPop[arg]);
+                        call_args.push_back(outPop[arg]);
                     }
                 }
                 // Execute hazard function and process results
                 // Result should be a vector of death chance, need to process these as a vector vs random
                 // Then update the death flag for affected agents
-                NumericVector result = dynamic_call(hazard["fn"], call_args); // This is returning vector length 0?
+                NumericVector result = dynamic_call(hazard["fn"], call_args);
                 // This may be faster unvectorised cpp?
-                NumericVector chance = runif(result.size());
-                LogicalVector dead = result >= chance;
-                IntegerVector death_time = initPop["death"];
-                initPop["death"] = ifelse(dead & (death_time == -1), rep(i, death_time.size()), death_time);
-                //initPop["death"] = result;
+                NumericVector chance = runif(Rf_length(result));  // Generate vector of random float [0, 1)
+                IntegerVector death_time = outPop["death"];  // Shallow copy to a non-abstract type
+                outPop["death"] = ifelse((result >= chance) & (death_time == -1), rep(i, Rf_length(death_time)), death_time);
                 printf("Step %d complete\n", i);
             }
         }
+        // @todo This will become trajectory handling
         // After hazards, everyone's age must increase
-        ageBuffer = ageBuffer + rep(1, ageBuffer.size());
+        IntegerVector age = outPop["age"];  // Shallow copy to a non-abstract type
+        age = age + 1;  // This isn't in-place, it creates a new vector!
         // Cap max age, to avoid life_fn's going out of bounds
-        ageBuffer = ifelse(ageBuffer > MAX_AGE, rep(MAX_AGE, ageBuffer.size()), ageBuffer);
+        outPop["age"] = ifelse(age > MAX_AGE, rep(MAX_AGE, Rf_length(age)), age);
     }
-    return List();
+    return outPop;
 }
