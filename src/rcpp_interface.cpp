@@ -225,9 +225,9 @@ List run_simulation(List initPop, List parms) {
         // @todo This will become trajectory handling
         // After hazards, everyone's age must increase
         IntegerVector age = outPop["age"];  // Shallow copy to a non-abstract type
-        age = age + 1;  // This isn't in-place, it creates a new vector!
-        // Cap max age, to avoid life_fn's going out of bounds
-        outPop["age"] = ifelse(age > MAX_AGE, rep(MAX_AGE, Rf_length(age)), age);
+        IntegerVector death_time = outPop["death"];  // Shallow copy to a non-abstract type
+        // Don't increase age if dead
+        outPop["age"] = ifelse(death_time == -1, age + 1, age);
     }
     return outPop;
 }
