@@ -20,8 +20,14 @@ n_years <- length(life_qx) / rows_per_year
 qx_mat <- matrix(life_qx, nrow = rows_per_year, ncol = n_years)
 
 life_fn <- function(age, year) {
-  # Params are 0-indexed, R matrix is 1-indexed
-  return(qx_mat[age + 1, year + 1])
+  # Convert to 1-indexed and clamp in bounds
+  n_rows <- nrow(qx_mat)
+  n_cols <- ncol(qx_mat)
+  
+  row_index <- pmin(pmax(age + 1, 1), n_rows)
+  col_index <- pmin(pmax(year + 1, 1), n_cols)
+  
+  return(qx_mat[row_index, col_index])
 }
 
 # Mock parameters
