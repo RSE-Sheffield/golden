@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <set>
+#include <limits>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -127,7 +128,6 @@ List run_simulation(List initPop, List parms) {
     // Load parameters, or use default if not present
     const int STEPS = parms.containsElementNamed("steps") ? parms["steps"] : 1;
     const uint64_t RANDOM_SEED = parms.containsElementNamed("random_seed") ? static_cast<uint64_t>(parms["random_seed"]) : 2999569345;
-    const int MAX_AGE = parms.containsElementNamed("max_age") ? parms["max_age"] : 100;
     std::set<std::string> special_args = {"~STEP", "~AGE"};
     // Validate initPop has columns required by hazard functions
     if (!parms.containsElementNamed("hazards"))
@@ -190,7 +190,9 @@ List run_simulation(List initPop, List parms) {
         for (List hazard : hazards) {
             // If hazard is active this step
             const unsigned int freq = hazard.containsElementNamed("freq") ? hazard["freq"] : 1;
-            if(i % freq == 0) {
+            const int before = hazard.containsElementNamed("before") ? hazard["before"] : std::numeric_limits<int>::max();
+            const int after = hazard.containsElementNamed("after") ? hazard["after"] : -1;
+            if(i % freq == 0 && i < before && i > after) {
                 // Build arg list
                 StringVector p = hazard["parms"];
                 List call_args;
@@ -219,7 +221,6 @@ List run_simulation(List initPop, List parms) {
                 NumericVector chance = runif(Rf_length(result));  // Generate vector of random float [0, 1)
                 IntegerVector death_time = outPop["death"];  // Shallow copy to a non-abstract type
                 outPop["death"] = ifelse((result >= chance) & (death_time == -1), rep(i, Rf_length(death_time)), death_time);
-                printf("Step %d complete\n", i);
             }
         }
         // @todo This will become trajectory handling
@@ -228,6 +229,7 @@ List run_simulation(List initPop, List parms) {
         IntegerVector death_time = outPop["death"];  // Shallow copy to a non-abstract type
         // Don't increase age if dead
         outPop["age"] = ifelse(death_time == -1, age + 1, age);
+        printf("Step %d complete\n", i);
     }
     return outPop;
 }

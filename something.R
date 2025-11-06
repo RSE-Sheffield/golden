@@ -32,7 +32,7 @@ life_fn <- function(age, year) {
 
 # Mock parameters
 parms <- list(
-  hazards = list(list(fn = life_fn, parms=c("age", "~STEP"), freq = 1)),
+  hazards = list(list(fn = life_fn, parms=c("age", "~STEP"), freq = 1, after = -1, before = 1000)),
   steps = n_years,
   random_seed = 12L
 )
