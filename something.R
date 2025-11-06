@@ -19,6 +19,7 @@ life_qx <- as.numeric(lifetable$qx)
 n_years <- length(life_qx) / rows_per_year
 qx_mat <- matrix(life_qx, nrow = rows_per_year, ncol = n_years)
 
+# Calculates the general death hazard chance for a given age/year
 life_fn <- function(age, year) {
   # Convert to 1-indexed and clamp in bounds
   n_rows <- nrow(qx_mat)
@@ -30,9 +31,20 @@ life_fn <- function(age, year) {
   return(qx_mat[row_index, col_index])
 }
 
+# Returns transitioned death_state based on current state and result of hazard
+life_transition_fn <- function(life_result, death_state, i) {
+    # If life result is true, and death_state is empty, update death state to current time
+    return (ifelse(life_result & (death_state == -1), rep(i, length(death_state)), death_state))
+}
+
 # Mock parameters
 parms <- list(
-  hazards = list(list(fn = life_fn, parms=c("age", "~STEP"), freq = 1, after = -1, before = 1000)),
+  hazards = list(list(fn = life_fn,
+                      parms=c("age", "~STEP"),
+                      transition_fn=life_transition_fn,
+                      transition_state="death",
+                      transition_parms=c("~RESULT", "death", "~STEP"),
+                      freq = 1, after = -1, before = 1000)),
   steps = n_years,
   random_seed = 12L
 )

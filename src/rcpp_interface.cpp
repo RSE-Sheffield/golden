@@ -122,32 +122,54 @@ SEXP dynamic_call(Function f, List args) {
     return call.eval();
 }
 
+inline void check_hazard_contains(List h, const int i, const std::string &name, const std::string &typ) {
+    if (!h.containsElementNamed(name.c_str())) {
+        std::stringstream err;
+        err << "Hazard[" << i <<"] expected to contain " << typ << " '" << name << "'\n";
+        throw std::invalid_argument(err.str());
+    }
+}
 
 // [[Rcpp::export]]
 List run_simulation(List initPop, List parms) {
     // Load parameters, or use default if not present
     const int STEPS = parms.containsElementNamed("steps") ? parms["steps"] : 1;
     const uint64_t RANDOM_SEED = parms.containsElementNamed("random_seed") ? static_cast<uint64_t>(parms["random_seed"]) : 2999569345;
-    std::set<std::string> special_args = {"~STEP", "~AGE"};
+    std::set<std::string> special_args = {"~STEP", "~RESULT"};  // @note technically ~RESULT is only valid for transitions
     // Validate initPop has columns required by hazard functions
     if (!parms.containsElementNamed("hazards"))
         throw std::invalid_argument("List 'parms' expected to contain vector 'hazards'\n");
     List hazards = parms["hazards"];
     for (int h_i = 0; h_i < Rf_length(hazards); ++h_i) {
         List h = hazards[h_i];
-        // Check hazard actually contains 'parms'
-        if (!h.containsElementNamed("parms")) {
-            std::stringstream err;
-            err << "Hazard[" << h_i <<"] expected to contain vector 'parms'\n";
-            throw std::invalid_argument(err.str());
-        }
-        // Check hazard actually contains 'fn'
-        if (!h.containsElementNamed("fn")) {
-            std::stringstream err;
-            err << "Hazard[" << h_i <<"] expected to contain function 'fn'\n";
-            throw std::invalid_argument(err.str());
-        }
+        // Check hazard actually contains required elements
+        // @todo Can we instead define an R type which would be mostly default init?
+        check_hazard_contains(h, h_i, "parms", "vector");
+        check_hazard_contains(h, h_i, "fn", "function");
+        check_hazard_contains(h, h_i, "transition_fn", "function");
+        check_hazard_contains(h, h_i, "transition_state", "string");
+        check_hazard_contains(h, h_i, "transition_parms", "vector");
         StringVector hazardParms = h["parms"];
+        // Check that listed parameters are found inside initPop columns
+        for (const String hp : hazardParms) {
+            const std::string hp_string = hp.get_cstring();
+            if (hp_string.length() > 1 && hp_string[0] == '~') {
+                // Special internal arg
+                if (special_args.find(hp_string) == special_args.end()) {
+                    std::stringstream err;
+                    err << "Unrecognised special arg '" << hp_string <<"'.\n";
+                    throw std::invalid_argument(err.str());
+                }
+            } else {
+                // Arg from population datatable
+                if(!initPop.containsElementNamed(hp_string.c_str())) {
+                    std::stringstream err;
+                    err << "Columns '" << hp_string <<"' expected inside data.table 'initPop'\n";
+                    throw std::invalid_argument(err.str());
+                }
+            }
+        }
+        hazardParms = h["parms"];
         // Check that listed parameters are found inside initPop columns
         for (const String hp : hazardParms) {
             const std::string hp_string = hp.get_cstring();
@@ -193,7 +215,7 @@ List run_simulation(List initPop, List parms) {
             const int before = hazard.containsElementNamed("before") ? hazard["before"] : std::numeric_limits<int>::max();
             const int after = hazard.containsElementNamed("after") ? hazard["after"] : -1;
             if(i % freq == 0 && i < before && i > after) {
-                // Build arg list
+                // Build arg list to execute hazard chance
                 StringVector p = hazard["parms"];
                 List call_args;
                 for (const String arg:p) {
@@ -202,11 +224,11 @@ List run_simulation(List initPop, List parms) {
                         // Map a special arg
                         if (arg_string == "~STEP") {
                             // Special arg corresponds to the step at runtime
-                            call_args.push_back(i);  // When this reches the R function it always evaluates 1?
+                            call_args.push_back(i);
                         } else {
                             // This should never be hit
                             std::stringstream err;
-                            err << "Special arg '" << arg_string <<"' not yet implemented.\n";
+                            err << "Hazard special arg '" << arg_string <<"' not yet implemented.\n";
                             throw std::runtime_error(err.str());
                         }
                     } else {
@@ -219,8 +241,31 @@ List run_simulation(List initPop, List parms) {
                 NumericVector result = dynamic_call(hazard["fn"], call_args);
                 // This may be faster unvectorised cpp?
                 NumericVector chance = runif(Rf_length(result));  // Generate vector of random float [0, 1)
-                IntegerVector death_time = outPop["death"];  // Shallow copy to a non-abstract type
-                outPop["death"] = ifelse((result >= chance) & (death_time == -1), rep(i, Rf_length(death_time)), death_time);
+                // Build arg list to execute hazard transition
+                p = hazard["transition_parms"];
+                call_args = List();
+                for (const String arg:p) {
+                    const std::string arg_string = arg.get_cstring();
+                    if (arg_string.length() > 1 && arg_string[0] == '~') {
+                        // Map a special arg
+                        if (arg_string == "~STEP") {
+                            // Special arg corresponds to the step at runtime
+                            call_args.push_back(i);
+                        } else if (arg_string == "~RESULT") {
+                            // Special arg corresponds to True/False whether hazard passed
+                            call_args.push_back((result >= chance)); 
+                        } else {
+                            // This should never be hit
+                            std::stringstream err;
+                            err << "Hazard transition special arg '" << arg_string <<"' not yet implemented.\n";
+                            throw std::runtime_error(err.str());
+                        }
+                    } else {
+                        call_args.push_back(outPop[arg]);
+                    }
+                }
+                String transition_state = hazard["transition_state"];
+                outPop[transition_state] = dynamic_call(hazard["transition_fn"], call_args);
             }
         }
         // @todo This will become trajectory handling
