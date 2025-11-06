@@ -93,6 +93,7 @@ List create_cohort(List demog, unsigned int N) {
     return List::create(
         _["male"] = out_male,
         _["age"] = out_age,
+        _["bmi"] = NumericVector(N, 0), // invalid init, externally init pre-sim
         _["death"] = IntegerVector(N, -1) // invalid init, gets set to time of death
     );
 }

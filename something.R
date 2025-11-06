@@ -1,17 +1,61 @@
 devtools::load_all()
 Sys.setenv(RCPP_DEVEL_DEBUG = "1")
 
-# Pop CSV
-# Read the CSV, coerce columns and pass to create_cohort() to make pop List
-demographics <- read.csv("tests/data/pop.csv")
-demographics$AgeGrp <- as.integer(demographics$AgeGrp)
-demographics$PopMale <- as.numeric(demographics$PopMale)
-demographics$PopFemale <- as.numeric(demographics$PopFemale)
-demographics$PopTotal <- as.numeric(demographics$PopTotal)
-# List with fields male, age, death
-initPop <- create_cohort(demographics, N=1e4)
+library(LCTMtools)
+library(CVrisk)
+library(lme4)
+library(data.table)
 
-# Life CSV
+##################
+# BMI TRAJECTORY #
+##################
+
+# load data.frame from LCTMtools
+# id/age/bmi/true_class
+data(bmi_long, package = "LCTMtools")
+
+## create a mixed model fit to bmi_long data
+mm <- lmer(bmi ~ 1 + age + I(age^2) + (1 | id),
+  data = bmi_long
+)
+
+## extract fixed effects for simple trajectory model
+## This is a tiny 3 column 1 row data table
+(B <- coef(summary(mm))[, 1])
+
+## Define a function to calculate bmi from age using the quadratic model
+bmi_traj <- function(age) {
+  unname(B[1] + age * B[2] + age^2 * B[3])
+}
+
+#bmi_traj(25) # test
+
+##############
+# CVD HAZARD #
+##############
+
+# Redundant, this returns a data table we aren't using?
+compute_CVrisk(sample_data,
+  age = "age", race = "race", gender = "gender", bmi = "BMI", sbp = "sbp",
+  hdl = "hdl", totchol = "totchol", bp_med = "bp_med", smoker = "smoker",
+  diabetes = "diabetes", lipid_med = "lipid_med",
+  fh_heartattack = "fh_heartattack", cac = "cac"
+)
+
+## Define a function to calculate risk of death via CVD from age and bmi
+CVD_haz <- function(age, bmi) {
+  risk10 <- ascvd_10y_frs_simple(
+    gender = "male", age = age,
+    bmi = bmi, sbp = 140,
+    bp_med = 0, smoker = 0, diabetes = 0
+  )
+  1 - (1 - risk10 / 100)^0.1 # horrible approximation
+}
+
+########################
+# GENERAL DEATH HAZARD #
+########################
+
 # Read the CSV and convert qx into a matrix [age, year]
 rows_per_year <- 101
 lifetable <- read.csv("tests/data/life_table.csv", header = TRUE)
@@ -31,25 +75,52 @@ life_fn <- function(age, year) {
   return(qx_mat[row_index, col_index])
 }
 
+######################
+# GENERIC TRANSITION #
+######################
+
 # Returns transitioned death_state based on current state and result of hazard
-life_transition_fn <- function(life_result, death_state, i) {
-    # If life result is true, and death_state is empty, update death state to current time
-    return (ifelse(life_result & (death_state == -1), rep(i, length(death_state)), death_state))
+transition_fn <- function(result, state, i) {
+    # If  result is true, and state is -1, update state to current time
+    return (ifelse(result & (state == -1), rep(i, length(state)), state))
 }
 
-# Mock parameters
+######################
+# INITIAL POPULATION #
+######################
+
+# Pop CSV
+# Read the CSV, coerce columns and pass to create_cohort() to make pop List
+demographics <- read.csv("tests/data/pop.csv")
+demographics$AgeGrp <- as.integer(demographics$AgeGrp)
+demographics$PopMale <- as.numeric(demographics$PopMale)
+demographics$PopFemale <- as.numeric(demographics$PopFemale)
+demographics$PopTotal <- as.numeric(demographics$PopTotal)
+# List with fields male, age, bmi, death
+initPop <- create_cohort(demographics, N=1e4)
+# Init bmi (hazards run before trajectories)
+initPop$bmi = bmi_traj(initPop$age)
+
+##############
+# SIMULATION #
+##############
+
 parms <- list(
-  hazards = list(list(fn = life_fn,
+  hazards = list(list(fn = CVD_haz,
+                      parms=c("age", "bmi"),
+                      transition_fn=transition_fn,
+                      transition_state="death",
+                      transition_parms=c("~RESULT", "death", "~STEP")),
+                 list(fn = life_fn,
                       parms=c("age", "~STEP"),
-                      transition_fn=life_transition_fn,
+                      transition_fn=transition_fn,
                       transition_state="death",
                       transition_parms=c("~RESULT", "death", "~STEP"),
-                      freq = 1, after = -1, before = 1000)),
+                      freq = 1, after = -1, before = 1000)), # Left in as default values to show they exist
   steps = n_years,
   random_seed = 12L
 )
 
-outPop <- run_simulation(initPop, parms) # Currently returns empty list
+outPop <- run_simulation(initPop, parms)
 
-library(data.table)
 fwrite(outPop, "outPop.csv")
