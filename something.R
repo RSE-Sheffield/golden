@@ -54,6 +54,8 @@ compute_CVrisk(sample_data,
 
 ## Define a function to calculate risk of death via CVD from age and bmi
 CVD_haz <- function(age, bmi) {
+  # Clamp age in bounds of model to avoid NA
+  age <- pmin(pmax(age, 30), 74)
   risk10 <- ascvd_10y_frs_simple(
     gender = "male", age = age,
     bmi = bmi, sbp = 140,
