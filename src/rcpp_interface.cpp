@@ -141,6 +141,8 @@ inline void check_trajectory_contains(List h, const int i, const std::string &na
 // [[Rcpp::export]]
 List run_simulation(List initPop, List parms) {
     // Load parameters, or use default if not present
+    if (!parms.containsElementNamed("steps"))
+        throw std::invalid_argument("List 'parms' expected to contain integer 'steps'\n");
     const int STEPS = parms.containsElementNamed("steps") ? parms["steps"] : 1;
     const uint64_t RANDOM_SEED = parms.containsElementNamed("random_seed") ? static_cast<uint64_t>(parms["random_seed"]) : 2999569345;
     std::set<std::string> special_args = {"~STEP"};  // @note technically ~RESULT is only valid for transitions
@@ -148,6 +150,8 @@ List run_simulation(List initPop, List parms) {
     if (!parms.containsElementNamed("hazards"))
         throw std::invalid_argument("List 'parms' expected to contain vector 'hazards'\n");
     List hazards = parms["hazards"];
+    if (!hazards.length())
+        throw std::invalid_argument("'parms$hazards' is empty\n");
     for (int h_i = 0; h_i < Rf_length(hazards); ++h_i) {
         List h = hazards[h_i];
         // Check hazard actually contains required elements
@@ -209,6 +213,8 @@ List run_simulation(List initPop, List parms) {
     if (!parms.containsElementNamed("trajectories"))
         throw std::invalid_argument("List 'parms' expected to contain vector 'trajectories'\n");
     List trajectories = parms["trajectories"];
+    if (!trajectories.length())
+        throw std::invalid_argument("'parms$trajectories' is empty\n");
     for (int t_i = 0; t_i < Rf_length(trajectories); ++t_i) {
         List t = trajectories[t_i];
         // Check hazard actually contains required elements
