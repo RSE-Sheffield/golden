@@ -7,6 +7,16 @@ library(lme4)
 library(data.table)
 
 ##################
+# AGE TRAJECTORY #
+##################
+
+## Define a function to increment by 1
+## If dead, age is not changed
+age_traj <- function(age, death_time) {
+  return (ifelse(death_time == -1, age + 1, age))
+}
+
+##################
 # BMI TRAJECTORY #
 ##################
 
@@ -117,8 +127,14 @@ parms <- list(
                       transition_state="death",
                       transition_parms=c("~RESULT", "death", "~STEP"),
                       freq = 1, after = -1, before = 1000)), # Left in as default values to show they exist
+  trajectories = list(list(fn = age_traj,
+                           property = "age",
+                           parms=c("age", "death")),
+                      list(fn = bmi_traj,
+                           property = "bmi",
+                           parms=c("age"))),
   steps = n_years,
-  random_seed = 12L
+  random_seed = 12L # Not currently seeding R rng internally
 )
 
 outPop <- run_simulation(initPop, parms)

@@ -130,13 +130,20 @@ inline void check_hazard_contains(List h, const int i, const std::string &name, 
         throw std::invalid_argument(err.str());
     }
 }
+inline void check_trajectory_contains(List h, const int i, const std::string &name, const std::string &typ) {
+    if (!h.containsElementNamed(name.c_str())) {
+        std::stringstream err;
+        err << "Trajectory[" << i <<"] expected to contain " << typ << " '" << name << "'\n";
+        throw std::invalid_argument(err.str());
+    }
+}
 
 // [[Rcpp::export]]
 List run_simulation(List initPop, List parms) {
     // Load parameters, or use default if not present
     const int STEPS = parms.containsElementNamed("steps") ? parms["steps"] : 1;
     const uint64_t RANDOM_SEED = parms.containsElementNamed("random_seed") ? static_cast<uint64_t>(parms["random_seed"]) : 2999569345;
-    std::set<std::string> special_args = {"~STEP", "~RESULT"};  // @note technically ~RESULT is only valid for transitions
+    std::set<std::string> special_args = {"~STEP"};  // @note technically ~RESULT is only valid for transitions
     // Validate initPop has columns required by hazard functions
     if (!parms.containsElementNamed("hazards"))
         throw std::invalid_argument("List 'parms' expected to contain vector 'hazards'\n");
@@ -158,38 +165,77 @@ List run_simulation(List initPop, List parms) {
                 // Special internal arg
                 if (special_args.find(hp_string) == special_args.end()) {
                     std::stringstream err;
-                    err << "Unrecognised special arg '" << hp_string <<"'.\n";
+                    err << "Unrecognised special hazard arg '" << hp_string <<"'.\n";
                     throw std::invalid_argument(err.str());
                 }
             } else {
                 // Arg from population datatable
                 if(!initPop.containsElementNamed(hp_string.c_str())) {
                     std::stringstream err;
-                    err << "Columns '" << hp_string <<"' expected inside data.table 'initPop'\n";
+                    err << "Column '" << hp_string <<"' expected inside data.table 'initPop'\n";
                     throw std::invalid_argument(err.str());
                 }
             }
         }
-        hazardParms = h["parms"];
-        // Check that listed parameters are found inside initPop columns
+        hazardParms = h["transition_parms"];
+        // Check that listed transition parameters are found inside initPop columns
         for (const String hp : hazardParms) {
             const std::string hp_string = hp.get_cstring();
             if (hp_string.length() > 1 && hp_string[0] == '~') {
                 // Special internal arg
-                if (special_args.find(hp_string) == special_args.end()) {
+                if (special_args.find(hp_string) == special_args.end() && hp_string != "~RESULT") {
                     std::stringstream err;
-                    err << "Unrecognised special arg '" << hp_string <<"'.\n";
+                    err << "Unrecognised special hazard transition arg '" << hp_string <<"'.\n";
                     throw std::invalid_argument(err.str());
                 }
             } else {
                 // Arg from population datatable
                 if(!initPop.containsElementNamed(hp_string.c_str())) {
                     std::stringstream err;
-                    err << "Columns '" << hp_string <<"' expected inside data.table 'initPop'\n";
+                    err << "Column '" << hp_string <<"' expected inside data.table 'initPop'\n";
                     throw std::invalid_argument(err.str());
                 }
             }
         }
+        // Confirm transition_state state exists in initPop
+        String ts = h["transition_state"];
+        if(!initPop.containsElementNamed(ts.get_cstring())) {
+            std::stringstream err;
+            err << "Transition state column '" << ts.get_cstring() <<"' expected inside data.table 'initPop'\n";
+            throw std::invalid_argument(err.str());
+        }
+    }
+    // Validate initPop has columns required by trajectory functions
+    if (!parms.containsElementNamed("trajectories"))
+        throw std::invalid_argument("List 'parms' expected to contain vector 'trajectories'\n");
+    List trajectories = parms["trajectories"];
+    for (int t_i = 0; t_i < Rf_length(trajectories); ++t_i) {
+        List t = trajectories[t_i];
+        // Check hazard actually contains required elements
+        // @todo Can we instead define an R type which would be mostly default init?
+        check_trajectory_contains(t, t_i, "parms", "vector");
+        check_trajectory_contains(t, t_i, "fn", "function");
+        check_trajectory_contains(t, t_i, "property", "string");
+        StringVector trajParms = t["parms"];
+        // Check that listed parameters are found inside initPop columns
+        for (const String tp : trajParms) {
+            const std::string tp_string = tp.get_cstring();
+            if (tp_string.length() > 1 && tp_string[0] == '~') {
+                // Special internal arg
+                if (special_args.find(tp_string) == special_args.end()) {
+                    std::stringstream err;
+                    err << "Unrecognised special trajectory arg '" << tp_string <<"'.\n";
+                    throw std::invalid_argument(err.str());
+                }
+            } else {
+                // Arg from population datatable
+                if(!initPop.containsElementNamed(tp_string.c_str())) {
+                    std::stringstream err;
+                    err << "Column '" << tp_string <<"' expected inside data.table 'initPop'\n";
+                    throw std::invalid_argument(err.str());
+                }
+            }
+        }        
     }
     // @todo Validate data table has other mandatory columns
     
@@ -269,13 +315,35 @@ List run_simulation(List initPop, List parms) {
                 outPop[transition_state] = dynamic_call(hazard["transition_fn"], call_args);
             }
         }
-        // @todo This will become trajectory handling
-        // After hazards, everyone's age must increase
-        IntegerVector age = outPop["age"];  // Shallow copy to a non-abstract type
-        IntegerVector death_time = outPop["death"];  // Shallow copy to a non-abstract type
-        // Don't increase age if dead
-        outPop["age"] = ifelse(death_time == -1, age + 1, age);
-        printf("Step %d complete\n", i);
+        // Execute trajectories in order
+        for (List trajectory : trajectories) {
+            // Currently assumed that trajectories are always active            
+            // Build arg list to execute hazard chance
+            StringVector p = trajectory["parms"];
+            List call_args;
+            for (const String arg:p) {
+                const std::string arg_string = arg.get_cstring();
+                if (arg_string.length() > 1 && arg_string[0] == '~') {
+                    // Map a special arg
+                    if (arg_string == "~STEP") {
+                        // Special arg corresponds to the step at runtime
+                        call_args.push_back(i);
+                    } else {
+                        // This should never be hit
+                        std::stringstream err;
+                        err << "Trajectory special arg '" << arg_string <<"' not yet implemented.\n";
+                        throw std::runtime_error(err.str());
+                    }
+                } else {
+                    call_args.push_back(outPop[arg]);
+                }
+            }
+            // Execute hazard function and store result directly in trajectory's property
+            String trajectory_prop = trajectory["property"];
+            outPop[trajectory_prop] = dynamic_call(trajectory["fn"], call_args);
+        }
+        printf("\rStep %d complete", i);
     }
+    printf("\rSimulation Complete!\n");
     return outPop;
 }
