@@ -10,32 +10,6 @@
 
 using namespace Rcpp;
 
-// [[Rcpp::export]]
-bool is_odd(int d){
-    return d % 2 != 0;
-}
-
-// [[Rcpp::export]]
-LogicalVector is_odd_vector(IntegerVector x) {
-    const int n = x.size();
-    LogicalVector result(n);
-    #pragma omp parallel for
-    for (int i = 0; i < n; i++) {
-        result[i] = x[i] % 2 != 0;
-    }
-    
-    return result;
-}
-
-/**
- * Convenience function returning the inclusive prefix sum of x
- */
-NumericVector prefix_sum(NumericVector x) {
-    NumericVector out(x.size());
-    std::partial_sum(x.begin(), x.end(), out.begin());
-    return out;
-}
-
 /**
  * Temporary testing method, probably replaced in future with R's simdata package or similar
  */
