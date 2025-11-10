@@ -34,7 +34,7 @@ empty_hazard_fn <- function(property) {
 #' @param chance Unused
 #' @param death This value is directly returned
 #' @return The param death
-empty_transition_fn <- function(chance, death) {
+empty_transition_fn <- function(death) {
     return (death)
 }
 #' Empty trajectory function example
@@ -54,7 +54,7 @@ get_parms <- function() {
               parms=c("age"),
               transition_fn=empty_transition_fn,
               transition_state="death",
-              transition_parms=c("~RESULT", "death")
+              transition_parms=c("death")
             )
           ),
           trajectories = list(
