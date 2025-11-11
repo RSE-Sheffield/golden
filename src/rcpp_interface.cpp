@@ -145,7 +145,13 @@ List run_simulation(List initPop, List parms) {
         throw std::invalid_argument("List 'parms' expected to contain integer 'steps'\n");
     const int STEPS = parms.containsElementNamed("steps") ? parms["steps"] : 1;
     const uint64_t RANDOM_SEED = parms.containsElementNamed("random_seed") ? static_cast<uint64_t>(parms["random_seed"]) : 2999569345;
+#ifdef NDEBUG
     const bool DEBUG = parms.containsElementNamed("debug") ? static_cast<bool>(parms["debug"]) : false;
+    warning("eldoradosim's model debug checks are enabled, these may impact performance.");
+#else
+    const bool DEBUG = true;
+    warning("You are using a development build of eldoradosim, this may impact performance.");
+#endif
     std::set<std::string> special_args = {"~STEP"};  // @note technically ~RESULT is only valid for transitions
     // Validate initPop has columns required by hazard functions
     if (!parms.containsElementNamed("hazards"))
