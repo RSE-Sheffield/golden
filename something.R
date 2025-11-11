@@ -136,7 +136,8 @@ parms <- list(
                            property = "bmi",
                            parms=c("age"))),
   steps = n_years,
-  random_seed = 12L # Not currently seeding R rng internally
+  random_seed = 12L, # Not currently seeding R rng internally
+  debug = TRUE
 )
 
 outPop <- run_simulation(initPop, parms)

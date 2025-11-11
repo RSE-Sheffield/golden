@@ -4,6 +4,7 @@
 #include <sstream>
 #include <set>
 #include <limits>
+#include <cmath>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -96,6 +97,31 @@ SEXP dynamic_call(Function f, List args) {
     // @todo what happens if the call is stored and eval'd twice?
     return call.eval();
 }
+/**
+ * Debug method to check output of dynamic methods, to ensure they don't contain NaN/Inf
+ * 
+ * @param s_i Step index
+ * @param fn_type String representation of the function type (e.g. hazard, trajectory, transition)
+ * @param fn_i Function index, e.g. 2nd hazard in the list. Assumed 1-indexed same as R, rather than 0-indexed C
+ * @param _result The result vector to be checked, assumed to be NumericVector (only floating point types have NaN)
+ * @note Not sure R has a concept of Inf, everything so far seems to be NA, which I assume to be NaN
+ * @note Labelling may need adjustments if allowing multiple transitions per hazard
+ */
+void check_result(int s_i, std::string fn_typ, int fn_i, SEXP _result) {
+    NumericVector result = _result;
+    int nan_count = 0;
+    int inf_count = 0;
+    for (const double &t : result) {
+        nan_count += std::isnan(t)?1:0;
+        inf_count += std::isinf(t)?1:0;
+    }
+    if (nan_count + inf_count) {
+        // This should never be hit
+        std::stringstream err;
+        err << "[DEBUG]During step " << s_i << " " << fn_typ << "[" << fn_i << "] return contained " << nan_count <<" NaN values and " << inf_count << " Inf values.\n";
+        throw std::runtime_error(err.str());
+    }
+}
 
 inline void check_hazard_contains(List h, const int i, const std::string &name, const std::string &typ) {
     if (!h.containsElementNamed(name.c_str())) {
@@ -119,6 +145,7 @@ List run_simulation(List initPop, List parms) {
         throw std::invalid_argument("List 'parms' expected to contain integer 'steps'\n");
     const int STEPS = parms.containsElementNamed("steps") ? parms["steps"] : 1;
     const uint64_t RANDOM_SEED = parms.containsElementNamed("random_seed") ? static_cast<uint64_t>(parms["random_seed"]) : 2999569345;
+    const bool DEBUG = parms.containsElementNamed("debug") ? static_cast<bool>(parms["debug"]) : false;
     std::set<std::string> special_args = {"~STEP"};  // @note technically ~RESULT is only valid for transitions
     // Validate initPop has columns required by hazard functions
     if (!parms.containsElementNamed("hazards"))
@@ -235,6 +262,7 @@ List run_simulation(List initPop, List parms) {
     // @todo seed runif
     // Simulation loop
     for (int i = 0; i < STEPS; ++i) {
+        int h_i = 1;  // 1 index'd similar to R
         // Execute hazards in order, if required at current step
         for (List hazard : hazards) {
             // If hazard is active this step
@@ -266,6 +294,8 @@ List run_simulation(List initPop, List parms) {
                 // Result should be a vector of death chance, need to process these as a vector vs random
                 // Then update the death flag for affected agents
                 NumericVector result = dynamic_call(hazard["fn"], call_args);
+                if (DEBUG)
+                    check_result(i, "hazard", h_i, result);
                 // This may be faster unvectorised cpp?
                 NumericVector chance = runif(Rf_length(result));  // Generate vector of random float [0, 1)
                 // Build arg list to execute hazard transition
@@ -293,11 +323,15 @@ List run_simulation(List initPop, List parms) {
                 }
                 String transition_state = hazard["transition_state"];
                 outPop[transition_state] = dynamic_call(hazard["transition_fn"], call_args);
+                if (DEBUG)
+                    check_result(i, "transition", h_i, outPop[transition_state]);
             }
+            ++h_i;
         }
+        int t_i = 1; // 1-indexed counter
         // Execute trajectories in order
         for (List trajectory : trajectories) {
-            // Currently assumed that trajectories are always active            
+            // Currently assumed that trajectories are always active
             // Build arg list to execute hazard chance
             StringVector p = trajectory["parms"];
             List call_args;
@@ -321,6 +355,9 @@ List run_simulation(List initPop, List parms) {
             // Execute hazard function and store result directly in trajectory's property
             String trajectory_prop = trajectory["property"];
             outPop[trajectory_prop] = dynamic_call(trajectory["fn"], call_args);
+            if (DEBUG)
+                check_result(i, "trajectory", t_i, outPop[trajectory_prop]);
+            t_i++;
         }
         printf("\rStep %d complete", i);
     }
