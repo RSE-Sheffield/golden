@@ -120,14 +120,16 @@ initPop$bmi = bmi_traj(initPop$age)
 parms <- list(
   hazards = list(list(fn = CVD_haz,
                       parms=c("age", "bmi"),
-                      transition_fn=transition_fn,
-                      transition_state="death",
-                      transition_parms=c("death", "~STEP")),
+                      transitions = list(
+                        list(fn=transition_fn,
+                             state="death",
+                             parms=c("death", "~STEP")))),
                  list(fn = life_fn,
                       parms=c("age", "~STEP"),
-                      transition_fn=transition_fn,
-                      transition_state="death",
-                      transition_parms=c("death", "~STEP"),
+                      transitions = list(
+                        list(fn=transition_fn,
+                             state="death",
+                             parms=c("death", "~STEP"))),
                       freq = 1, after = -1, before = 1000)), # Left in as default values to show they exist
   trajectories = list(list(fn = age_traj,
                            property = "age",

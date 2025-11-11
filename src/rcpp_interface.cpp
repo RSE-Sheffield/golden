@@ -130,6 +130,13 @@ inline void check_hazard_contains(List h, const int i, const std::string &name, 
         throw std::invalid_argument(err.str());
     }
 }
+inline void check_transition_contains(List t, const int h_i, const int t_i, const std::string &name, const std::string &typ) {
+    if (!t.containsElementNamed(name.c_str())) {
+        std::stringstream err;
+        err << "Hazard[" << h_i <<"] Transition[" <<t_i<< "] expected to contain " << typ << " '" << name << "'\n";
+        throw std::invalid_argument(err.str());
+    }
+}
 inline void check_trajectory_contains(List h, const int i, const std::string &name, const std::string &typ) {
     if (!h.containsElementNamed(name.c_str())) {
         std::stringstream err;
@@ -165,9 +172,7 @@ List run_simulation(List initPop, List parms) {
         // @todo Can we instead define an R type which would be mostly default init?
         check_hazard_contains(h, h_i, "parms", "vector");
         check_hazard_contains(h, h_i, "fn", "function");
-        check_hazard_contains(h, h_i, "transition_fn", "function");
-        check_hazard_contains(h, h_i, "transition_state", "string");
-        check_hazard_contains(h, h_i, "transition_parms", "vector");
+        check_hazard_contains(h, h_i, "transitions", "vector");
         StringVector hazardParms = h["parms"];
         // Check that listed parameters are found inside initPop columns
         for (const String hp : hazardParms) {
@@ -188,32 +193,39 @@ List run_simulation(List initPop, List parms) {
                 }
             }
         }
-        hazardParms = h["transition_parms"];
-        // Check that listed transition parameters are found inside initPop columns
-        for (const String hp : hazardParms) {
-            const std::string hp_string = hp.get_cstring();
-            if (hp_string.length() > 1 && hp_string[0] == '~') {
-                // Special internal arg
-                if (special_args.find(hp_string) == special_args.end()) {
-                    std::stringstream err;
-                    err << "Unrecognised special hazard transition arg '" << hp_string <<"'.\n";
-                    throw std::invalid_argument(err.str());
-                }
-            } else {
-                // Arg from population datatable
-                if(!initPop.containsElementNamed(hp_string.c_str())) {
-                    std::stringstream err;
-                    err << "Column '" << hp_string <<"' expected inside data.table 'initPop'\n";
-                    throw std::invalid_argument(err.str());
+        List transition_list = h["transitions"];
+        for (int t_i = 0; t_i < Rf_length(transition_list); ++t_i) {
+            List transit = transition_list[t_i];
+            check_transition_contains(transit, h_i, t_i, "parms", "vector");
+            check_transition_contains(transit, h_i, t_i, "fn", "function");
+            check_transition_contains(transit, h_i, t_i, "state", "string");
+            hazardParms = transit["parms"];
+            // Check that listed transition parameters are found inside initPop columns
+            for (const String hp : hazardParms) {
+                const std::string hp_string = hp.get_cstring();
+                if (hp_string.length() > 1 && hp_string[0] == '~') {
+                    // Special internal arg
+                    if (special_args.find(hp_string) == special_args.end()) {
+                        std::stringstream err;
+                        err << "Unrecognised special hazard transition arg '" << hp_string <<"'.\n";
+                        throw std::invalid_argument(err.str());
+                    }
+                } else {
+                    // Arg from population datatable
+                    if(!initPop.containsElementNamed(hp_string.c_str())) {
+                        std::stringstream err;
+                        err << "Column '" << hp_string <<"' expected inside data.table 'initPop'\n";
+                        throw std::invalid_argument(err.str());
+                    }
                 }
             }
-        }
-        // Confirm transition_state state exists in initPop
-        String ts = h["transition_state"];
-        if(!initPop.containsElementNamed(ts.get_cstring())) {
-            std::stringstream err;
-            err << "Transition state column '" << ts.get_cstring() <<"' expected inside data.table 'initPop'\n";
-            throw std::invalid_argument(err.str());
+            // Confirm transition_state state exists in initPop
+            String ts = transit["state"];
+            if(!initPop.containsElementNamed(ts.get_cstring())) {
+                std::stringstream err;
+                err << "Transition state column '" << ts.get_cstring() <<"' expected inside data.table 'initPop'\n";
+                throw std::invalid_argument(err.str());
+            }            
         }
     }
     // Validate initPop has columns required by trajectory functions
@@ -302,41 +314,43 @@ List run_simulation(List initPop, List parms) {
                 NumericVector hazard_result = dynamic_call(hazard["fn"], call_args);
                 if (DEBUG)
                     check_result(i, "hazard", h_i, hazard_result);
-                // Build arg list to execute hazard transition
-                p = hazard["transition_parms"];
-                call_args = List();
-                for (const String arg:p) {
-                    const std::string arg_string = arg.get_cstring();
-                    if (arg_string.length() > 1 && arg_string[0] == '~') {
-                        // Map a special arg
-                        if (arg_string == "~STEP") {
-                            // Special arg corresponds to the step at runtime
-                            call_args.push_back(i);
+                // Process hazard's transitions
+                List transition_list = hazard["transitions"];
+                for(List transition : transition_list) {
+                    // Build arg list to execute hazard transition
+                    p = transition["parms"];
+                    call_args = List();
+                    for (const String arg:p) {
+                        const std::string arg_string = arg.get_cstring();
+                        if (arg_string.length() > 1 && arg_string[0] == '~') {
+                            // Map a special arg
+                            if (arg_string == "~STEP") {
+                                // Special arg corresponds to the step at runtime
+                                call_args.push_back(i);
+                            } else {
+                                // This should never be hit
+                                std::stringstream err;
+                                err << "Hazard transition special arg '" << arg_string <<"' not yet implemented.\n";
+                                throw std::runtime_error(err.str());
+                            }
                         } else {
-                            // This should never be hit
-                            std::stringstream err;
-                            err << "Hazard transition special arg '" << arg_string <<"' not yet implemented.\n";
-                            throw std::runtime_error(err.str());
+                            call_args.push_back(outPop[arg]);
                         }
-                    } else {
-                        call_args.push_back(outPop[arg]);
                     }
+                    // @todo This currently assumes transition_result and transition_state are both float vectors
+                    // If they are instead set to general SEXP, the result ends up a logical vector
+                    // If transition state is not even cast to SEXP, ifelse() expects it to be a scalar??
+                    // Need a better strategy, as some transition results are likely to be int vector.
+                    NumericVector transition_result = dynamic_call(transition["fn"], call_args); // @todo This assumes result is floating point (setting to SAXP gets result converted to TRUE)
+                    if (DEBUG)
+                        check_result(i, "transition", h_i, transition_result);
+                    // Only apply transitions in cases where hazard occurred
+                    // This may be faster unvectorised cpp?
+                    NumericVector chance = runif(Rf_length(hazard_result));  // Generate vector of random float [0, 1)
+                    String ts_name = transition["state"];
+                    NumericVector transition_state = outPop[ts_name]; // @todo This assumes result is floating point
+                    outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
                 }
-                // @todo This currently assumes transition_result and transition_state are both float vectors
-                // If they are instead set to general SEXP, the result ends up a logical vector
-                // If transition state is not even cast to SEXP, ifelse() expects it to be a scalar??
-                // Need a better strategy, as some transition results are likely to be int vector.
-                NumericVector transition_result = dynamic_call(hazard["transition_fn"], call_args); // @todo This assumes result is floating point (setting to SAXP gets result converted to TRUE)
-                printf("b");
-                if (DEBUG)
-                    check_result(i, "transition", h_i, transition_result);
-                printf("c");
-                // Only apply transitions in cases where hazard occurred
-                // This may be faster unvectorised cpp?
-                NumericVector chance = runif(Rf_length(hazard_result));  // Generate vector of random float [0, 1)
-                String ts_name = hazard["transition_state"];
-                NumericVector transition_state = outPop[ts_name]; // @todo This assumes result is floating point
-                outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
             }
             ++h_i;
         }
