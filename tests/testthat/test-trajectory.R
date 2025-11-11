@@ -41,9 +41,10 @@ get_parms <- function() {
             list(
               fn = empty_hazard_fn,
               parms=c("a"),
-              transition_fn=empty_transition_fn,
-              transition_state="a",
-              transition_parms=c("a")
+              transitions=list(
+                list(fn=empty_transition_fn,
+                     state="a",
+                     parms=c("a")))
             )
           ),
           trajectories = list(
@@ -90,5 +91,7 @@ test_that("Trajectory function is reflected in results", {
     # second traj?
     
     # dependent traj?
+    
+    # Multiple/zero trajectories
     
 })

@@ -52,9 +52,10 @@ get_parms <- function() {
             list(
               fn = empty_hazard_fn,
               parms=c("age"),
-              transition_fn=empty_transition_fn,
-              transition_state="death",
-              transition_parms=c("death")
+              transitions = list(
+                list(fn=empty_transition_fn,
+                     state="death",
+                     parms=c("death")))
             )
           ),
           trajectories = list(
@@ -71,17 +72,28 @@ get_parms <- function() {
 
 test_that("Missing parameters trigger errors", {
     initPop <- sample_pop(100)
-    # hazard subfields
+    # Hazard subfields
     required_fields <- c(
         "fn",
         "parms",
-        "transition_fn",
-        "transition_state",
-        "transition_parms"
+        "transitions"
     )
     for (field in required_fields) {
         parms <- get_parms()
         parms$hazards[[1]][[field]] <- NULL
+        expect_error(run_simulation(initPop, parms),
+            paste("'", field, "'", sep=""),
+            info = paste("Missing", field, "should cause an error"))
+    }
+    # Transition subfields
+    required_fields <- c(
+        "fn",
+        "parms",
+        "state"
+    )
+    for (field in required_fields) {
+        parms <- get_parms()
+        parms$hazards[[1]]$transitions[[1]][[field]] <- NULL
         expect_error(run_simulation(initPop, parms),
             paste("'", field, "'", sep=""),
             info = paste("Missing", field, "should cause an error"))
