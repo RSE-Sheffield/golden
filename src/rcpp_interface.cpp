@@ -152,7 +152,7 @@ List run_simulation(List initPop, List parms) {
     const bool DEBUG = true;
     warning("You are using a development build of eldoradosim, this may impact performance.");
 #endif
-    std::set<std::string> special_args = {"~STEP"};  // @note technically ~RESULT is only valid for transitions
+    std::set<std::string> special_args = {"~STEP"};
     // Validate initPop has columns required by hazard functions
     if (!parms.containsElementNamed("hazards"))
         throw std::invalid_argument("List 'parms' expected to contain vector 'hazards'\n");
@@ -194,7 +194,7 @@ List run_simulation(List initPop, List parms) {
             const std::string hp_string = hp.get_cstring();
             if (hp_string.length() > 1 && hp_string[0] == '~') {
                 // Special internal arg
-                if (special_args.find(hp_string) == special_args.end() && hp_string != "~RESULT") {
+                if (special_args.find(hp_string) == special_args.end()) {
                     std::stringstream err;
                     err << "Unrecognised special hazard transition arg '" << hp_string <<"'.\n";
                     throw std::invalid_argument(err.str());
@@ -299,11 +299,9 @@ List run_simulation(List initPop, List parms) {
                 // Execute hazard function and process results
                 // Result should be a vector of death chance, need to process these as a vector vs random
                 // Then update the death flag for affected agents
-                NumericVector result = dynamic_call(hazard["fn"], call_args);
+                NumericVector hazard_result = dynamic_call(hazard["fn"], call_args);
                 if (DEBUG)
-                    check_result(i, "hazard", h_i, result);
-                // This may be faster unvectorised cpp?
-                NumericVector chance = runif(Rf_length(result));  // Generate vector of random float [0, 1)
+                    check_result(i, "hazard", h_i, hazard_result);
                 // Build arg list to execute hazard transition
                 p = hazard["transition_parms"];
                 call_args = List();
@@ -314,9 +312,6 @@ List run_simulation(List initPop, List parms) {
                         if (arg_string == "~STEP") {
                             // Special arg corresponds to the step at runtime
                             call_args.push_back(i);
-                        } else if (arg_string == "~RESULT") {
-                            // Special arg corresponds to True/False whether hazard passed
-                            call_args.push_back((result >= chance)); 
                         } else {
                             // This should never be hit
                             std::stringstream err;
@@ -327,10 +322,21 @@ List run_simulation(List initPop, List parms) {
                         call_args.push_back(outPop[arg]);
                     }
                 }
-                String transition_state = hazard["transition_state"];
-                outPop[transition_state] = dynamic_call(hazard["transition_fn"], call_args);
+                // @todo This currently assumes transition_result and transition_state are both float vectors
+                // If they are instead set to general SEXP, the result ends up a logical vector
+                // If transition state is not even cast to SEXP, ifelse() expects it to be a scalar??
+                // Need a better strategy, as some transition results are likely to be int vector.
+                NumericVector transition_result = dynamic_call(hazard["transition_fn"], call_args); // @todo This assumes result is floating point (setting to SAXP gets result converted to TRUE)
+                printf("b");
                 if (DEBUG)
-                    check_result(i, "transition", h_i, outPop[transition_state]);
+                    check_result(i, "transition", h_i, transition_result);
+                printf("c");
+                // Only apply transitions in cases where hazard occurred
+                // This may be faster unvectorised cpp?
+                NumericVector chance = runif(Rf_length(hazard_result));  // Generate vector of random float [0, 1)
+                String ts_name = hazard["transition_state"];
+                NumericVector transition_state = outPop[ts_name]; // @todo This assumes result is floating point
+                outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
             }
             ++h_i;
         }

@@ -1,6 +1,6 @@
 devtools::load_all()
 Sys.setenv(RCPP_DEVEL_DEBUG = "1")
-
+options(error = recover)
 library(LCTMtools)
 library(CVrisk)
 library(lme4)
@@ -92,9 +92,9 @@ life_fn <- function(age, year) {
 ######################
 
 # Returns transitioned death_state based on current state and result of hazard
-transition_fn <- function(result, state, i) {
+transition_fn <- function(state, i) {
     # If  result is true, and state is -1, update state to current time
-    return (ifelse(result & (state == -1), rep(i, length(state)), state))
+    return (ifelse(state == -1, rep(i, length(state)), state))
 }
 
 ######################
@@ -122,12 +122,12 @@ parms <- list(
                       parms=c("age", "bmi"),
                       transition_fn=transition_fn,
                       transition_state="death",
-                      transition_parms=c("~RESULT", "death", "~STEP")),
+                      transition_parms=c("death", "~STEP")),
                  list(fn = life_fn,
                       parms=c("age", "~STEP"),
                       transition_fn=transition_fn,
                       transition_state="death",
-                      transition_parms=c("~RESULT", "death", "~STEP"),
+                      transition_parms=c("death", "~STEP"),
                       freq = 1, after = -1, before = 1000)), # Left in as default values to show they exist
   trajectories = list(list(fn = age_traj,
                            property = "age",
