@@ -104,10 +104,12 @@ SEXP dynamic_call(Function f, List args) {
  * @param fn_type String representation of the function type (e.g. hazard, trajectory, transition)
  * @param fn_i Function index, e.g. 2nd hazard in the list. Assumed 1-indexed same as R, rather than 0-indexed C
  * @param _result The result vector to be checked, assumed to be NumericVector (only floating point types have NaN)
+ * @param parent_typ (Optional) For transition functions, this will be set to "hazard"
+ * @param p_i (Optional) Index of the parent type (hazard). Assumed 1-indexed same as R, rather than 0-indexed C
  * @note Not sure R has a concept of Inf, everything so far seems to be NA, which I assume to be NaN
  * @note Labelling may need adjustments if allowing multiple transitions per hazard
  */
-void check_result(int s_i, std::string fn_typ, int fn_i, SEXP _result) {
+void check_result(int s_i, const std::string &fn_typ, int fn_i, SEXP _result, const std::string &parent_typ = "", int p_i = 0) {
     NumericVector result = _result;
     int nan_count = 0;
     int inf_count = 0;
@@ -118,7 +120,11 @@ void check_result(int s_i, std::string fn_typ, int fn_i, SEXP _result) {
     if (nan_count + inf_count) {
         // This should never be hit
         std::stringstream err;
-        err << "[DEBUG]During step " << s_i << " " << fn_typ << "[" << fn_i << "] return contained " << nan_count <<" NaN values and " << inf_count << " Inf values.\n";
+        err << "[DEBUG]During step " << s_i << " " << fn_typ << "[" << fn_i << "] ";
+        if (!parent_typ.empty()) {
+            err << "from " << parent_typ << "[" << p_i << "] ";
+        }
+        err << "return contained " << nan_count <<" NaN values and " << inf_count << " Inf values.\n";
         throw std::runtime_error(err.str());
     }
 }
@@ -316,6 +322,7 @@ List run_simulation(List initPop, List parms) {
                     check_result(i, "hazard", h_i, hazard_result);
                 // Process hazard's transitions
                 List transition_list = hazard["transitions"];
+                int t_i = 1;  // 1 index'd similar to R
                 for(List transition : transition_list) {
                     // Build arg list to execute hazard transition
                     p = transition["parms"];
@@ -343,13 +350,14 @@ List run_simulation(List initPop, List parms) {
                     // Need a better strategy, as some transition results are likely to be int vector.
                     NumericVector transition_result = dynamic_call(transition["fn"], call_args); // @todo This assumes result is floating point (setting to SAXP gets result converted to TRUE)
                     if (DEBUG)
-                        check_result(i, "transition", h_i, transition_result);
+                        check_result(i, "transition", t_i, transition_result, "hazard", h_i);
                     // Only apply transitions in cases where hazard occurred
                     // This may be faster unvectorised cpp?
                     NumericVector chance = runif(Rf_length(hazard_result));  // Generate vector of random float [0, 1)
                     String ts_name = transition["state"];
                     NumericVector transition_state = outPop[ts_name]; // @todo This assumes result is floating point
                     outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
+                    ++t_i;
                 }
             }
             ++h_i;

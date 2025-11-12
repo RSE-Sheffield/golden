@@ -49,21 +49,16 @@ get_parms <- function() {
     return(
         parms <- list(
           hazards = list(
-            list(
-              fn = empty_hazard_fn,
-              parms=c("age"),
-              transitions = list(
-                list(fn=empty_transition_fn,
-                     state="death",
-                     parms=c("death")))
+            new_hazard(
+              empty_hazard_fn,
+              c("age"),
+              list(
+                new_transition(empty_transition_fn, c("death"), "death")
+              )
             )
           ),
           trajectories = list(
-            list(
-              fn = empty_trajectory_fn,
-              property="age",
-              parms=c("age")
-            )
+            new_trajectory(empty_trajectory_fn, c("age"), "age")
           ),
           steps = 1
         )

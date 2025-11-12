@@ -38,21 +38,16 @@ get_parms <- function() {
     return(
         parms <- list(
           hazards = list(
-            list(
-              fn = empty_hazard_fn,
-              parms=c("a"),
-              transitions=list(
-                list(fn=empty_transition_fn,
-                     state="a",
-                     parms=c("a")))
+            new_hazard(
+              empty_hazard_fn,
+              c("a"),
+              list(
+                new_transition(empty_transition_fn, c("a"), "a")
+              )
             )
           ),
           trajectories = list(
-            list(
-              fn = plus_two_fn,
-              property="b",
-              parms=c("b")
-            )
+            new_trajectory(plus_two_fn, c("b"), "b")
           ),
           steps = 1
         )

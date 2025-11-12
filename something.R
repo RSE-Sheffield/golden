@@ -117,26 +117,17 @@ initPop$bmi = bmi_traj(initPop$age)
 # SIMULATION #
 ##############
 
-parms <- list(
-  hazards = list(list(fn = CVD_haz,
-                      parms=c("age", "bmi"),
-                      transitions = list(
-                        list(fn=transition_fn,
-                             state="death",
-                             parms=c("death", "~STEP")))),
-                 list(fn = life_fn,
-                      parms=c("age", "~STEP"),
-                      transitions = list(
-                        list(fn=transition_fn,
-                             state="death",
-                             parms=c("death", "~STEP"))),
-                      freq = 1, after = -1, before = 1000)), # Left in as default values to show they exist
-  trajectories = list(list(fn = age_traj,
-                           property = "age",
-                           parms=c("age", "death")),
-                      list(fn = bmi_traj,
-                           property = "bmi",
-                           parms=c("age"))),
+parms <- new_parameters(
+  hazards = list(new_hazard(CVD_haz, c("age", "bmi"),
+                            list(new_transition(transition_fn, c("death", "~STEP"), "death"))
+                            ),
+                 new_hazard(life_fn, c("age", "~STEP"),
+                            list(new_transition(transition_fn, c("death", "~STEP"), "death"))
+                            )
+                ),
+  trajectories = list(new_trajectory(age_traj, c("age", "death"), "age"),
+                      new_trajectory(bmi_traj, c("age"), "bmi")
+                      ),
   steps = n_years,
   random_seed = 12L, # Not currently seeding R rng internally
   debug = TRUE
