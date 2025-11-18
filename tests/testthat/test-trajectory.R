@@ -2,14 +2,7 @@ library(testthat)
 library(eldoradosim)
 library(data.table)
 
-#' Create a sample data.table with two columns a and b, both zero init
-sample_pop <- function(N) {
-      a <- rep(0, N)
-      b <- rep(0, N)
-      dt <- data.table(a = a, b = b)
-      
-      return(dt)
-}
+
 plus_two_fn <- function(a) {
     return (a + 2)
 }
@@ -40,7 +33,7 @@ get_parms <- function() {
 
 test_that("Trajectory function is reflected in results", {
     N <- 100
-    initPop <- sample_pop(N)
+    initPop <- sample_pop2(N)
     parms <- get_parms()
     # 1 step b->b
     parms$steps = 1

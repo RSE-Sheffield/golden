@@ -5,6 +5,7 @@
 #include <set>
 #include <limits>
 #include <cmath>
+#include <chrono>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -183,7 +184,16 @@ List run_simulation(List initPop, List parms) {
     }
     // Extract configuration options
     const int STEPS = parms["steps"];
-    const uint64_t RANDOM_SEED = static_cast<uint64_t>(parms["random_seed"]);
+    {
+        // R uses a global random state
+        // If we don't end up using C++ RNG, we may want users set it themselves
+        // Nanosecond granularity, so b2b runs do have different seeds
+        const int32_t TIME_NANOS = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        const int32_t RANDOM_SEED = static_cast<int32_t>(parms["random_seed"]);
+        Function set_seed("set.seed");
+        set_seed(RANDOM_SEED ? RANDOM_SEED : TIME_NANOS);  // SEED==0==time
+    }
 #ifdef NDEBUG
     const bool DEBUG = static_cast<bool>(parms["debug"]);
     warning("eldoradosim's model debug checks are enabled, these may impact performance.");
