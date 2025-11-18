@@ -35,3 +35,12 @@ sample_pop2 <- function(N) {
       
       return(dt)
 }
+#' Create a sample data.table with two columns a, b and c, all zero init
+sample_pop3 <- function(N) {
+      a <- rep(0, N)
+      b <- rep(0, N)
+      c <- rep(0, N)
+      dt <- data.table(a = a, b = b, c = c)
+      
+      return(dt)
+}
