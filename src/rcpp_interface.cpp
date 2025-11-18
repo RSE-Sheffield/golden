@@ -110,22 +110,44 @@ SEXP dynamic_call(Function f, List args) {
  * @note Labelling may need adjustments if allowing multiple transitions per hazard
  */
 void check_result(int s_i, const std::string &fn_typ, int fn_i, SEXP _result, const std::string &parent_typ = "", int p_i = 0) {
-    NumericVector result = _result;
-    int nan_count = 0;
-    int inf_count = 0;
-    for (const double &t : result) {
-        nan_count += std::isnan(t)?1:0;
-        inf_count += std::isinf(t)?1:0;
-    }
-    if (nan_count + inf_count) {
-        // This should never be hit
-        std::stringstream err;
-        err << "[DEBUG]During step " << s_i << " " << fn_typ << "[" << fn_i << "] ";
-        if (!parent_typ.empty()) {
-            err << "from " << parent_typ << "[" << p_i << "] ";
+    if (Rf_isNumeric(_result)) {
+        NumericVector result = _result;
+        int nan_count = 0;
+        int inf_count = 0;
+        int range_count = 0;
+        for (const double &t : result) {
+            nan_count += std::isnan(t)?1:0;
+            inf_count += std::isinf(t)?1:0;
+            if (t < 0) {
+                ++range_count;
+            }
         }
-        err << "return contained " << nan_count <<" NaN values and " << inf_count << " Inf values.\n";
-        throw std::runtime_error(err.str());
+        if (nan_count + inf_count) {
+            // This should never be hit
+            std::stringstream err;
+            err << "[DEBUG]During step " << s_i << " " << fn_typ << "[" << fn_i << "] ";
+            if (!parent_typ.empty()) {
+                err << "from " << parent_typ << "[" << p_i << "] ";
+            }
+            err << "return contained " << nan_count <<" NaN values and " << inf_count << " Inf values.\n";
+            throw std::runtime_error(err.str());
+        }
+        if (fn_typ == "hazard" && range_count) {
+            // Special case, warn if hazard return is <0
+            std::stringstream err;
+            err << "[DEBUG]During step " << s_i << " " << fn_typ << "[" << fn_i << "] ";
+            err << "return contained " << range_count <<" negative values.\n";
+            err << "Hazards are expected to return values greater than or equal to 0\n";
+            warning(err.str());
+        }
+    } else {
+        if (fn_typ == "hazard") {
+            // This should never be hit
+            std::stringstream err;
+            err << "[DEBUG]During step " << s_i << " " << fn_typ << "[" << fn_i << "] ";
+            err << "return was type " << type2name(_result) << " expected type double\n";
+            throw std::runtime_error(err.str());
+        }
     }
 }
 
@@ -344,19 +366,30 @@ List run_simulation(List initPop, List parms) {
                             call_args.push_back(outPop[arg]);
                         }
                     }
-                    // @todo This currently assumes transition_result and transition_state are both float vectors
-                    // If they are instead set to general SEXP, the result ends up a logical vector
-                    // If transition state is not even cast to SEXP, ifelse() expects it to be a scalar??
-                    // Need a better strategy, as some transition results are likely to be int vector.
-                    NumericVector transition_result = dynamic_call(transition["fn"], call_args); // @todo This assumes result is floating point (setting to SAXP gets result converted to TRUE)
-                    if (DEBUG)
-                        check_result(i, "transition", t_i, transition_result, "hazard", h_i);
+                    // @todo can this be hidden inside a util function cleanly?
                     // Only apply transitions in cases where hazard occurred
                     // This may be faster unvectorised cpp?
                     NumericVector chance = runif(Rf_length(hazard_result));  // Generate vector of random float [0, 1)
                     String ts_name = transition["state"];
-                    NumericVector transition_state = outPop[ts_name]; // @todo This assumes result is floating point
-                    outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
+                    // Select correct output based on output state type
+                    if (Rf_isNumeric(outPop[ts_name])) {
+                        NumericVector transition_result = dynamic_call(transition["fn"], call_args);
+                        if (DEBUG)
+                            check_result(i, "transition", t_i, transition_result, "hazard", h_i);
+                        NumericVector transition_state = outPop[ts_name];
+                        outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
+                    } else if (Rf_isInteger(outPop[ts_name])) {
+                        IntegerVector transition_result = dynamic_call(transition["fn"], call_args);
+                        IntegerVector transition_state = outPop[ts_name];
+                        outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
+                    } else if (Rf_isLogical(outPop[ts_name])) {
+                        LogicalVector transition_result = dynamic_call(transition["fn"], call_args);
+                        LogicalVector transition_state = outPop[ts_name];
+                        outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
+                    } else {
+                        // @todo Support other types?(Complex, String, Date, Datetime)
+                        stop("Unsupported type at transition processing");
+                    }
                     ++t_i;
                 }
             }
