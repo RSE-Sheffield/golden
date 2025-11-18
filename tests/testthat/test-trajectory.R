@@ -10,33 +10,17 @@ sample_pop <- function(N) {
       
       return(dt)
 }
-
-#' Empty hazard function example
-#'
-#' @param property This dictates the length of the vector returned
-#' @return A vector of length. equal to param property, filled with 0.5
-empty_hazard_fn <- function(property) {
-    return (rep(0.5, length(property)))
-}
-#' Empty hazard transition function example
-#'
-#' @param chance Unused
-#' @param death This value is directly returned
-#' @return The param death
-empty_transition_fn <- function(death) {
-    return (death)
-}
-
 plus_two_fn <- function(a) {
     return (a + 2)
 }
+
 all_step_fn <- function(a, step) {
     return (rep(step, length(a)))
 }
 
 get_parms <- function() {
     return(
-        parms <- list(
+        parms <- new_parameters(
           hazards = list(
             new_hazard(
               empty_hazard_fn,
@@ -67,7 +51,7 @@ test_that("Trajectory function is reflected in results", {
     step4 = run_simulation(initPop, parms)
     expect_equal(step4$b, rep(8, N))
     
-    parms$trajectories <- list(list(
+    parms$trajectories <- list(new_trajectory(
               fn = all_step_fn,
               property="b",
               parms=c("b", "~STEP")
