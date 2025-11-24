@@ -175,35 +175,35 @@ inline void check_trajectory_contains(List h, const int i, const std::string &na
 }
 
 // [[Rcpp::export]]
-List run_simulation(List initPop, List parms) {
+List run_simulation(List initPop, List parameters) {
     // Call eldoradosim::check_parameters()
     {        
         Environment eldoradosim = Environment::namespace_env("eldoradosim");
         Function check_parameters = eldoradosim["check_parameters"];
-        check_parameters(parms);
+        check_parameters(parameters);
     }
     // Extract configuration options
-    const int STEPS = parms["steps"];
+    const int STEPS = parameters["steps"];
     {
         // R uses a global random state
         // If we don't end up using C++ RNG, we may want users set it themselves
         // Nanosecond granularity, so b2b runs do have different seeds
         const int32_t TIME_NANOS = std::chrono::duration_cast<std::chrono::nanoseconds>(
         std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-        const int32_t RANDOM_SEED = static_cast<int32_t>(parms["random_seed"]);
+        const int32_t RANDOM_SEED = static_cast<int32_t>(parameters["random_seed"]);
         Function set_seed("set.seed");
         set_seed(RANDOM_SEED ? RANDOM_SEED : TIME_NANOS);  // SEED==0==time
     }
 #ifdef NDEBUG
-    const bool DEBUG = static_cast<bool>(parms["debug"]);
+    const bool DEBUG = static_cast<bool>(parameters["debug"]);
     warning("eldoradosim's model debug checks are enabled, these may impact performance.");
 #else
     const bool DEBUG = true;
     warning("You are using a development build of eldoradosim, this may impact performance.");
 #endif
     const std::set<std::string> special_args = {"~STEP"};
-    List hazards = parms["hazards"];
-    List trajectories = parms["trajectories"];
+    List hazards = parameters["hazards"];
+    List trajectories = parameters["trajectories"];
     
     // Create a deep-copy of the initial pop, that we will return with changes at the end
     // @todo create other columns, to log last hazard score?
@@ -230,7 +230,7 @@ List run_simulation(List initPop, List parms) {
             const int after = hazard.containsElementNamed("after") ? hazard["after"] : -1;
             if(i % freq == 0 && i < before && i > after) {
                 // Build arg list to execute hazard chance
-                StringVector p = hazard["parms"];
+                StringVector p = hazard["args"];
                 List call_args;
                 for (const String arg:p) {
                     const std::string arg_string = arg.get_cstring();
@@ -260,7 +260,7 @@ List run_simulation(List initPop, List parms) {
                 int t_i = 1;  // 1 index'd similar to R
                 for(List transition : transition_list) {
                     // Build arg list to execute hazard transition
-                    p = transition["parms"];
+                    p = transition["args"];
                     call_args = List();
                     for (const String arg:p) {
                         const std::string arg_string = arg.get_cstring();
@@ -313,7 +313,7 @@ List run_simulation(List initPop, List parms) {
         for (List trajectory : trajectories) {
             // Currently assumed that trajectories are always active
             // Build arg list to execute hazard chance
-            StringVector p = trajectory["parms"];
+            StringVector p = trajectory["args"];
             List call_args;
             for (const String arg:p) {
                 const std::string arg_string = arg.get_cstring();

@@ -11,16 +11,16 @@ library(data.table)
 # For the purposes of
 # - Missing attributes
 # - Attributes of the incorrect type
-# - parms not found within the initial population
-# - length of parms, does not match the number of args required by fn()
-# - parms that begin with "~" do not need to be in the initial population
+# - args not found within the initial population
+# - length of args, does not match the number of args required by fn()
+# - args that begin with "~" do not need to be in the initial population
 #
 
 test_that("Trajectory with missing attribute triggers stop()", {
     # Trajectory subfields
     required_fields <- c(
         "fn",
-        "parms",
+        "args",
         "property"
     )
     # No error by default
@@ -39,7 +39,7 @@ test_that("Trajectory attribute of incorrect type triggers stop()", {
     # Trajectory subfields
     required_fields <- c(
         "fn",
-        "parms",
+        "args",
         "property"
     )
     # No error by default
@@ -55,12 +55,12 @@ test_that("Trajectory attribute of incorrect type triggers stop()", {
     }
     # Special case: lists with different item types
     trj <- new_trajectory(empty_trajectory_fn, c("age"), "age")
-    trj$parms <- list("age", 12)
+    trj$args <- list("age", 12)
     expect_error(check_trajectory(trj),
-            "'trajectory\\$parms' must only contain strings",
-            info = paste("trajectory$parms elements must be strings"))
+            "'trajectory\\$args' must only contain strings",
+            info = paste("trajectory$args elements must be strings"))
 })
-test_that("Trajectory param not found in initial pop table triggers stop()", {
+test_that("Trajectory arg not found in initial pop table triggers stop()", {
     dt <- data.table(a = integer(),
                      b = integer(),
                      c = integer())
@@ -70,10 +70,10 @@ test_that("Trajectory param not found in initial pop table triggers stop()", {
     # Error when table does not contain column "d"
     trj_fail <- new_trajectory(empty_trajectory_fn, c("d"), "d")
     expect_error(check_trajectory(trj_fail, dt),
-        "columns required by trajectory\\$parms: d",
+        "columns required by trajectory\\$args: d",
         info = "Column not found in initial pop should cause an error")
 })
-test_that("Special trajectory param not found in initial pop table does not trigger stop()", {
+test_that("Special trajectory arg not found in initial pop table does not trigger stop()", {
     dt <- data.table(a = integer(),
                      b = integer(),
                      c = integer())
@@ -84,7 +84,7 @@ test_that("Special trajectory param not found in initial pop table does not trig
     trj_pass2 <- new_trajectory(empty_trajectory_fn, c("~STEP"), "a")
     expect_no_error(check_trajectory(trj_pass2, dt))
 })
-test_that("Trajectory param length does not match fn args triggers stop()", {
+test_that("Trajectory args length does not match fn args triggers stop()", {
     dt <- data.table(a = integer(),
                      b = integer(),
                      c = integer())
@@ -92,7 +92,7 @@ test_that("Trajectory param length does not match fn args triggers stop()", {
     # No error by default when table contains column "a"
     expect_no_error(check_trajectory(trj))
     # Error when params is wrong length
-    trj$parms <- c("a", "~STEP")
+    trj$args <- c("a", "~STEP")
     expect_error(check_trajectory(trj),
         "does not match number of arguments required",
         info = "params cant be used if they don't match fn")
@@ -115,7 +115,7 @@ test_that("Hazard with missing attribute triggers stop()", {
     # Hazard subfields
     required_fields <- c(
         "fn",
-        "parms",
+        "args",
         "transitions",
         "freq",
         "first",
@@ -138,7 +138,7 @@ test_that("Hazard attribute of incorrect type triggers stop()", {
    # Hazard subfields
     required_fields <- c(
         "fn",
-        "parms",
+        "args",
         "transitions",
         "freq",
         "first",
@@ -159,12 +159,12 @@ test_that("Hazard attribute of incorrect type triggers stop()", {
     }
     # Special case: lists with different item types
     haz <- new_hazard(empty_hazard_fn, c("age"), trn)
-    haz$parms <- list("age", 12)
+    haz$args <- list("age", 12)
     expect_error(check_hazard(haz),
-            "'hazard\\$parms' must only contain strings",
-            info = paste("hazard$parms elements must be strings"))
+            "'hazard\\$args' must only contain strings",
+            info = paste("hazard$args elements must be strings"))
 })
-test_that("Hazard param not found in initial pop table triggers stop()", {
+test_that("Hazard arg not found in initial pop table triggers stop()", {
     dt <- data.table(a = integer(),
                      b = integer(),
                      c = integer())
@@ -175,10 +175,10 @@ test_that("Hazard param not found in initial pop table triggers stop()", {
     # Error when table does not contain column "d"
     haz_fail <- new_hazard(empty_hazard_fn, c("d"), trn)
     expect_error(check_hazard(haz_fail, dt),
-        "columns required by hazard\\$parms: d",
+        "columns required by hazard\\$args: d",
         info = "Column not found in initial pop should cause an error")
 })
-test_that("Special hazard param not found in initial pop table does not trigger stop()", {
+test_that("Special hazard arg not found in initial pop table does not trigger stop()", {
     dt <- data.table(a = integer(),
                      b = integer(),
                      c = integer())
@@ -190,7 +190,7 @@ test_that("Special hazard param not found in initial pop table does not trigger 
     haz_pass2 <- new_hazard(empty_hazard_fn, c("~STEP"), trn)
     expect_no_error(check_hazard(haz_pass2, dt))
 })
-test_that("Hazard param length does not match fn args triggers stop()", {
+test_that("Hazard args length does not match fn args triggers stop()", {
     dt <- data.table(a = integer(),
                      b = integer(),
                      c = integer())
@@ -199,7 +199,7 @@ test_that("Hazard param length does not match fn args triggers stop()", {
     # No error by default when table contains column "a"
     expect_no_error(check_hazard(haz))
     # Error when params is wrong length
-    haz$parms <- c("a", "~STEP")
+    haz$args <- c("a", "~STEP")
     expect_error(check_hazard(haz),
         "does not match number of arguments required",
         info = "params cant be used if they don't match fn")
@@ -209,7 +209,7 @@ test_that("Transition with missing attribute triggers stop()", {
     # Transition subfields
     required_fields <- c(
         "fn",
-        "parms",
+        "args",
         "state"
     )
     # No error by default
@@ -228,7 +228,7 @@ test_that("Transition attribute of incorrect type triggers stop()", {
     # Trajectory subfields
     required_fields <- c(
         "fn",
-        "parms",
+        "args",
         "state"
     )
     # No error by default
@@ -244,12 +244,12 @@ test_that("Transition attribute of incorrect type triggers stop()", {
     }    
     # Special case: lists with different item types
     trn <- new_transition(empty_transition_fn, c("age"), "age")
-    trn$parms <- list("age", 12)
+    trn$args <- list("age", 12)
     expect_error(check_transition(trn),
-            "'transition\\$parms' must only contain strings",
-            info = paste("transition$parms elements must be strings"))
+            "'transition\\$args' must only contain strings",
+            info = paste("transition$args elements must be strings"))
 })
-test_that("Transition param not found in initial pop table triggers stop()", {
+test_that("Transition arg not found in initial pop table triggers stop()", {
     dt <- data.table(a = integer(),
                      b = integer(),
                      c = integer())
@@ -259,10 +259,10 @@ test_that("Transition param not found in initial pop table triggers stop()", {
     # Error when table does not contain column "d"
     trn_fail <- new_transition(empty_trajectory_fn, c("d"), "d")
     expect_error(check_transition(trn_fail, dt),
-        "columns required by transition\\$parms: d",
+        "columns required by transition\\$args: d",
         info = "Column not found in initial pop should cause an error")
 })
-test_that("Special transition param not found in initial pop table does not trigger stop()", {
+test_that("Special transition arg not found in initial pop table does not trigger stop()", {
     dt <- data.table(a = integer(),
                      b = integer(),
                      c = integer())
@@ -273,7 +273,7 @@ test_that("Special transition param not found in initial pop table does not trig
     trn_pass2 <- new_transition(empty_transition_fn, c("~STEP"), "a")
     expect_no_error(check_transition(trn_pass2, dt))
 })
-test_that("Transition param length does not match fn args triggers stop()", {
+test_that("Transition args length does not match fn args triggers stop()", {
     dt <- data.table(a = integer(),
                      b = integer(),
                      c = integer())
@@ -281,7 +281,7 @@ test_that("Transition param length does not match fn args triggers stop()", {
     # No error by default when table contains column "a"
     expect_no_error(check_transition(trn))
     # Error when params is wrong length
-    trn$parms <- c("a", "~STEP")
+    trn$args <- c("a", "~STEP")
     expect_error(check_transition(trn),
         "does not match number of arguments required",
         info = "params cant be used if they don't match fn")

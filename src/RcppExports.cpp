@@ -23,14 +23,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // run_simulation
-List run_simulation(List initPop, List parms);
-RcppExport SEXP _eldoradosim_run_simulation(SEXP initPopSEXP, SEXP parmsSEXP) {
+List run_simulation(List initPop, List parameters);
+RcppExport SEXP _eldoradosim_run_simulation(SEXP initPopSEXP, SEXP parametersSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type initPop(initPopSEXP);
-    Rcpp::traits::input_parameter< List >::type parms(parmsSEXP);
-    rcpp_result_gen = Rcpp::wrap(run_simulation(initPop, parms));
+    Rcpp::traits::input_parameter< List >::type parameters(parametersSEXP);
+    rcpp_result_gen = Rcpp::wrap(run_simulation(initPop, parameters));
     return rcpp_result_gen;
 END_RCPP
 }

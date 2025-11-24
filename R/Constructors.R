@@ -8,7 +8,7 @@ check_hazard <- function(hazard, initPop=NULL) {
   }
 
   # Are the expected fields present
-  required_fields <- c("fn", "parms", "transitions", "freq", "first", "last")
+  required_fields <- c("fn", "args", "transitions", "freq", "first", "last")
   missing_fields <- setdiff(required_fields, names(hazard))
   if (length(missing_fields)) {
     stop("Hazard missing required fields: ", paste(missing_fields, collapse = ", "))
@@ -19,36 +19,36 @@ check_hazard <- function(hazard, initPop=NULL) {
     stop("'hazard$fn' must be a function")
   }
 
-  # ---- parms ----
+  # ---- args ----
   # Attempt to convert lists to character vectors
-  if (is.list(hazard$parms)) {
-    all_strings <- all(vapply(hazard$parms, function(e) is.character(e) && length(e) == 1, logical(1)))
+  if (is.list(hazard$args)) {
+    all_strings <- all(vapply(hazard$args, function(e) is.character(e) && length(e) == 1, logical(1)))
     if (!all_strings) {
-      stop("'hazard$parms' must only contain strings")
+      stop("'hazard$args' must only contain strings")
     }
-    hazard$parms <- unlist(hazard$parms, use.names = FALSE)
+    hazard$args <- unlist(hazard$args, use.names = FALSE)
   }
-  if (!is.character(hazard$parms)) {
-    stop("'hazard$parms' must be a character vector")
+  if (!is.character(hazard$args)) {
+    stop("'hazard$args' must be a character vector")
   }
-  if (any(is.na(hazard$parms)) || any(hazard$parms == "")) {
-    stop("'hazard$parms' must not contain NA or empty strings")
+  if (any(is.na(hazard$args)) || any(hazard$args == "")) {
+    stop("'hazard$args' must not contain NA or empty strings")
   }
   # Check named columns exist
   if (!is.null(initPop)) {
-    # Ignore special parms (they begin "~")
-    clean_parms <- hazard$parms[!grepl("^~", hazard$parms)]
-    # Which parms aren't present among the names of initPop
-    missing_columns <- clean_parms[!clean_parms %in% names(initPop)]
+    # Ignore special args (they begin "~")
+    clean_args <- hazard$args[!grepl("^~", hazard$args)]
+    # Which args aren't present among the names of initPop
+    missing_columns <- clean_args[!clean_args %in% names(initPop)]
     if (length(missing_columns)) {
-      stop("initPop missing columns required by hazard$parms: ", paste(missing_columns, collapse = ", "))
+      stop("initPop missing columns required by hazard$args: ", paste(missing_columns, collapse = ", "))
     }
   }
   # Check number of params matches what function requires
   # Greater than, because of default arg potential
-  if(length(hazard$parms) > length(formals(hazard$fn))) {
-    stop("length of hazard$parms, does not match number of arguments required by hazard$fn: ",
-      paste(length(hazard$parms), ">", length(formals(hazard$fn))))
+  if(length(hazard$args) > length(formals(hazard$fn))) {
+    stop("length of hazard$args, does not match number of arguments required by hazard$fn: ",
+      paste(length(hazard$args), ">", length(formals(hazard$fn))))
   }
 
   # ---- transitions ----
@@ -100,17 +100,17 @@ check_hazard <- function(hazard, initPop=NULL) {
 #' Create a new hazard object
 #'
 #' @param fn Function which calculates the hazard likelihood
-#' @param parms Character vector of parameter names expected by fn
+#' @param args Character vector of parameter names expected by fn
 #' @param transitions List of transition objects to be applied where the hazard is successful
 #' @param freq (Optional) The frequency of hazard execution
 #' @param first (Optional) First step the hazard should be enabled
 #' @param last (Optional) Last step the hazard should be enabled
 #' @return An object of class "hazard"
-new_hazard <- function(fn, parms, transitions, freq = 1, first = 0, last = 2147483647) {
+new_hazard <- function(fn, args, transitions, freq = 1, first = 0, last = 2147483647) {
   # Initialise new hazard (S3 class)
   hazard <- list(
     fn = fn,
-    parms = parms,
+    args = args,
     transitions = transitions,
     freq = freq,
     first = first,
@@ -134,7 +134,7 @@ check_trajectory <- function(trajectory, initPop=NULL) {
   }
 
   # Are the expected fields present
-  required_fields <- c("fn", "parms", "property")
+  required_fields <- c("fn", "args", "property")
   missing_fields <- setdiff(required_fields, names(trajectory))
   if (length(missing_fields)) {
     stop("trajectory missing required fields: ", paste(missing_fields, collapse = ", "))
@@ -145,33 +145,33 @@ check_trajectory <- function(trajectory, initPop=NULL) {
     stop("'trajectory$fn' must be a function")
   }
 
-  # ---- parms ----
+  # ---- args ----
   # Attempt to convert lists to character vectors
-  if (is.list(trajectory$parms)) {
-      all_strings <- all(vapply(trajectory$parms, function(e) is.character(e) && length(e) == 1, logical(1)))
+  if (is.list(trajectory$args)) {
+      all_strings <- all(vapply(trajectory$args, function(e) is.character(e) && length(e) == 1, logical(1)))
       if (!all_strings) {
-        stop("'trajectory$parms' must only contain strings")
+        stop("'trajectory$args' must only contain strings")
       }
-    trajectory$parms <- unlist(trajectory$parms, use.names = FALSE)
+    trajectory$args <- unlist(trajectory$args, use.names = FALSE)
   }
-  if (!is.character(trajectory$parms)) {
-    stop("'trajectory$parms' must be a character vector")
+  if (!is.character(trajectory$args)) {
+    stop("'trajectory$args' must be a character vector")
   }
   # Check named columns exist
   if (!is.null(initPop)) {
-    # Ignore special parms (they begin "~")
-    clean_parms <- trajectory$parms[!grepl("^~", trajectory$parms)]
-    # Which parms aren't present among the names of initPop
-    missing_columns <- clean_parms[!clean_parms %in% names(initPop)]
+    # Ignore special args (they begin "~")
+    clean_args <- trajectory$args[!grepl("^~", trajectory$args)]
+    # Which args aren't present among the names of initPop
+    missing_columns <- clean_args[!clean_args %in% names(initPop)]
     if (length(missing_columns)) {
-      stop("initPop missing columns required by trajectory$parms: ", paste(missing_columns, collapse = ", "))
+      stop("initPop missing columns required by trajectory$args: ", paste(missing_columns, collapse = ", "))
     }
   }
   # Check number of params matches what function requires
   # Greater than, because of default arg potential
-  if(length(trajectory$parms) > length(formals(trajectory$fn))) {
-    stop("length of trajectory$parms, does not match number of arguments required by trajectory$fn: ",
-      paste(length(trajectory$parms), ">", length(formals(trajectory$fn))))
+  if(length(trajectory$args) > length(formals(trajectory$fn))) {
+    stop("length of trajectory$args, does not match number of arguments required by trajectory$fn: ",
+      paste(length(trajectory$args), ">", length(formals(trajectory$fn))))
   }
 
   # ---- property ----
@@ -191,14 +191,14 @@ check_trajectory <- function(trajectory, initPop=NULL) {
 #' Create a new trajectory object
 #'
 #' @param fn Function defining the trajectory functions
-#' @param parms Character vector of parameter names expected by fn
+#' @param args Character vector of parameter names expected by fn
 #' @param property Name of the column where the result of the trajectory function is to be stored
 #' @return An object of class "trajectory"
-new_trajectory <- function(fn, parms, property) {
+new_trajectory <- function(fn, args, property) {
   # Initialise new trajectory (S3 class)
   trajectory <- list(
     fn = fn,
-    parms = parms,
+    args = args,
     property = property
   )
   # Assign S3 class
@@ -219,7 +219,7 @@ check_transition <- function(transition, initPop=NULL) {
   }
 
   # Are the expected fields present
-  required_fields <- c("fn", "parms", "state")
+  required_fields <- c("fn", "args", "state")
   missing_fields <- setdiff(required_fields, names(transition))
   if (length(missing_fields)) {
     stop("Transition missing required fields: ", paste(missing_fields, collapse = ", "))
@@ -230,36 +230,36 @@ check_transition <- function(transition, initPop=NULL) {
     stop("'transition$fn' must be a function")
   }
 
-  # ---- parms ----
+  # ---- args ----
   # Attempt to convert lists to character vectors
-  if (is.list(transition$parms)) {
-    all_strings <- all(vapply(transition$parms, function(e) is.character(e) && length(e) == 1, logical(1)))
+  if (is.list(transition$args)) {
+    all_strings <- all(vapply(transition$args, function(e) is.character(e) && length(e) == 1, logical(1)))
     if (!all_strings) {
-      stop("'transition$parms' must only contain strings")
+      stop("'transition$args' must only contain strings")
     }
-    transition$parms <- unlist(transition$parms, use.names = FALSE)
+    transition$args <- unlist(transition$args, use.names = FALSE)
   }
-  if (!is.character(transition$parms)) {
-    stop("'transition$parms' must be a character vector")
+  if (!is.character(transition$args)) {
+    stop("'transition$args' must be a character vector")
   }
-  if (any(is.na(transition$parms)) || any(transition$parms == "")) {
-    stop("'transition$parms' must not contain NA or empty strings")
+  if (any(is.na(transition$args)) || any(transition$args == "")) {
+    stop("'transition$args' must not contain NA or empty strings")
   }
   # Check named columns exist
   if (!is.null(initPop)) {
-    # Ignore special parms (they begin "~")
-    clean_parms <- transition$parms[!grepl("^~", transition$parms)]
-    # Which parms aren't present among the names of initPop
-    missing_columns <- clean_parms[!clean_parms %in% names(initPop)]
+    # Ignore special args (they begin "~")
+    clean_args <- transition$args[!grepl("^~", transition$args)]
+    # Which args aren't present among the names of initPop
+    missing_columns <- clean_args[!clean_args %in% names(initPop)]
     if (length(missing_columns)) {
-      stop("initPop missing columns required by transition$parms: ", paste(missing_columns, collapse = ", "))
+      stop("initPop missing columns required by transition$args: ", paste(missing_columns, collapse = ", "))
     }
   }
   # Check number of params matches what function requires
   # Greater than, because of default arg potential
-  if(length(transition$parms) > length(formals(transition$fn))) {
-    stop("length of transition$parms, does not match number of arguments required by transition$fn: ",
-      paste(length(transition$parms), ">", length(formals(transition$fn))))
+  if(length(transition$args) > length(formals(transition$fn))) {
+    stop("length of transition$args, does not match number of arguments required by transition$fn: ",
+      paste(length(transition$args), ">", length(formals(transition$fn))))
   }
 
   # ---- state ----
@@ -279,14 +279,14 @@ check_transition <- function(transition, initPop=NULL) {
 #' Create a new transition object
 #'
 #' @param fn Function defining the transition functions
-#' @param parms Character vector of parameter names expected by fn
+#' @param args Character vector of parameter names expected by fn
 #' @param state Name of the column where the result of the transition function is to be stored
 #' @return An object of class "transition"
-new_transition <- function(fn, parms, state) {
+new_transition <- function(fn, args, state) {
   # Initialise new transition (S3 class)
   transition <- list(
     fn = fn,
-    parms = parms,
+    args = args,
     state = state
   )
   # Assign S3 class

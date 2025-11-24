@@ -61,7 +61,7 @@ test_that("Trajectory function is reflected in results", {
     parms$trajectories <- list(new_trajectory(
               fn = all_step_fn,
               property="b",
-              parms=c("b", "~STEP")
+              args=c("b", "~STEP")
             ))
     # 1 step
     parms$steps = 1
@@ -76,7 +76,7 @@ test_that("Trajectory function is reflected in results", {
     parms$trajectories <- list(new_trajectory(
               fn = add_fn,
               property="b",
-              parms=c("b", "a")
+              args=c("b", "a")
             ))
     initPop$a = rep(3, N)
     # 1 step
@@ -95,12 +95,12 @@ test_that("Trajectory function is reflected in results", {
         new_trajectory(
               fn = all_step_fn,
               property="c",
-              parms=c("c", "~STEP")
+              args=c("c", "~STEP")
             ),
         new_trajectory(
               fn = add_fn,
               property="b",
-              parms=c("b", "a")
+              args=c("b", "a")
             )
     )
     # 1 step

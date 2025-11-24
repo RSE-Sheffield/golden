@@ -5,7 +5,7 @@ create_cohort <- function(demog, N) {
     .Call(`_eldoradosim_create_cohort`, demog, N)
 }
 
-run_simulation <- function(initPop, parms) {
-    .Call(`_eldoradosim_run_simulation`, initPop, parms)
+run_simulation <- function(initPop, parameters) {
+    .Call(`_eldoradosim_run_simulation`, initPop, parameters)
 }
 
