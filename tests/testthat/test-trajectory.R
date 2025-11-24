@@ -2,6 +2,14 @@ library(testthat)
 library(eldoradosim)
 library(data.table)
 
+#
+# Tests in this file cover the functionality of trajectories
+# They mostly ensure that the below features are functional: 
+# - multiple parameters 
+# - special (e.g.~CAPS) parameters
+# - multiple trajectories
+# - dependent trajectories/order
+#
 
 plus_two_fn <- function(a) {
     return (a + 2)
@@ -116,6 +124,4 @@ test_that("Trajectory function is reflected in results", {
     # 1 step
     parms$steps = 1
     expect_no_error(run_simulation(initPop, parms))
-    
-    
 })
