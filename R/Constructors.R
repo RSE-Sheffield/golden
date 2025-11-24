@@ -1,8 +1,8 @@
 #' Validate an hazard object
 #'
-#' @param hazard An S3 object of class "hazard"
+#' @param hazard An S3 object of class "eldoradosim_hazard"
 #' @param initPop (Optional) data.table to check columns required by functions exist
-check_hazard <- function(hazard, initPop=NULL) {
+check_hazard <- function(hazard, initPop = NULL) {
   if (!inherits(hazard, "eldoradosim_hazard")) {
     stop("Object is not of class 'eldoradosim_hazard'")
   }
@@ -52,7 +52,7 @@ check_hazard <- function(hazard, initPop=NULL) {
   }
 
   # ---- transitions ----
-  # Check every element is a 'transition' S3 object
+  # Check every element is a 'eldoradosim_transition' S3 object
   if (!is.list(hazard$transitions)) {
     stop("'hazard$transitions' must be a list")
   }
@@ -105,7 +105,7 @@ check_hazard <- function(hazard, initPop=NULL) {
 #' @param freq (Optional) The frequency of hazard execution
 #' @param first (Optional) First step the hazard should be enabled
 #' @param last (Optional) Last step the hazard should be enabled
-#' @return An object of class "hazard"
+#' @return An object of class "eldoradosim_hazard"
 new_hazard <- function(fn, args, transitions, freq = 1, first = 0, last = 2147483647) {
   # Initialise new hazard (S3 class)
   hazard <- list(
@@ -126,9 +126,9 @@ new_hazard <- function(fn, args, transitions, freq = 1, first = 0, last = 214748
 
 #' Validate an trajectory object
 #'
-#' @param trajectory An S3 object of class "trajectory"
+#' @param trajectory An S3 object of class "eldoradosim_trajectory"
 #' @param initPop (Optional) data.table to check columns required by functions exist
-check_trajectory <- function(trajectory, initPop=NULL) {
+check_trajectory <- function(trajectory, initPop = NULL) {
   if (!inherits(trajectory, "eldoradosim_trajectory")) {
     stop("Object is not of class 'eldoradosim_trajectory'")
   }
@@ -193,7 +193,7 @@ check_trajectory <- function(trajectory, initPop=NULL) {
 #' @param fn Function defining the trajectory functions
 #' @param args Character vector of parameter names expected by fn
 #' @param property Name of the column where the result of the trajectory function is to be stored
-#' @return An object of class "trajectory"
+#' @return An object of class "eldoradosim_trajectory"
 new_trajectory <- function(fn, args, property) {
   # Initialise new trajectory (S3 class)
   trajectory <- list(
@@ -211,9 +211,9 @@ new_trajectory <- function(fn, args, property) {
 
 #' Validate an transition object
 #'
-#' @param transition An S3 object of class "transition"
+#' @param transition An S3 object of class "eldoradosim_transition"
 #' @param initPop (Optional) data.table to check columns required by functions exist
-check_transition <- function(transition, initPop=NULL) {
+check_transition <- function(transition, initPop = NULL) {
   if (!inherits(transition, "eldoradosim_transition")) {
     stop("Object is not of class 'eldoradosim_transition'")
   }
@@ -281,7 +281,7 @@ check_transition <- function(transition, initPop=NULL) {
 #' @param fn Function defining the transition functions
 #' @param args Character vector of parameter names expected by fn
 #' @param state Name of the column where the result of the transition function is to be stored
-#' @return An object of class "transition"
+#' @return An object of class "eldoradosim_transition"
 new_transition <- function(fn, args, state) {
   # Initialise new transition (S3 class)
   transition <- list(
@@ -301,7 +301,7 @@ new_transition <- function(fn, args, state) {
 #'
 #' @param parameters An eldoradosim_parameters S3 object to be validated
 #' @param initPop data.frame which contains the columns required by parameters
-check_parameters <- function(parameters, initPop=NULL) {
+check_parameters <- function(parameters, initPop = NULL) {
   if (!inherits(parameters, "eldoradosim_parameters")) {
     stop("Object is not of class 'eldoradosim_parameters'")
   }
@@ -360,6 +360,15 @@ check_parameters <- function(parameters, initPop=NULL) {
         parameters$steps == as.integer(parameters$steps))) {
     stop("'parameters$steps' must be a whole number")
   }
+  # ---- history ----
+  if (!is.null(parameters$history)) {
+    if (!inherits(parameters$history, "eldoradosim_history")) {
+      stop("parameters$history is not of class 'eldoradosim_history'")
+    }
+  } 
+  if (!is.null(initPop)) {
+    check_history(parameters$history, initPop)
+  }
   
   # ---- random_seed ----
   if (!(is.numeric(parameters$random_seed) &&
@@ -381,14 +390,16 @@ check_parameters <- function(parameters, initPop=NULL) {
 #' @param trajectories List of eldoradosim_trajectory S3 objects
 #' @param steps Number of steps to run
 #' @param random_seed Seed to be used for random generation. If set 0, current time will be used.
-#' @param debug (TRUE/FALSE) flag indicating whether validation checks are enabled. These catch NaN, but reduce performance.
-#' @return An object of class "transition"
-new_parameters <- function(hazards, trajectories, steps, random_seed = 0, debug = TRUE) {
+#' @param debug (TRUE/FALSE) flag indicating whether validation checks are enabled. These catch NaN, but reduce performance
+#' @param history eldoradosim_history S3 object representing the columns of data to be agregated during simulation
+#' @return An object of class "eldoradosim_parameters"
+new_parameters <- function(hazards, trajectories, steps, random_seed = 0, debug = TRUE, history = NULL) {
   # Initialise new parameters (S3 class)
   parameters <- list(
     hazards = hazards,
     trajectories = trajectories,
     steps = steps,
+    history = history,
     random_seed = random_seed,
     debug = debug
   )
@@ -398,4 +409,189 @@ new_parameters <- function(hazards, trajectories, steps, random_seed = 0, debug 
   check_parameters(parameters)
   # Return parameters
   return(parameters)
+}
+
+
+#' Validate an history object
+#'
+#' @param history An S3 object of class "eldoradosim_history"
+#' @param initPop (Optional) data.table to check columns required by functions exist
+check_history <- function(history, initPop = NULL) {
+  if (!inherits(history, "eldoradosim_history")) {
+    stop("Object is not of class 'eldoradosim_history'")
+  }
+
+  # Are the expected fields present
+  required_fields <- c("columns", "frequency")
+  missing_fields <- setdiff(required_fields, names(history))
+  if (length(missing_fields)) {
+    stop("eldoradosim_history missing required fields: ", paste(missing_fields, collapse = ", "))
+  }
+  
+  # ---- columns & nested transitions ----
+  # Check every element is a 'columns' S3 object
+  if (!is.list(history$columns)) {
+    stop("'history$columns' must be a list")
+  }
+  if (length(history$columns) > 0) {
+    ok <- vapply(history$columns, function(x) inherits(x, "eldoradosim_history_column"), logical(1))
+    if (!all(ok)) {
+      stop(
+        "All elements of 'history$columns' must be S3 objects of class 'eldoradosim_history_column'. ",
+        "Invalid elements at positions: ",
+        paste(which(!ok), collapse = ", ")
+      )
+    }
+  }
+  if (!is.null(initPop)) {
+    for (cl in history$columns) {
+      check_column(cl, initPop)
+    }
+  }
+    
+  # ---- frequency ----
+  if (!(is.numeric(history$frequency) &&
+        length(history$frequency) == 1L &&
+        history$frequency == as.integer(history$frequency))) {
+    stop("'history$frequency' must be a positive integer")
+  } else if(history$frequency <= 0) {
+    stop("'history$frequency' must be a positive integer")
+  }
+}
+
+#' Create a new eldoradosim_history
+#'
+#' @param columns List of eldoradosim_history_column
+#' @param frequency The number of simulation steps per history collection.
+#' @return An object of class "eldoradosim_history"
+new_history <- function(columns, frequency = 1) {
+  # Initialise new parameters (S3 class)
+  history <- list(
+    columns = columns,
+    frequency = frequency
+  )
+  # Assign S3 class
+  class(history) <- "eldoradosim_history"
+  # Check history has correct members of correct types
+  check_history(history)
+  # Return history
+  return(history)
+}
+
+#' Validate an history column object
+#'
+#' @param column An S3 object of class "eldoradosim_history_column"
+#' @param initPop (Optional) data.table to check columns required by functions exist
+check_column <- function(column, initPop = NULL) {
+  if (!inherits(column, "eldoradosim_history_column")) {
+    stop("Object is not of class 'eldoradosim_history_column'")
+  }
+
+  # Are the expected fields present
+  required_fields <- c("name", "fn", "args")
+  missing_fields <- setdiff(required_fields, names(column))
+  if (length(missing_fields)) {
+    stop("Column missing required fields: ", paste(missing_fields, collapse = ", "))
+  }
+
+  # ---- name ----
+  if (!(is.character(column$name) && length(column$name) == 1)) {
+    stop("'column$name' must be a string")
+  }
+  # ---- fn ----
+  if (!is.function(column$fn)) {
+    stop("'column$fn' must be a function")
+  }
+
+  # ---- args ----
+  # Attempt to convert lists to character vectors
+  if (is.list(column$args)) {
+      all_strings <- all(vapply(column$args, function(e) is.character(e) && length(e) == 1, logical(1)))
+      if (!all_strings) {
+        stop("'column$args' must only contain strings")
+      }
+    column$args <- unlist(column$args, use.names = FALSE)
+  }
+  if (!is.character(column$args)) {
+    stop("'column$args' must be a character vector")
+  }
+  # Check named columns exist
+  if (!is.null(initPop)) {
+    # Ignore special args (they begin "~")
+    clean_args <- column$args[!grepl("^~", column$args)]
+    # Which args aren't present among the names of initPop
+    missing_columns <- clean_args[!clean_args %in% names(initPop)]
+    if (length(missing_columns)) {
+      stop("initPop missing columns required by column$args: ", paste(missing_columns, collapse = ", "))
+    }
+  }
+  # Check number of args matches what function requires
+  # Greater than, because of default arg potential
+  if(length(column$args) > length(formals(column$fn))) {
+    stop("length of column$args, does not match number of arguments required by column$fn: ",
+      paste(length(column$args), ">", length(formals(column$fn))))
+  }
+
+  # ---- filter_fn ----
+  if (!is.null(column$filter_fn)) {
+      if (!is.function(column$filter_fn)) {
+        stop("'column$filter_fn' must be a function")
+      }
+
+      # ---- filter_args ----
+      # Attempt to convert lists to character vectors
+      if (is.list(column$filter_args)) {
+          all_strings <- all(vapply(column$filter_args, function(e) is.character(e) && length(e) == 1, logical(1)))
+          if (!all_strings) {
+            stop("'column$filter_args' must only contain strings")
+          }
+        column$filter_args <- unlist(column$filter_args, use.names = FALSE)
+      }
+      if (!is.character(column$filter_args)) {
+        stop("'column$filter_args' must be a character vector")
+      }
+      # Check named columns exist
+      if (!is.null(initPop)) {
+        # Ignore special args (they begin "~")
+        clean_args <- column$filter_args[!grepl("^~", column$filter_args)]
+        # Which args aren't present among the names of initPop
+        missing_columns <- clean_args[!clean_args %in% names(initPop)]
+        if (length(missing_columns)) {
+          stop("initPop missing columns required by column$filter_args: ", paste(missing_columns, collapse = ", "))
+        }
+      }
+      # Check number of args matches what function requires
+      # Greater than, because of default arg potential
+      if(length(column$filter_args) > length(formals(column$filter_fn))) {
+        stop("length of column$args, does not match number of arguments required by column$filter_fn: ",
+          paste(length(column$filter_args), ">", length(formals(column$filter_fn))))
+      }
+  } else if (!is.null(column$filter_args)) {
+      stop("'column$filter_args' provided without 'column$filter_fn'")
+  }
+}
+
+#' Create a new eldoradosim_history_column
+#'
+#' @param name Name of the column in the output data-table
+#' @param fn Reduction function, which converts the input columns to a single value
+#' @param args Names of columns and special variables to be passed to fn
+#' @param filter_fn (Optional) Filter function, which returns a bool vector denoting which rows should be reduced
+#' @param filter_args (Optional) Names of columns and special variables to be passed to filter_fn. Required if filter_fn is used.
+#' @return An object of class "eldoradosim_history_column"
+new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
+  # Initialise new parameters (S3 class)
+  column <- list(
+    name = name,
+    fn = fn,
+    args = args,
+    filter_fn = filter_fn,
+    filter_args = filter_args
+  )
+  # Assign S3 class
+  class(column) <- "eldoradosim_history_column"
+  # Check column has correct members of correct types
+  check_column(column)
+  # Return column
+  return(column)
 }

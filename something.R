@@ -1,6 +1,6 @@
 devtools::load_all()
-Sys.setenv(RCPP_DEVEL_DEBUG = "1")
-options(error = recover)
+#Sys.setenv(RCPP_DEVEL_DEBUG = "1")
+#options(error = recover)
 library(LCTMtools)
 library(CVrisk)
 library(lme4)
@@ -113,6 +113,26 @@ initPop <- create_cohort(demographics, N=1e4)
 # Init bmi (hazards run before trajectories)
 initPop$bmi = bmi_traj(initPop$age)
 
+###########
+# HISTORY #
+###########
+
+reduce_fn <- function(x) {
+  return (sum(x))
+}
+filter_fn <- function(x) {
+  return (x == -1)
+}
+
+history <- new_history(
+  columns = list(
+    new_column("sum age", reduce_fn, c("age")),
+    new_column("sum age alive", reduce_fn, c("age"), filter_fn, c("death"))
+  ),
+  frequency = 1
+)
+
+
 ##############
 # SIMULATION #
 ##############
@@ -130,9 +150,11 @@ parms <- new_parameters(
                       ),
   steps = n_years,
   random_seed = 12L, # Not currently seeding R rng internally
-  debug = TRUE
+  debug = TRUE,
+  history = history
 )
 
-outPop <- run_simulation(initPop, parms)
+ret <- run_simulation(initPop, parms)
 
-fwrite(outPop, "outPop.csv")
+fwrite(ret$pop, "outPop.csv")
+fwrite(ret$history, "outHistory.csv")

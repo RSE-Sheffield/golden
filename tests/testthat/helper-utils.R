@@ -13,6 +13,7 @@ empty_hazard_fn <- function(property) {
 empty_transition_fn <- function(a) {
     return (a)
 }
+empty_reduction_fn <- empty_transition_fn
 #' All transitioning agents, transition from 0 to 1
 #' @param a Vector which provides the length of the output vector
 #' @return A vector of 1's
@@ -26,6 +27,7 @@ transition_to_1_fn <- function(a) {
 empty_trajectory_fn <- function(age) {
     return (age + 1)
 }
+plus_1_fn <- empty_trajectory_fn
 
 #' Create a sample data.table with two columns a and b, both zero init
 sample_pop2 <- function(N) {
@@ -43,4 +45,10 @@ sample_pop3 <- function(N) {
       dt <- data.table(a = a, b = b, c = c)
       
       return(dt)
+}
+reduce_fn <- function(x) {
+  return (sum(x))
+}
+filter_fn <- function(x) {
+  return (x == -1)
 }

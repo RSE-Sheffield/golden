@@ -66,12 +66,16 @@ List create_cohort(List demog, unsigned int N) {
         d_i -= fTot[f_i];
     }
     
-    return List::create(
+   List ret = List::create(
         _["male"] = out_male,
         _["age"] = out_age,
         _["bmi"] = NumericVector(N, 0), // invalid init, externally init pre-sim
         _["death"] = IntegerVector(N, -1) // invalid init, gets set to time of death
     );
+    // Make it a data.table
+    ret.attr("class") = CharacterVector::create("data.table", "data.frame");
+    ret.attr("row.names") = IntegerVector::create(NA_INTEGER, -static_cast<int>(N));
+    return ret;
 }
 
 /**
@@ -152,28 +156,56 @@ void check_result(int s_i, const std::string &fn_typ, int fn_i, SEXP _result, co
     }
 }
 
-inline void check_hazard_contains(List h, const int i, const std::string &name, const std::string &typ) {
-    if (!h.containsElementNamed(name.c_str())) {
-        std::stringstream err;
-        err << "Hazard[" << i <<"] expected to contain " << typ << " '" << name << "'\n";
-        throw std::invalid_argument(err.str());
+/**
+ * Utility which returns vector v with only elements with corresponding true element inside keep
+ * 
+ * @param v Input vector to be filtered, assumed type IntegerVector, NumericVector, LogicalVector or CharacterVector
+ * @param keep Logical vector denoting elements of v to be retained
+ * @return A copy of v with selected elements removed
+ */
+SEXP logical_filter(SEXP v, LogicalVector keep) {
+    if (Rf_length(v) != keep.size()) {
+        stop("Argument vector length mismatch in logical_filter()");
     }
-}
-inline void check_transition_contains(List t, const int h_i, const int t_i, const std::string &name, const std::string &typ) {
-    if (!t.containsElementNamed(name.c_str())) {
-        std::stringstream err;
-        err << "Hazard[" << h_i <<"] Transition[" <<t_i<< "] expected to contain " << typ << " '" << name << "'\n";
-        throw std::invalid_argument(err.str());
-    }
-}
-inline void check_trajectory_contains(List h, const int i, const std::string &name, const std::string &typ) {
-    if (!h.containsElementNamed(name.c_str())) {
-        std::stringstream err;
-        err << "Trajectory[" << i <<"] expected to contain " << typ << " '" << name << "'\n";
-        throw std::invalid_argument(err.str());
-    }
-}
 
+    // Count length of output vector
+    // To avoid dynamic resize
+    // @todo this could be calculated once
+    int out_len = 0;
+    for (int i = 0; i < keep.size(); i++) {
+        if (keep[i]) out_len++;
+    }
+
+    // Special case per type
+    int j = 0;
+    if (Rf_isNumeric(v)) {
+        NumericVector typed_v(v);
+        NumericVector out(out_len);
+        for (int i = 0; i < keep.size(); ++i)
+            if (keep[i]) out[j++] = typed_v[i];
+        return out;
+    } else if(Rf_isInteger(v)) {
+        IntegerVector typed_v(v);
+        IntegerVector out(out_len);
+        for (int i = 0; i < keep.size(); ++i)
+            if (keep[i]) out[j++] = typed_v[i];
+        return out;
+    } else if(Rf_isLogical(v)) {
+        LogicalVector typed_v(v);
+        LogicalVector out(out_len);
+        for (int i = 0; i < keep.size(); ++i)
+            if (keep[i]) out[j++] = typed_v[i];
+        return out;
+    } else if(Rf_isString(v)) {
+        CharacterVector typed_v(v);
+        CharacterVector out(out_len);
+        for (int i = 0; i < keep.size(); ++i)
+            if (keep[i]) out[j++] = typed_v[i];
+        return out;
+    } else {
+        stop("Unsupported SEXP type in logical_filter()");
+    }
+}
 // [[Rcpp::export]]
 List run_simulation(List initPop, List parameters) {
     // Call eldoradosim::check_parameters()
@@ -204,6 +236,7 @@ List run_simulation(List initPop, List parameters) {
     const std::set<std::string> special_args = {"~STEP"};
     List hazards = parameters["hazards"];
     List trajectories = parameters["trajectories"];
+    List history = parameters.containsElementNamed("history") ? parameters["history"] : R_NilValue;
     
     // Create a deep-copy of the initial pop, that we will return with changes at the end
     // @todo create other columns, to log last hazard score?
@@ -216,9 +249,8 @@ List run_simulation(List initPop, List parameters) {
         IntegerVector death_col(Rf_length(outPop[0]), -1);
         outPop["death"] = death_col;
     }
-    // Create "death" column if it's not present
-    // Init Random (currently using runif)
-    // @todo seed runif
+    // Init History Data-table
+    List history_dt = List::create();
     // Simulation loop
     for (int i = 0; i < STEPS; ++i) {
         int h_i = 1;  // 1 index'd similar to R
@@ -339,8 +371,112 @@ List run_simulation(List initPop, List parameters) {
                 check_result(i, "trajectory", t_i, outPop[trajectory_prop]);
             t_i++;
         }
+        // Process any history to be collected
+        if (history.size()) {
+            // Is history desired this step
+            const unsigned int freq = history["frequency"];
+            if (i % freq == 0) {
+                List columns = history["columns"];
+                const unsigned int hist_i = i / freq;
+                // Calculate and store result for each column of output
+                for (List col : columns) {
+                    String name = col["name"];
+                    // Calculate filter vector if required by column
+                    LogicalVector filter_v = LogicalVector();
+                    if (col["filter_fn"] != R_NilValue) {
+                        StringVector p = col["filter_args"];
+                        List call_args;
+                        for (const String arg:p) {
+                            const std::string arg_string = arg.get_cstring();
+                            if (arg_string.length() > 1 && arg_string[0] == '~') {
+                                // Map a special arg
+                                if (arg_string == "~STEP") {
+                                    // Special arg corresponds to the step at runtime
+                                    call_args.push_back(i);
+                                } else {
+                                    // This should never be hit
+                                    std::stringstream err;
+                                    err << "History column filter fn special arg '" << arg_string <<"' not yet implemented.\n";
+                                    throw std::runtime_error(err.str());
+                                }
+                            } else {
+                                // @todo apply filter result to outPop[arg] here prior to push_back
+                                call_args.push_back(outPop[arg]);
+                            }
+                        }
+                        filter_v = dynamic_call(col["filter_fn"], call_args);
+                    }
+                    // Call the dynamic function
+                    StringVector p = col["args"];
+                    List call_args;
+                    for (const String arg:p) {
+                        const std::string arg_string = arg.get_cstring();
+                        if (arg_string.length() > 1 && arg_string[0] == '~') {
+                            // Map a special arg
+                            if (arg_string == "~STEP") {
+                                // Special arg corresponds to the step at runtime
+                                call_args.push_back(i);
+                            } else {
+                                // This should never be hit
+                                std::stringstream err;
+                                err << "History column fn special arg '" << arg_string <<"' not yet implemented.\n";
+                                throw std::runtime_error(err.str());
+                            }
+                        } else {
+                            // Store the requested column
+                            // Apply the filter to included elements if required
+                            call_args.push_back(col["filter_fn"] != R_NilValue ? logical_filter(outPop[arg], filter_v) : outPop[arg]);
+                        }
+                    }
+                    SEXP result = dynamic_call(col["fn"], call_args);
+                    if (hist_i == 0) {
+                        // Detect the type of the result and create corresponding vector
+                        if (Rf_isNumeric(result)) {
+                            history_dt[name] = NumericVector(STEPS/freq, 0);
+                        } else if (Rf_isInteger(result)) {
+                            history_dt[name] = IntegerVector(STEPS/freq, 0);
+                        } else if (Rf_isLogical(result)) {
+                            history_dt[name] = LogicalVector(STEPS/freq, false);
+                        } else {
+                            // @todo Support other types?(Complex, String, Date, Datetime)
+                            stop("Unsupported type at history processing");
+                        }
+                    }
+                    // Store result
+                    if (Rf_isNumeric(result)) {
+                        NumericVector t = history_dt[name];
+                        t[hist_i] = as<double>(result);
+                    } else if (Rf_isInteger(result)) {
+                        IntegerVector t = history_dt[name];
+                        t[hist_i] = as<int>(result);
+                    } else if (Rf_isLogical(result)) {
+                        LogicalVector t = history_dt[name];
+                        t[hist_i] = as<bool>(result);
+                    } else {
+                        // @todo Support other types?(Complex, String, Date, Datetime)
+                        stop("Unsupported type at history processing");
+                    }
+                }
+            }
+        }
         printf("\rStep %d complete", i);
     }
     printf("\rSimulation Complete!\n");
-    return outPop;
+    
+    if (history.size()) {
+        // Mark history as a data table
+        // (This can't be done before it has columns)
+        const unsigned int freq = history["frequency"];
+        const int history_rows = STEPS / freq;
+        history_dt.attr("class") = CharacterVector::create("data.table", "data.frame");
+        history_dt.attr("row.names") = IntegerVector::create(NA_INTEGER, -history_rows);
+        // Package it into a structure for return
+        List ret = List::create(
+            _["pop"]   = outPop,
+            _["history"] = history_dt
+        );
+        return ret;
+    } else {
+        return outPop;
+    }
 }

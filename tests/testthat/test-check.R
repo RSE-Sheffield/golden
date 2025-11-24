@@ -8,6 +8,8 @@ library(data.table)
 # - check_hazard()
 # - check_transition()
 # - check_parameters()
+# - check_history()
+# - check_columns()
 # For the purposes of
 # - Missing attributes
 # - Attributes of the incorrect type
@@ -91,11 +93,11 @@ test_that("Trajectory args length does not match fn args triggers stop()", {
     trj <- new_trajectory(empty_trajectory_fn, c("a"), "a")
     # No error by default when table contains column "a"
     expect_no_error(check_trajectory(trj))
-    # Error when params is wrong length
+    # Error when args is wrong length
     trj$args <- c("a", "~STEP")
     expect_error(check_trajectory(trj),
         "does not match number of arguments required",
-        info = "params cant be used if they don't match fn")
+        info = "args cant be used if they don't match fn")
 })
 test_that("Trajectory property not found in initial pop table triggers stop()", {
     dt <- data.table(a = integer(),
@@ -163,6 +165,11 @@ test_that("Hazard attribute of incorrect type triggers stop()", {
     expect_error(check_hazard(haz),
             "'hazard\\$args' must only contain strings",
             info = paste("hazard$args elements must be strings"))
+    haz <- new_hazard(empty_hazard_fn, c("age"), trn)
+    haz$transitions <- list(new_transition(empty_transition_fn, c("age"), "age"), 12)
+    expect_error(check_hazard(haz),
+            "'hazard\\$transitions' must be S3 objects of class 'eldoradosim_transition'",
+            info = paste("hazard$transitions elements must be transition objects"))
 })
 test_that("Hazard arg not found in initial pop table triggers stop()", {
     dt <- data.table(a = integer(),
@@ -191,18 +198,15 @@ test_that("Special hazard arg not found in initial pop table does not trigger st
     expect_no_error(check_hazard(haz_pass2, dt))
 })
 test_that("Hazard args length does not match fn args triggers stop()", {
-    dt <- data.table(a = integer(),
-                     b = integer(),
-                     c = integer())
     trn <- list(new_transition(empty_transition_fn, c("a"), "a"))
     haz <- new_hazard(empty_hazard_fn, c("a"), trn)
     # No error by default when table contains column "a"
     expect_no_error(check_hazard(haz))
-    # Error when params is wrong length
+    # Error when args is wrong length
     haz$args <- c("a", "~STEP")
     expect_error(check_hazard(haz),
         "does not match number of arguments required",
-        info = "params cant be used if they don't match fn")
+        info = "args cant be used if they don't match fn")
 })
 
 test_that("Transition with missing attribute triggers stop()", {
@@ -280,11 +284,11 @@ test_that("Transition args length does not match fn args triggers stop()", {
     trn <- new_transition(empty_transition_fn, c("a"), "a")
     # No error by default when table contains column "a"
     expect_no_error(check_transition(trn))
-    # Error when params is wrong length
+    # Error when args is wrong length
     trn$args <- c("a", "~STEP")
     expect_error(check_transition(trn),
         "does not match number of arguments required",
-        info = "params cant be used if they don't match fn")
+        info = "args cant be used if they don't match fn")
 })
 test_that("Transition state not found in initial pop table triggers stop()", {
     dt <- data.table(a = integer(),
@@ -299,7 +303,6 @@ test_that("Transition state not found in initial pop table triggers stop()", {
         "initial population columns do not contain transition\\$state",
         info = "property d does not exist in dt")
 })
-
 
 test_that("Parameters with missing attribute triggers stop()", {
     # Trajectory subfields
@@ -328,6 +331,7 @@ test_that("Parameters attribute of incorrect type triggers stop()", {
         "hazards",
         "trajectories",
         "steps",
+        "history",
         "random_seed",
         "debug"
     )
@@ -354,3 +358,195 @@ test_that("Parameters attribute of incorrect type triggers stop()", {
         "'parameters\\$random_seed' must be a whole number",
         info = paste(field, " of incorrect type should cause an error"))
 })
+
+test_that("History with missing attribute triggers stop()", {
+    # History subfields
+    required_fields <- c(
+        "columns",
+        "frequency"
+    )
+    # No error by default
+    hist <- new_history(list(new_column("test", empty_reduction_fn, c("a"))), 1)
+    expect_no_error(check_history(hist))
+    # Test removal of each subfield 1 by 1
+    for (field in required_fields) {
+        hist <- new_history(list(new_column("test", empty_reduction_fn, c("a"))), 1)
+        hist[[field]] <- NULL
+        expect_error(check_history(hist),
+            paste("required fields:", field),
+            info = paste("Missing", field, "should cause an error"))
+    }
+})
+test_that("History attribute of incorrect type triggers stop()", {
+    # History subfields
+    required_fields <- c(
+        "columns",
+        "frequency"
+    )
+    # No error by default
+    hist <- new_history(list(new_column("test", empty_reduction_fn, c("a"))), 1)
+    expect_no_error(check_history(hist))
+    # Test replacing each field with an unexpected logical 1 by 1
+    for (field in required_fields) {
+    hist <- new_history(list(new_column("test", empty_reduction_fn, c("a"))), 1)
+        hist[[field]] <- TRUE
+        expect_error(check_history(hist),
+            paste("history\\$", field, sep=""),
+            info = paste(field, " of incorrect type should cause an error"))
+    }
+    # Special case: lists with different item types
+    hist <- new_history(list(new_column("test", empty_reduction_fn, c("a"))), 1)
+    hist$columns <- list(new_column("test", empty_reduction_fn, c("a")), 12)
+    expect_error(check_history(hist),
+            "'history\\$columns' must be S3 objects of class 'eldoradosim_history_column'",
+            info = paste("history$columns elements must be history_column objects"))
+    # Special case, frequency must be positive whole number
+    hist <- new_history(list(new_column("test", empty_reduction_fn, c("a"))), 1)
+    hist$frequency = 12.5
+    expect_error(check_history(hist),
+        "'history\\$frequency' must be a positive integer",
+        info = paste(field, " of incorrect type should cause an error"))
+    hist$frequency = 0
+    expect_error(check_history(hist),
+        "'history\\$frequency' must be a positive integer",
+        info = paste(field, " of incorrect type should cause an error"))
+    hist$frequency = -12
+    expect_error(check_history(hist),
+        "'history\\$frequency' must be a positive integer",
+        info = paste(field, " of incorrect type should cause an error"))
+})
+
+test_that("Column with missing attribute triggers stop()", {
+    # Column subfields
+    required_fields <- c(
+        "name",
+        "fn",
+        "args"
+    )
+    # No error by default
+    clm <- new_column("test", empty_reduction_fn, c("a"))
+    expect_no_error(check_column(clm))
+    # Test removing each subfield 1 by 1
+    for (field in required_fields) {
+        clm <- new_column("test", empty_reduction_fn, c("a"))
+        clm[[field]] <- NULL
+        expect_error(check_column(clm),
+            paste("Column missing required fields:", field),
+            info = paste("Missing", field, "should cause an error"))
+    }
+})
+test_that("Column filter_args passed without filter_fn triggers stop()", {
+    # No error by default
+    clm <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("a"))
+    expect_no_error(check_column(clm))
+    # Remove filter_fn
+    clm$filter_fn <- NULL
+    expect_error(check_column(clm),
+        "'column\\$filter_args' provided without 'column\\$filter_fn'",
+        info = "Column should not contains filter_args without filter_fn")
+})
+test_that("Column attribute of incorrect type triggers stop()", {
+   # Column subfields
+    required_fields <- c(
+        "name",
+        "fn",
+        "args",
+        "filter_fn",
+        "filter_args"
+    )
+    # No error by default
+    clm <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("a"))
+    expect_no_error(check_column(clm))
+    # Replace individual fields with 12.5
+    # No field expects a number
+    for (field in required_fields) {
+        clm <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("a"))
+        clm[[field]] <- 12.5
+        expect_error(check_column(clm),
+            paste("column\\$", field, sep=""),
+            info = paste(field, "of incorrect type should cause an error"))
+    }
+    # Special case: lists with different item types
+    # args
+    clm <- new_column("test", empty_reduction_fn, c("a"))
+    clm$args <- list("a", 12)
+    expect_error(check_column(clm),
+            "'column\\$args' must only contain strings",
+            info = paste("column$args elements must be strings"))
+    # filter_args
+    clm <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("a"))
+    clm$filter_args <- list("a", 12)
+    expect_error(check_column(clm),
+            "'column\\$filter_args' must only contain strings",
+            info = paste("column$filter_args elements must be strings"))
+})
+test_that("Column arg not found in initial pop table triggers stop()", {
+    dt <- data.table(a = integer(),
+                     b = integer(),
+                     c = integer())
+    # No error by default when table contains column "a"
+    clm <- new_column("test", empty_reduction_fn, c("a"))
+    expect_no_error(check_column(clm, dt))
+    # Error when table does not contain column "d"
+    clm_fail <- new_column("test", empty_reduction_fn, c("d"))
+    expect_error(check_column(clm_fail, dt),
+        "columns required by column\\$args: d",
+        info = "Column not found in initial pop should cause an error")
+})
+test_that("Column filter_arg not found in initial pop table triggers stop()", {
+    dt <- data.table(a = integer(),
+                     b = integer(),
+                     c = integer())
+    # No error by default when table contains column "a"
+    clm <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("a"))
+    expect_no_error(check_column(clm, dt))
+    # Error when table does not contain column "d"
+    clm_fail <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("d"))
+    expect_error(check_column(clm_fail, dt),
+        "columns required by column\\$filter_args: d",
+        info = "Column not found in initial pop should cause an error")
+})
+test_that("Special column arg not found in initial pop table does not trigger stop()", {
+    dt <- data.table(a = integer(),
+                     b = integer(),
+                     c = integer())
+    clm_pass <- new_column("test", empty_reduction_fn, c("a"))
+    # No error by default when table contains column "a"
+    expect_no_error(check_column(clm_pass, dt))
+    # No error when param is special
+    clm_pass2 <- new_column("test", empty_reduction_fn, c("~STEP"))
+    expect_no_error(check_column(clm_pass2, dt))
+})
+test_that("Special column filter arg not found in initial pop table does not trigger stop()", {
+    dt <- data.table(a = integer(),
+                     b = integer(),
+                     c = integer())
+    clm_pass <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("a"))
+    # No error by default when table contains column "a"
+    expect_no_error(check_column(clm_pass, dt))
+    # No error when param is special
+    clm_pass2 <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("~STEP"))
+    expect_no_error(check_column(clm_pass2, dt))
+})
+test_that("Column args length does not match fn args triggers stop()", {
+    clm <- new_column("test", empty_reduction_fn, c("a"))
+    # No error by default when table contains column "a"
+    expect_no_error(check_column(clm))
+    # Error when args is wrong length
+    clm$args <- c("a", "~STEP")
+    expect_error(check_column(clm),
+        "does not match number of arguments required",
+        info = "args cant be used if they don't match fn")
+})
+test_that("Column filter args length does not match fn args triggers stop()", {
+    clm <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("a"))
+    # No error by default when table contains column "a"
+    expect_no_error(check_column(clm))
+    # Error when filter args is wrong length
+    clm$filter_args <- c("a", "~STEP")
+    expect_error(check_column(clm),
+        "does not match number of arguments required",
+        info = "filter args cant be used if they don't match fn")
+})
+
+# Column filter_args passed without filter_fn causes error
