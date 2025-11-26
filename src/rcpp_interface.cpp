@@ -206,6 +206,65 @@ SEXP logical_filter(SEXP v, LogicalVector keep) {
         stop("Unsupported SEXP type in logical_filter()");
     }
 }
+
+/**
+ * Utility function covering the common task of building up the call arguments to be passed to dynamic_call()
+ *
+ * @param p String vector of column names and ~SPECIAL values
+ * @param table Data table which columns will be taken from
+ * @param current_step Value to provided for "~STEP"
+ * @return List containing R objects and variables to be passed to dynamic_call()
+ */
+List build_args(StringVector p, List table, int current_step) {
+    List call_args;
+    for (const String arg:p) {
+        const std::string arg_string = arg.get_cstring();
+        if (arg_string.length() > 1 && arg_string[0] == '~') {
+            // Map a special arg
+            if (arg_string == "~STEP") {
+                // Special arg corresponds to the step at runtime
+                call_args.push_back(current_step);
+            } else {
+                // This should never be hit
+                std::stringstream err;
+                err << "Special arg '" << arg_string <<"' not yet implemented in build_args().\n";
+                throw std::runtime_error(err.str());
+            }
+        } else {
+            call_args.push_back(table[arg]);
+        }
+    }
+    return call_args;
+}
+/**
+ * Utility function covering the common task of building up the call arguments to be passed to dynamic_call()
+ * This version applies logical_filter() to columns included in the return value with filter_v
+ * @param filter_v LogicalVector passed to keep parameter of logical_filter
+ * @see build_args()
+ */
+List build_args_filtered(StringVector p, List table, int current_step, LogicalVector filter_v) {
+    List call_args;
+    for (const String arg:p) {
+        const std::string arg_string = arg.get_cstring();
+        if (arg_string.length() > 1 && arg_string[0] == '~') {
+            // Map a special arg
+            if (arg_string == "~STEP") {
+                // Special arg corresponds to the step at runtime
+                call_args.push_back(current_step);
+            } else {
+                // This should never be hit
+                std::stringstream err;
+                err << "Special arg '" << arg_string <<"' not yet implemented in build_args().\n";
+                throw std::runtime_error(err.str());
+            }
+        } else {
+            call_args.push_back(logical_filter(table[arg], filter_v));
+        }
+    }
+    return call_args;
+}
+
+
 // [[Rcpp::export]]
 List run_simulation(List initPop, List parameters) {
     // Call eldoradosim::check_parameters()
@@ -262,25 +321,7 @@ List run_simulation(List initPop, List parameters) {
             const int after = hazard.containsElementNamed("after") ? hazard["after"] : -1;
             if(i % freq == 0 && i < before && i > after) {
                 // Build arg list to execute hazard chance
-                StringVector p = hazard["args"];
-                List call_args;
-                for (const String arg:p) {
-                    const std::string arg_string = arg.get_cstring();
-                    if (arg_string.length() > 1 && arg_string[0] == '~') {
-                        // Map a special arg
-                        if (arg_string == "~STEP") {
-                            // Special arg corresponds to the step at runtime
-                            call_args.push_back(i);
-                        } else {
-                            // This should never be hit
-                            std::stringstream err;
-                            err << "Hazard special arg '" << arg_string <<"' not yet implemented.\n";
-                            throw std::runtime_error(err.str());
-                        }
-                    } else {
-                        call_args.push_back(outPop[arg]);
-                    }
-                }
+                List call_args = build_args(hazard["args"], outPop, i);
                 // Execute hazard function and process results
                 // Result should be a vector of death chance, need to process these as a vector vs random
                 // Then update the death flag for affected agents
@@ -292,25 +333,7 @@ List run_simulation(List initPop, List parameters) {
                 int t_i = 1;  // 1 index'd similar to R
                 for(List transition : transition_list) {
                     // Build arg list to execute hazard transition
-                    p = transition["args"];
-                    call_args = List();
-                    for (const String arg:p) {
-                        const std::string arg_string = arg.get_cstring();
-                        if (arg_string.length() > 1 && arg_string[0] == '~') {
-                            // Map a special arg
-                            if (arg_string == "~STEP") {
-                                // Special arg corresponds to the step at runtime
-                                call_args.push_back(i);
-                            } else {
-                                // This should never be hit
-                                std::stringstream err;
-                                err << "Hazard transition special arg '" << arg_string <<"' not yet implemented.\n";
-                                throw std::runtime_error(err.str());
-                            }
-                        } else {
-                            call_args.push_back(outPop[arg]);
-                        }
-                    }
+                    call_args = build_args(transition["args"], outPop, i);
                     // @todo can this be hidden inside a util function cleanly?
                     // Only apply transitions in cases where hazard occurred
                     // This may be faster unvectorised cpp?
@@ -345,25 +368,7 @@ List run_simulation(List initPop, List parameters) {
         for (List trajectory : trajectories) {
             // Currently assumed that trajectories are always active
             // Build arg list to execute hazard chance
-            StringVector p = trajectory["args"];
-            List call_args;
-            for (const String arg:p) {
-                const std::string arg_string = arg.get_cstring();
-                if (arg_string.length() > 1 && arg_string[0] == '~') {
-                    // Map a special arg
-                    if (arg_string == "~STEP") {
-                        // Special arg corresponds to the step at runtime
-                        call_args.push_back(i);
-                    } else {
-                        // This should never be hit
-                        std::stringstream err;
-                        err << "Trajectory special arg '" << arg_string <<"' not yet implemented.\n";
-                        throw std::runtime_error(err.str());
-                    }
-                } else {
-                    call_args.push_back(outPop[arg]);
-                }
-            }
+            List call_args = build_args(trajectory["args"], outPop, i);
             // Execute hazard function and store result directly in trajectory's property
             String trajectory_prop = trajectory["property"];
             outPop[trajectory_prop] = dynamic_call(trajectory["fn"], call_args);
@@ -384,50 +389,14 @@ List run_simulation(List initPop, List parameters) {
                     // Calculate filter vector if required by column
                     LogicalVector filter_v = LogicalVector();
                     if (col["filter_fn"] != R_NilValue) {
-                        StringVector p = col["filter_args"];
-                        List call_args;
-                        for (const String arg:p) {
-                            const std::string arg_string = arg.get_cstring();
-                            if (arg_string.length() > 1 && arg_string[0] == '~') {
-                                // Map a special arg
-                                if (arg_string == "~STEP") {
-                                    // Special arg corresponds to the step at runtime
-                                    call_args.push_back(i);
-                                } else {
-                                    // This should never be hit
-                                    std::stringstream err;
-                                    err << "History column filter fn special arg '" << arg_string <<"' not yet implemented.\n";
-                                    throw std::runtime_error(err.str());
-                                }
-                            } else {
-                                // @todo apply filter result to outPop[arg] here prior to push_back
-                                call_args.push_back(outPop[arg]);
-                            }
-                        }
+                        List call_args = build_args(col["filter_args"], outPop, i);
                         filter_v = dynamic_call(col["filter_fn"], call_args);
                     }
+                    // Columns may be filtered here
+                    List call_args = col["filter_fn"] != R_NilValue
+                        ? build_args_filtered(col["args"], outPop, i, filter_v)
+                        : build_args(col["args"], outPop, i);
                     // Call the dynamic function
-                    StringVector p = col["args"];
-                    List call_args;
-                    for (const String arg:p) {
-                        const std::string arg_string = arg.get_cstring();
-                        if (arg_string.length() > 1 && arg_string[0] == '~') {
-                            // Map a special arg
-                            if (arg_string == "~STEP") {
-                                // Special arg corresponds to the step at runtime
-                                call_args.push_back(i);
-                            } else {
-                                // This should never be hit
-                                std::stringstream err;
-                                err << "History column fn special arg '" << arg_string <<"' not yet implemented.\n";
-                                throw std::runtime_error(err.str());
-                            }
-                        } else {
-                            // Store the requested column
-                            // Apply the filter to included elements if required
-                            call_args.push_back(col["filter_fn"] != R_NilValue ? logical_filter(outPop[arg], filter_v) : outPop[arg]);
-                        }
-                    }
                     SEXP result = dynamic_call(col["fn"], call_args);
                     if (hist_i == 0) {
                         // Detect the type of the result and create corresponding vector
