@@ -101,12 +101,16 @@ check_hazard <- function(hazard, initPop = NULL) {
 #'
 #' @param fn Function which calculates the hazard likelihood
 #' @param args Character vector of parameter names expected by fn
-#' @param transitions List of transition objects to be applied where the hazard is successful
+#' @param transitions Transition object(s) to be applied where the hazard is successful
 #' @param freq (Optional) The frequency of hazard execution
 #' @param first (Optional) First step the hazard should be enabled
 #' @param last (Optional) Last step the hazard should be enabled
 #' @return An object of class "eldoradosim_hazard"
 new_hazard <- function(fn, args, transitions, freq = 1, first = 0, last = 2147483647) {
+  # If transitions is not already a list, upgrade it
+  if (inherits(transitions, "eldoradosim_transition")) {
+    transitions <- list(transitions)
+  }
   # Initialise new hazard (S3 class)
   hazard <- list(
     fn = fn,
@@ -386,14 +390,22 @@ check_parameters <- function(parameters, initPop = NULL) {
 
 #' Create a new eldoradosim_parameters
 #'
-#' @param hazards List of eldoradosim_hazard S3 objects
-#' @param trajectories List of eldoradosim_trajectory S3 objects
+#' @param hazards eldoradosim_hazard S3 object(s)
+#' @param trajectories eldoradosim_trajectory S3 object(s)
 #' @param steps Number of steps to run
 #' @param random_seed Seed to be used for random generation. If set 0, current time will be used.
 #' @param debug (TRUE/FALSE) flag indicating whether validation checks are enabled. These catch NaN, but reduce performance
 #' @param history eldoradosim_history S3 object representing the columns of data to be agregated during simulation
 #' @return An object of class "eldoradosim_parameters"
 new_parameters <- function(hazards, trajectories, steps, random_seed = 0, debug = TRUE, history = NULL) {
+  # If hazards is not already a list, upgrade it
+  if (inherits(hazards, "eldoradosim_hazard")) {
+    hazards <- list(hazards)
+  }
+  # If trajectories is not already a list, upgrade it
+  if (inherits(trajectories, "eldoradosim_trajectory")) {
+    trajectories <- list(trajectories)
+  }
   # Initialise new parameters (S3 class)
   parameters <- list(
     hazards = hazards,
@@ -461,10 +473,14 @@ check_history <- function(history, initPop = NULL) {
 
 #' Create a new eldoradosim_history
 #'
-#' @param columns List of eldoradosim_history_column
+#' @param columns eldoradosim_history_column S3 object(s)
 #' @param frequency The number of simulation steps per history collection.
 #' @return An object of class "eldoradosim_history"
 new_history <- function(columns, frequency = 1) {
+  # If columns is not already a list, upgrade it
+  if (inherits(columns, "eldoradosim_history_column")) {
+    columns <- list(columns)
+  }
   # Initialise new parameters (S3 class)
   history <- list(
     columns = columns,

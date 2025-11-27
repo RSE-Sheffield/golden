@@ -208,6 +208,15 @@ test_that("Hazard args length does not match fn args triggers stop()", {
         "does not match number of arguments required",
         info = "args cant be used if they don't match fn")
 })
+test_that("Hazard passed transition, as opposed to list of,is valid", {
+    trn <- new_transition(empty_transition_fn, c("age"), "age")
+    haz <- new_hazard(empty_hazard_fn, c("age"), trn)
+    # It has been replaced by a list containing only the original item
+    expect_equal(length(haz$transitions), 1)
+    expect_equal(haz$transitions[[1]], trn)
+    # No error by default
+    expect_no_error(check_hazard(haz))
+})
 
 test_that("Transition with missing attribute triggers stop()", {
     # Transition subfields
@@ -358,6 +367,26 @@ test_that("Parameters attribute of incorrect type triggers stop()", {
         "'parameters\\$random_seed' must be a whole number",
         info = paste(field, " of incorrect type should cause an error"))
 })
+test_that("Parameters passed hazard, as opposed to list of,is valid", {
+    trn <- new_transition(empty_transition_fn, c("age"), "age")
+    haz <- new_hazard(empty_hazard_fn, c("age"), trn)
+    prm <- new_parameters(haz, list(), 12, 12, FALSE)
+    # It has been replaced by a list containing only the original item
+    expect_equal(length(prm$hazards), 1)
+    expect_equal(prm$hazards[[1]], haz)
+    # No error by default
+    expect_no_error(check_parameters(prm))
+})
+test_that("Parameters passed trajectory, as opposed to list of,is valid", {
+    trj <- new_trajectory(empty_trajectory_fn, c("age"), "age")
+    prm <- new_parameters(list(), trj, 12, 12, FALSE)
+    # It has been replaced by a list containing only the original item
+    expect_equal(length(prm$trajectories), 1)
+    expect_equal(prm$trajectories[[1]], trj)
+    # No error by default
+    expect_no_error(check_parameters(prm))
+})
+
 
 test_that("History with missing attribute triggers stop()", {
     # History subfields
@@ -414,6 +443,15 @@ test_that("History attribute of incorrect type triggers stop()", {
     expect_error(check_history(hist),
         "'history\\$frequency' must be a positive integer",
         info = paste(field, " of incorrect type should cause an error"))
+})
+test_that("Parameters passed column, as opposed to list of,is valid", {
+    clm <- new_column("test", empty_reduction_fn, c("a"))
+    hist <- new_history(clm, 1)
+    # It has been replaced by a list containing only the original item
+    expect_equal(length(hist$columns), 1)
+    expect_equal(hist$columns[[1]], clm)
+    # No error by default
+    expect_no_error(check_history(hist))
 })
 
 test_that("Column with missing attribute triggers stop()", {
