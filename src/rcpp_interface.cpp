@@ -275,15 +275,10 @@ List run_simulation(List initPop, List parameters) {
     }
     // Extract configuration options
     const int STEPS = parameters["steps"];
-    {
-        // R uses a global random state
-        // If we don't end up using C++ RNG, we may want users set it themselves
-        // Nanosecond granularity, so b2b runs do have different seeds
-        const int32_t TIME_NANOS = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-        const int32_t RANDOM_SEED = static_cast<int32_t>(parameters["random_seed"]);
+    if (static_cast<int32_t>(parameters["random_seed"])) {
+        // R uses a global random state, however if a user provides a seed we will override that state
         Function set_seed("set.seed");
-        set_seed(RANDOM_SEED ? RANDOM_SEED : TIME_NANOS);  // SEED==0==time
+        set_seed(static_cast<int32_t>(parameters["random_seed"]));
     }
 #ifdef NDEBUG
     const bool DEBUG = static_cast<bool>(parameters["debug"]);

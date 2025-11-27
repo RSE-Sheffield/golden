@@ -393,9 +393,9 @@ check_parameters <- function(parameters, initPop = NULL) {
 #' @param hazards eldoradosim_hazard S3 object(s)
 #' @param trajectories eldoradosim_trajectory S3 object(s)
 #' @param steps Number of steps to run
-#' @param random_seed Seed to be used for random generation. If set 0, current time will be used.
+#' @param random_seed Seed to be used for random generation. If set 0, current R random state will be used.
 #' @param debug (TRUE/FALSE) flag indicating whether validation checks are enabled. These catch NaN, but reduce performance
-#' @param history eldoradosim_history S3 object representing the columns of data to be agregated during simulation
+#' @param history eldoradosim_history S3 object representing the columns of data to be aggregated during simulation
 #' @return An object of class "eldoradosim_parameters"
 new_parameters <- function(hazards, trajectories, steps, random_seed = 0, debug = TRUE, history = NULL) {
   # If hazards is not already a list, upgrade it
