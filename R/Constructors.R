@@ -46,9 +46,9 @@ check_hazard <- function(hazard, initPop = NULL) {
   }
   # Check number of params matches what function requires
   # Greater than, because of default arg potential
-  if(length(hazard$args) > length(formals(hazard$fn))) {
+  if(length(hazard$args) > length(formals(args(hazard$fn)))) {
     stop("length of hazard$args, does not match number of arguments required by hazard$fn: ",
-      paste(length(hazard$args), ">", length(formals(hazard$fn))))
+      paste(length(hazard$args), ">", length(formals(args(hazard$fn)))))
   }
 
   # ---- transitions ----
@@ -169,9 +169,9 @@ check_trajectory <- function(trajectory, initPop = NULL) {
   }
   # Check number of params matches what function requires
   # Greater than, because of default arg potential
-  if(length(trajectory$args) > length(formals(trajectory$fn))) {
+  if(length(trajectory$args) > length(formals(args(trajectory$fn)))) {
     stop("length of trajectory$args, does not match number of arguments required by trajectory$fn: ",
-      paste(length(trajectory$args), ">", length(formals(trajectory$fn))))
+      paste(length(trajectory$args), ">", length(formals(args(trajectory$fn)))))
   }
 
   # ---- property ----
@@ -257,9 +257,9 @@ check_transition <- function(transition, initPop = NULL) {
   }
   # Check number of params matches what function requires
   # Greater than, because of default arg potential
-  if(length(transition$args) > length(formals(transition$fn))) {
+  if(length(transition$args) > length(formals(args(transition$fn)))) {
     stop("length of transition$args, does not match number of arguments required by transition$fn: ",
-      paste(length(transition$args), ">", length(formals(transition$fn))))
+      paste(length(transition$args), ">", length(formals(args(transition$fn)))))
   }
 
   # ---- state ----
@@ -527,9 +527,9 @@ check_column <- function(column, initPop = NULL) {
   }
   # Check number of args matches what function requires
   # Greater than, because of default arg potential
-  if(length(column$args) > length(formals(column$fn))) {
+  if(length(column$args) > length(formals(args(column$fn)))) {
     stop("length of column$args, does not match number of arguments required by column$fn: ",
-      paste(length(column$args), ">", length(formals(column$fn))))
+      paste(length(column$args), ">", length(formals(args(column$fn)))))
   }
 
   # ---- filter_fn ----
@@ -562,9 +562,9 @@ check_column <- function(column, initPop = NULL) {
       }
       # Check number of args matches what function requires
       # Greater than, because of default arg potential
-      if(length(column$filter_args) > length(formals(column$filter_fn))) {
+      if(length(column$filter_args) > length(formals(args(column$filter_fn)))) {
         stop("length of column$args, does not match number of arguments required by column$filter_fn: ",
-          paste(length(column$filter_args), ">", length(formals(column$filter_fn))))
+          paste(length(column$filter_args), ">", length(formals(args(column$filter_fn)))))
       }
   } else if (!is.null(column$filter_args)) {
       stop("'column$filter_args' provided without 'column$filter_fn'")
