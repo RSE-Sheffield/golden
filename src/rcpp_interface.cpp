@@ -362,13 +362,29 @@ List run_simulation(List initPop, List parameters) {
         // Execute trajectories in order
         for (List trajectory : trajectories) {
             // Currently assumed that trajectories are always active
-            // Build arg list to execute hazard chance
+            // Build arg list to execute trajectory chance
             List call_args = build_args(trajectory["args"], outPop, i);
-            // Execute hazard function and store result directly in trajectory's property
-            String trajectory_prop = trajectory["property"];
-            outPop[trajectory_prop] = dynamic_call(trajectory["fn"], call_args);
-            if (DEBUG)
-                check_result(i, "trajectory", t_i, outPop[trajectory_prop]);
+            // Execute trajectory function and store result directly in trajectory's property
+            // Slightly different path, depending on whether it returns 1 or multiple properties
+            if (Rf_length(trajectory["property"]) == 1) {
+                // Single return value (returned list should be a column)
+                String trajectory_prop = trajectory["property"];
+                outPop[trajectory_prop] = dynamic_call(trajectory["fn"], call_args);
+                if (DEBUG)
+                    check_result(i, "trajectory", t_i, outPop[trajectory_prop]);
+            } else {
+                // Multiple return values (returned list, should be a list of columns)
+                List trajectory_returns = dynamic_call(trajectory["fn"], call_args);
+                CharacterVector trajectory_properties = trajectory["property"];
+                if (Rf_length(trajectory_properties) != Rf_length(trajectory_returns))
+                    stop("Trajectory function return value contains a different number of properties than expected.");
+                for (int i = 0; i < Rf_length(trajectory_properties); ++i ) {
+                    String trajectory_prop = trajectory_properties[i];
+                    outPop[trajectory_prop] = trajectory_returns[i];
+                    if (DEBUG)
+                        check_result(i, "trajectory", t_i, outPop[trajectory_prop]);
+                }
+            }
             t_i++;
         }
         // Process any history to be collected

@@ -61,6 +61,9 @@ test_that("Trajectory attribute of incorrect type triggers stop()", {
     expect_error(check_trajectory(trj),
             "'trajectory\\$args' must only contain strings",
             info = paste("trajectory$args elements must be strings"))
+    # Special case: Multiple properties provided
+    trj <- new_trajectory(empty_trajectory_fn, c("age"), c("age", "foo"))
+    expect_no_error(check_trajectory(trj))
 })
 test_that("Trajectory arg not found in initial pop table triggers stop()", {
     dt <- data.table(a = integer(),

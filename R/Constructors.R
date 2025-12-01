@@ -179,8 +179,8 @@ check_trajectory <- function(trajectory, initPop = NULL) {
   }
 
   # ---- property ----
-  if (!is.character(trajectory$property) || length(trajectory$property) != 1L) {
-    stop("'trajectory$property' must be a string (character vector length 1)")
+  if (!is.character(trajectory$property) || length(trajectory$property) == 0L) {
+    stop("'trajectory$property' must be a character vector of 1 or more strings")
   }
   if (!is.null(initPop)) {
       # property exists as a column
@@ -194,10 +194,11 @@ check_trajectory <- function(trajectory, initPop = NULL) {
 
 #' Create a new trajectory object
 #'
-#' @param fn Function defining the trajectory functions
+#' @param fn Function defining the trajectory function
 #' @param args Character vector of parameter names expected by fn
-#' @param property Name of the column where the result of the trajectory function is to be stored
+#' @param property Name(s) of the column(s) where the result(s) of the trajectory function is to be stored
 #' @return An object of class "eldoradosim_trajectory"
+#' @note If a list if passed to property, fn must return a list of equal length
 new_trajectory <- function(fn, args, property) {
   # Initialise new trajectory (S3 class)
   trajectory <- list(
