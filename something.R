@@ -5,6 +5,7 @@ library(LCTMtools)
 library(CVrisk)
 library(lme4)
 library(data.table)
+library(ggplot2)
 
 ##################
 # AGE TRAJECTORY #
@@ -44,13 +45,6 @@ bmi_traj <- function(age) {
 # CVD HAZARD #
 ##############
 
-# Redundant, this returns a data table we aren't using?
-compute_CVrisk(sample_data,
-  age = "age", race = "race", gender = "gender", bmi = "BMI", sbp = "sbp",
-  hdl = "hdl", totchol = "totchol", bp_med = "bp_med", smoker = "smoker",
-  diabetes = "diabetes", lipid_med = "lipid_med",
-  fh_heartattack = "fh_heartattack", cac = "cac"
-)
 
 ## Define a function to calculate risk of death via CVD from age and bmi
 CVD_haz <- function(age, bmi) {
@@ -120,6 +114,9 @@ initPop$bmi = bmi_traj(initPop$age)
 reduce_fn <- function(x) {
   return (sum(x))
 }
+count_fn <- function(x) {
+  return (length(x))
+}
 filter_fn <- function(x) {
   return (x == -1)
 }
@@ -127,10 +124,37 @@ filter_fn <- function(x) {
 history <- new_history(
   columns = list(
     new_column("sum age", reduce_fn, c("age")),
-    new_column("sum age alive", reduce_fn, c("age"), filter_fn, c("death"))
+    new_column("sum age alive", reduce_fn, c("age"), filter_fn, c("death")),
+    new_column("no. alive", count_fn, c("age"), filter_fn, c("death")),
+    new_column("av. age alive", mean, c("age"), filter_fn, c("death"))
   ),
   frequency = 1
 )
+
+
+###########
+## HAZARDS
+###########
+
+hazlist <- list(
+  new_hazard(CVD_haz,
+             c("age", "bmi"),
+             list(new_transition(transition_fn, c("death", "~STEP"), "death"))
+             ),
+  new_hazard(life_fn,
+             c("age", "~STEP"),
+             list(new_transition(transition_fn, c("death", "~STEP"), "death"))
+             )
+)
+
+
+###############
+## TRAJACTORIES
+###############
+
+trajlist <- list(new_trajectory(age_traj, c("age", "death"), "age"),
+                 new_trajectory(bmi_traj, c("age"), "bmi")
+                 )
 
 
 ##############
@@ -138,23 +162,42 @@ history <- new_history(
 ##############
 
 parms <- new_parameters(
-  hazards = list(new_hazard(CVD_haz, c("age", "bmi"),
-                            list(new_transition(transition_fn, c("death", "~STEP"), "death"))
-                            ),
-                 new_hazard(life_fn, c("age", "~STEP"),
-                            list(new_transition(transition_fn, c("death", "~STEP"), "death"))
-                            )
-                ),
-  trajectories = list(new_trajectory(age_traj, c("age", "death"), "age"),
-                      new_trajectory(bmi_traj, c("age"), "bmi")
-                      ),
+  hazards = hazlist,
+  trajectories = trajlist,
   steps = n_years,
-  random_seed = 12L, # Not currently seeding R rng internally
   debug = TRUE,
   history = history
 )
+
 
 ret <- run_simulation(initPop, parms)
 
 fwrite(ret$pop, "outPop.csv")
 fwrite(ret$history, "outHistory.csv")
+
+## initial pop
+ggplot(initPop,aes(x=age,fill=factor(male),group=male))+
+  geom_histogram()
+
+## still alive
+ggplot(ret$pop[death==-1],
+       aes(x=age,fill=factor(male),group=male))+
+  geom_histogram()
+
+## now dead
+ggplot(ret$pop[death>0],
+       aes(x=age,fill=factor(male),group=male))+
+  geom_histogram()
+
+## TODO this generates a warning,
+## and we may want inclusion of step done by sim
+## perhaps with ~STEP name?
+ret$history[,step:=1:nrow(ret$history)]
+
+## history: number alive
+ggplot(ret$history, aes(step,`no. alive`))+
+  geom_line()
+
+## average age:
+ggplot(ret$history, aes(step,`av. age alive`))+
+  geom_line()
