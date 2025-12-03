@@ -1,4 +1,3 @@
-#include <Rcpp.h>
 #include <random>
 #include <stdexcept>
 #include <sstream>
@@ -6,11 +5,15 @@
 #include <limits>
 #include <cmath>
 #include <chrono>
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
+// Not currently used
+//#ifdef _OPENMP
+//#include <omp.h>
+//#endif
+#include <Rcpp.h>
 using namespace Rcpp;
+
+#include "utils/dynamic_call.h"
+#include "utils/debug.h"
 
 /**
  * Temporary testing method, probably replaced in future with R's simdata package or similar
@@ -77,193 +80,6 @@ List create_cohort(List demog, unsigned int N) {
     ret.attr("row.names") = IntegerVector::create(NA_INTEGER, -static_cast<int>(N));
     return ret;
 }
-
-/**
- * Dynamically call an R function from cpp
- *
- * R functions may require any number of arguments
- * The RCPP Function::operator() cannot be called in a varadic manner
- * (e.g. dynamically changing the number of arguments at runtime)
- * Hence this method instead acts as a wrapper, whereby a vector of arguments can be passed to the function
- * @param f The R function to be called
- * @param args A List of arguments to be passed.
- */
-SEXP dynamic_call(Function f, List args) {
-    // Create a call object
-    Language call(f);
-
-    // Append all arguments dynamically
-    for (R_xlen_t i = 0; i < args.size(); ++i) {
-        call.push_back(args[i]);
-        // @note To support named arguments a PairList(<name>, args[i]) would be pushed back here.
-    }
-
-    // Evaluate the call
-    // @todo what happens if the call is stored and eval'd twice?
-    return call.eval();
-}
-/**
- * Debug method to check output of dynamic methods, to ensure they don't contain NaN/Inf
- * 
- * @param s_i Step index
- * @param fn_type String representation of the function type (e.g. hazard, trajectory, transition)
- * @param fn_i Function index, e.g. 2nd hazard in the list. Assumed 1-indexed same as R, rather than 0-indexed C
- * @param _result The result vector to be checked, assumed to be NumericVector (only floating point types have NaN)
- * @param parent_typ (Optional) For transition functions, this will be set to "hazard"
- * @param p_i (Optional) Index of the parent type (hazard). Assumed 1-indexed same as R, rather than 0-indexed C
- * @note Not sure R has a concept of Inf, everything so far seems to be NA, which I assume to be NaN
- * @note Labelling may need adjustments if allowing multiple transitions per hazard
- */
-void check_result(int s_i, const std::string &fn_typ, int fn_i, SEXP _result, const std::string &parent_typ = "", int p_i = 0) {
-    if (Rf_isNumeric(_result)) {
-        NumericVector result = _result;
-        int nan_count = 0;
-        int inf_count = 0;
-        int range_count = 0;
-        for (const double &t : result) {
-            nan_count += std::isnan(t)?1:0;
-            inf_count += std::isinf(t)?1:0;
-            if (t < 0) {
-                ++range_count;
-            }
-        }
-        if (nan_count + inf_count) {
-            // This should never be hit
-            std::stringstream err;
-            err << "[DEBUG]During step " << s_i << " " << fn_typ << "[" << fn_i << "] ";
-            if (!parent_typ.empty()) {
-                err << "from " << parent_typ << "[" << p_i << "] ";
-            }
-            err << "return contained " << nan_count <<" NaN values and " << inf_count << " Inf values.\n";
-            throw std::runtime_error(err.str());
-        }
-        if (fn_typ == "hazard" && range_count) {
-            // Special case, warn if hazard return is <0
-            std::stringstream err;
-            err << "[DEBUG]During step " << s_i << " " << fn_typ << "[" << fn_i << "] ";
-            err << "return contained " << range_count <<" negative values.\n";
-            err << "Hazards are expected to return values greater than or equal to 0\n";
-            warning(err.str());
-        }
-    } else {
-        if (fn_typ == "hazard") {
-            // This should never be hit
-            std::stringstream err;
-            err << "[DEBUG]During step " << s_i << " " << fn_typ << "[" << fn_i << "] ";
-            err << "return was type " << type2name(_result) << " expected type double\n";
-            throw std::runtime_error(err.str());
-        }
-    }
-}
-
-/**
- * Utility which returns vector v with only elements with corresponding true element inside keep
- * 
- * @param v Input vector to be filtered, assumed type IntegerVector, NumericVector, LogicalVector or CharacterVector
- * @param keep Logical vector denoting elements of v to be retained
- * @return A copy of v with selected elements removed
- */
-SEXP logical_filter(SEXP v, LogicalVector keep) {
-    if (Rf_length(v) != keep.size()) {
-        stop("Argument vector length mismatch in logical_filter()");
-    }
-
-    // Count length of output vector
-    // To avoid dynamic resize
-    // @todo this could be calculated once
-    int out_len = 0;
-    for (int i = 0; i < keep.size(); i++) {
-        if (keep[i]) out_len++;
-    }
-
-    // Special case per type
-    int j = 0;
-    if (Rf_isNumeric(v)) {
-        NumericVector typed_v(v);
-        NumericVector out(out_len);
-        for (int i = 0; i < keep.size(); ++i)
-            if (keep[i]) out[j++] = typed_v[i];
-        return out;
-    } else if(Rf_isInteger(v)) {
-        IntegerVector typed_v(v);
-        IntegerVector out(out_len);
-        for (int i = 0; i < keep.size(); ++i)
-            if (keep[i]) out[j++] = typed_v[i];
-        return out;
-    } else if(Rf_isLogical(v)) {
-        LogicalVector typed_v(v);
-        LogicalVector out(out_len);
-        for (int i = 0; i < keep.size(); ++i)
-            if (keep[i]) out[j++] = typed_v[i];
-        return out;
-    } else if(Rf_isString(v)) {
-        CharacterVector typed_v(v);
-        CharacterVector out(out_len);
-        for (int i = 0; i < keep.size(); ++i)
-            if (keep[i]) out[j++] = typed_v[i];
-        return out;
-    } else {
-        stop("Unsupported SEXP type in logical_filter()");
-    }
-}
-
-/**
- * Utility function covering the common task of building up the call arguments to be passed to dynamic_call()
- *
- * @param p String vector of column names and ~SPECIAL values
- * @param table Data table which columns will be taken from
- * @param current_step Value to provided for "~STEP"
- * @return List containing R objects and variables to be passed to dynamic_call()
- */
-List build_args(StringVector p, List table, int current_step) {
-    List call_args;
-    for (const String arg:p) {
-        const std::string arg_string = arg.get_cstring();
-        if (arg_string.length() > 1 && arg_string[0] == '~') {
-            // Map a special arg
-            if (arg_string == "~STEP") {
-                // Special arg corresponds to the step at runtime
-                call_args.push_back(current_step);
-            } else {
-                // This should never be hit
-                std::stringstream err;
-                err << "Special arg '" << arg_string <<"' not yet implemented in build_args().\n";
-                throw std::runtime_error(err.str());
-            }
-        } else {
-            call_args.push_back(table[arg]);
-        }
-    }
-    return call_args;
-}
-/**
- * Utility function covering the common task of building up the call arguments to be passed to dynamic_call()
- * This version applies logical_filter() to columns included in the return value with filter_v
- * @param filter_v LogicalVector passed to keep parameter of logical_filter
- * @see build_args()
- */
-List build_args_filtered(StringVector p, List table, int current_step, LogicalVector filter_v) {
-    List call_args;
-    for (const String arg:p) {
-        const std::string arg_string = arg.get_cstring();
-        if (arg_string.length() > 1 && arg_string[0] == '~') {
-            // Map a special arg
-            if (arg_string == "~STEP") {
-                // Special arg corresponds to the step at runtime
-                call_args.push_back(current_step);
-            } else {
-                // This should never be hit
-                std::stringstream err;
-                err << "Special arg '" << arg_string <<"' not yet implemented in build_args().\n";
-                throw std::runtime_error(err.str());
-            }
-        } else {
-            call_args.push_back(logical_filter(table[arg], filter_v));
-        }
-    }
-    return call_args;
-}
-
 
 // [[Rcpp::export]]
 List run_simulation(List initPop, List parameters) {
