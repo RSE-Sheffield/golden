@@ -135,7 +135,7 @@ test_that("Hazard with missing attribute triggers stop()", {
         haz <- new_hazard(empty_hazard_fn, c("age"), trn)
         haz[[field]] <- NULL
         expect_error(check_hazard(haz),
-            paste("Hazard missing required fields:", field),
+            paste("eldoradosim_hazard missing required fields:", field),
             info = paste("Missing", field, "should cause an error"))
     }
 })
@@ -472,7 +472,7 @@ test_that("Column with missing attribute triggers stop()", {
         clm <- new_column("test", empty_reduction_fn, c("a"))
         clm[[field]] <- NULL
         expect_error(check_column(clm),
-            paste("Column missing required fields:", field),
+            paste("eldoradosim_history_column missing required fields:", field),
             info = paste("Missing", field, "should cause an error"))
     }
 })

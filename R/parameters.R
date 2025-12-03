@@ -3,32 +3,15 @@
 #' @param parameters An eldoradosim_parameters S3 object to be validated
 #' @param initPop data.frame which contains the columns required by parameters
 check_parameters <- function(parameters, initPop = NULL) {
-  if (!inherits(parameters, "eldoradosim_parameters")) {
-    stop("Object is not of class 'eldoradosim_parameters'")
-  }
+  validate_S3(parameters, "Object", "eldoradosim_parameters")
 
   # Are the expected fields present
   required_fields <- c("hazards", "trajectories", "steps", "random_seed", "debug")
-  missing_fields <- setdiff(required_fields, names(parameters))
-  if (length(missing_fields)) {
-    stop("eldoradosim_parameters missing required fields: ", paste(missing_fields, collapse = ", "))
-  }
+  validate_fields_present(parameters, "eldoradosim_parameters", required_fields)
   
   # ---- hazards & nested transitions ----
   # Check every element is a 'hazard' S3 object
-  if (!is.list(parameters$hazards)) {
-    stop("'parameters$hazards' must be a list")
-  }
-  if (length(parameters$hazards) > 0) {
-    ok <- vapply(parameters$hazards, function(x) inherits(x, "eldoradosim_hazard"), logical(1))
-    if (!all(ok)) {
-      stop(
-        "All elements of 'parameters$hazards' must be S3 objects of class 'eldoradosim_hazard'. ",
-        "Invalid elements at positions: ",
-        paste(which(!ok), collapse = ", ")
-      )
-    }
-  }
+  validate_S3_list(parameters$hazards, "parameters$hazards", "eldoradosim_hazard")
   if (!is.null(initPop)) {
     for (hz in parameters$hazards) {
       check_hazard(hz, initPop)
@@ -36,19 +19,7 @@ check_parameters <- function(parameters, initPop = NULL) {
   }
   
   # ---- trajectories ----
-  if (!is.list(parameters$trajectories)) {
-    stop("'parameters$trajectories' must be a list")
-  }
-  if (length(parameters$trajectories) > 0) {
-    ok <- vapply(parameters$trajectories, function(x) inherits(x, "eldoradosim_trajectory"), logical(1))
-    if (!all(ok)) {
-      stop(
-        "All elements of 'parameters$trajectories' must be S3 objects of class 'eldoradosim_trajectory'. ",
-        "Invalid elements at positions: ",
-        paste(which(!ok), collapse = ", ")
-      )
-    }
-  }
+  validate_S3_list(parameters$trajectories, "parameters$trajectories", "eldoradosim_trajectory")
   if (!is.null(initPop)) {
     for (trj in parameters$trajectories) {
       check_trajectory(trj, initPop)
@@ -56,33 +27,20 @@ check_parameters <- function(parameters, initPop = NULL) {
   } 
   
   # ---- steps ----
-  if (!(is.numeric(parameters$steps) &&
-        length(parameters$steps) == 1L &&
-        parameters$steps == as.integer(parameters$steps))) {
-    stop("'parameters$steps' must be a whole number")
+  validate_whole_number(parameters$steps, "parameters$steps")
+  # ---- history ----  
+  if (!is.null(parameters$history)) {  
+    validate_S3(parameters$history, "parameters$history", "eldoradosim_history")
   }
-  # ---- history ----
-  if (!is.null(parameters$history)) {
-    if (!inherits(parameters$history, "eldoradosim_history")) {
-      stop("parameters$history is not of class 'eldoradosim_history'")
-    }
-  } 
   if (!is.null(initPop)) {
     check_history(parameters$history, initPop)
   }
   
   # ---- random_seed ----
-  if (!(is.numeric(parameters$random_seed) &&
-        length(parameters$random_seed) == 1L &&
-        parameters$random_seed == as.integer(parameters$random_seed))) {
-    stop("'parameters$random_seed' must be a whole number")
-  }
+  validate_whole_number(parameters$random_seed, "parameters$random_seed")
   
   # ---- debug ----
-  if (!(is.logical(parameters$debug))) {
-    stop("'parameters$debug' must be either TRUE or FALSE")
-  }
-
+  validate_logical(parameters$debug, "parameters$debug")
 }
 
 #' Create a new eldoradosim_parameters

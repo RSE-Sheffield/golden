@@ -3,16 +3,11 @@
 #' @param trajectory An S3 object of class "eldoradosim_trajectory"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_trajectory <- function(trajectory, initPop = NULL) {
-  if (!inherits(trajectory, "eldoradosim_trajectory")) {
-    stop("Object is not of class 'eldoradosim_trajectory'")
-  }
+  validate_S3(trajectory, "Object", "eldoradosim_trajectory")
 
   # Are the expected fields present
   required_fields <- c("fn", "args", "property")
-  missing_fields <- setdiff(required_fields, names(trajectory))
-  if (length(missing_fields)) {
-    stop("trajectory missing required fields: ", paste(missing_fields, collapse = ", "))
-  }
+  validate_fields_present(trajectory, "eldoradosim_trajectory", required_fields)
 
   # ---- fn ----
   if (!is.function(trajectory$fn)) {
@@ -21,32 +16,13 @@ check_trajectory <- function(trajectory, initPop = NULL) {
 
   # ---- args ----
   # Attempt to convert lists to character vectors
-  if (is.list(trajectory$args)) {
-      all_strings <- all(vapply(trajectory$args, function(e) is.character(e) && length(e) == 1, logical(1)))
-      if (!all_strings) {
-        stop("'trajectory$args' must only contain strings")
-      }
-    trajectory$args <- unlist(trajectory$args, use.names = FALSE)
-  }
-  if (!is.character(trajectory$args)) {
-    stop("'trajectory$args' must be a character vector")
-  }
+  trajectory$args <- validate_convert_char_vector(trajectory$args, "trajectory$args")
   # Check named columns exist
   if (!is.null(initPop)) {
-    # Ignore special args (they begin "~")
-    clean_args <- trajectory$args[!grepl("^~", trajectory$args)]
-    # Which args aren't present among the names of initPop
-    missing_columns <- clean_args[!clean_args %in% names(initPop)]
-    if (length(missing_columns)) {
-      stop("initPop missing columns required by trajectory$args: ", paste(missing_columns, collapse = ", "))
-    }
+    validate_columns_exist(trajectory$args, "trajectory$args", initPop)
   }
   # Check number of params matches what function requires
-  # Greater than, because of default arg potential
-  if(length(trajectory$args) > length(formals(args(trajectory$fn)))) {
-    stop("length of trajectory$args, does not match number of arguments required by trajectory$fn: ",
-      paste(length(trajectory$args), ">", length(formals(args(trajectory$fn)))))
-  }
+  validate_function_args(trajectory$args, "trajectory$args", trajectory$fn)
 
   # ---- property ----
   if (!is.character(trajectory$property) || length(trajectory$property) == 0L) {

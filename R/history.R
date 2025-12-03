@@ -3,32 +3,15 @@
 #' @param history An S3 object of class "eldoradosim_history"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_history <- function(history, initPop = NULL) {
-  if (!inherits(history, "eldoradosim_history")) {
-    stop("Object is not of class 'eldoradosim_history'")
-  }
+  validate_S3(history, "Object", "eldoradosim_history")
 
   # Are the expected fields present
   required_fields <- c("columns", "frequency")
-  missing_fields <- setdiff(required_fields, names(history))
-  if (length(missing_fields)) {
-    stop("eldoradosim_history missing required fields: ", paste(missing_fields, collapse = ", "))
-  }
+  validate_fields_present(history, "eldoradosim_history", required_fields)
   
   # ---- columns & nested transitions ----
   # Check every element is a 'columns' S3 object
-  if (!is.list(history$columns)) {
-    stop("'history$columns' must be a list")
-  }
-  if (length(history$columns) > 0) {
-    ok <- vapply(history$columns, function(x) inherits(x, "eldoradosim_history_column"), logical(1))
-    if (!all(ok)) {
-      stop(
-        "All elements of 'history$columns' must be S3 objects of class 'eldoradosim_history_column'. ",
-        "Invalid elements at positions: ",
-        paste(which(!ok), collapse = ", ")
-      )
-    }
-  }
+  validate_S3_list(history$columns, "history$columns", "eldoradosim_history_column")
   if (!is.null(initPop)) {
     for (cl in history$columns) {
       check_column(cl, initPop)

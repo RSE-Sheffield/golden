@@ -3,16 +3,11 @@
 #' @param transition An S3 object of class "eldoradosim_transition"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_transition <- function(transition, initPop = NULL) {
-  if (!inherits(transition, "eldoradosim_transition")) {
-    stop("Object is not of class 'eldoradosim_transition'")
-  }
+  validate_S3(transition, "Object", "eldoradosim_transition")
 
   # Are the expected fields present
   required_fields <- c("fn", "args", "state")
-  missing_fields <- setdiff(required_fields, names(transition))
-  if (length(missing_fields)) {
-    stop("Transition missing required fields: ", paste(missing_fields, collapse = ", "))
-  }
+  validate_fields_present(transition, "eldoradosim_transition", required_fields)
 
   # ---- fn ----
   if (!is.function(transition$fn)) {
@@ -21,35 +16,13 @@ check_transition <- function(transition, initPop = NULL) {
 
   # ---- args ----
   # Attempt to convert lists to character vectors
-  if (is.list(transition$args)) {
-    all_strings <- all(vapply(transition$args, function(e) is.character(e) && length(e) == 1, logical(1)))
-    if (!all_strings) {
-      stop("'transition$args' must only contain strings")
-    }
-    transition$args <- unlist(transition$args, use.names = FALSE)
-  }
-  if (!is.character(transition$args)) {
-    stop("'transition$args' must be a character vector")
-  }
-  if (any(is.na(transition$args)) || any(transition$args == "")) {
-    stop("'transition$args' must not contain NA or empty strings")
-  }
+  transition$args <- validate_convert_char_vector(transition$args, "transition$args")
   # Check named columns exist
   if (!is.null(initPop)) {
-    # Ignore special args (they begin "~")
-    clean_args <- transition$args[!grepl("^~", transition$args)]
-    # Which args aren't present among the names of initPop
-    missing_columns <- clean_args[!clean_args %in% names(initPop)]
-    if (length(missing_columns)) {
-      stop("initPop missing columns required by transition$args: ", paste(missing_columns, collapse = ", "))
-    }
+    validate_columns_exist(transition$args, "transition$args", initPop)
   }
   # Check number of params matches what function requires
-  # Greater than, because of default arg potential
-  if(length(transition$args) > length(formals(args(transition$fn)))) {
-    stop("length of transition$args, does not match number of arguments required by transition$fn: ",
-      paste(length(transition$args), ">", length(formals(args(transition$fn)))))
-  }
+  validate_function_args(transition$args, "transition$args", transition$fn)
 
   # ---- state ----
   if (!is.character(transition$state) || length(transition$state) != 1L) {
