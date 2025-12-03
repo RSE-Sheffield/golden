@@ -14,7 +14,7 @@ library(ggplot2)
 ## Define a function to increment by 1
 ## If dead, age is not changed
 age_traj <- function(age, death_time) {
-  return (ifelse(death_time == -1, age + 1, age))
+  ifelse(death_time == -1, age + 1, age)
 }
 
 ##################
@@ -39,7 +39,7 @@ bmi_traj <- function(age) {
   unname(B[1] + age * B[2] + age^2 * B[3])
 }
 
-#bmi_traj(25) # test
+# bmi_traj(25) # test
 
 ##############
 # CVD HAZARD #
@@ -58,6 +58,7 @@ CVD_haz <- function(age, bmi) {
   1 - (1 - risk10 / 100)^0.1 # horrible approximation
 }
 
+
 ########################
 # GENERAL DEATH HAZARD #
 ########################
@@ -74,12 +75,12 @@ life_fn <- function(age, year) {
   # Convert to 1-indexed and clamp in bounds
   n_rows <- nrow(qx_mat)
   n_cols <- ncol(qx_mat)
-  
   row_index <- pmin(pmax(age + 1, 1), n_rows)
   col_index <- pmin(pmax(year + 1, 1), n_cols)
-  
-  return(qx_mat[row_index, col_index])
+  qx_mat[row_index, col_index]
 }
+
+
 
 ######################
 # GENERIC TRANSITION #
@@ -87,9 +88,11 @@ life_fn <- function(age, year) {
 
 # Returns transitioned death_state based on current state and result of hazard
 transition_fn <- function(state, i) {
-    # If  result is true, and state is -1, update state to current time
-    return (ifelse(state == -1, rep(i, length(state)), state))
+  # If  result is true, and state is -1, update state to current time
+  ifelse(state == -1, rep(i, length(state)), state)
 }
+
+
 
 ######################
 # INITIAL POPULATION #
@@ -105,56 +108,57 @@ demographics$PopTotal <- as.numeric(demographics$PopTotal)
 # List with fields male, age, bmi, death
 initPop <- create_cohort(demographics, N=1e4)
 # Init bmi (hazards run before trajectories)
-initPop$bmi = bmi_traj(initPop$age)
+initPop$bmi <- bmi_traj(initPop$age)
+
+
+
+#############
+## HAZARDS ##
+#############
+
+hazlist <- list(
+  new_hazard(
+    CVD_haz,
+    c("age", "bmi"),
+    list(new_transition(transition_fn, c("death", "~STEP"), "death"))
+  ),
+  new_hazard(
+    life_fn,
+    c("age", "~STEP"),
+    list(new_transition(transition_fn, c("death", "~STEP"), "death"))
+  )
+)
+
+
+
+##################
+## TRAJECTORIES ##
+##################
+
+trajlist <- list(
+  new_trajectory(age_traj, c("age", "death"), "age"),
+  new_trajectory(bmi_traj, c("age"), "bmi")
+)
 
 ###########
 # HISTORY #
 ###########
 
-reduce_fn <- function(x) {
-  return (sum(x))
-}
-count_fn <- function(x) {
-  return (length(x))
-}
 filter_fn <- function(x) {
-  return (x == -1)
+  x == -1 # tests alive applied to 'death'
 }
+
 
 history <- new_history(
   columns = list(
-    new_column("sum age", reduce_fn, c("age")),
-    new_column("sum age alive", reduce_fn, c("age"), filter_fn, c("death")),
-    new_column("no. alive", count_fn, c("age"), filter_fn, c("death")),
+    new_column("sum age", sum, "age"),
+    new_column("sum age alive", sum, c("age"), filter_fn, "death"),
+    new_column("no. alive", length, c("age"), filter_fn, c("death")),
     new_column("av. age alive", mean, c("age"), filter_fn, c("death"))
   ),
   frequency = 1
 )
 
-
-###########
-## HAZARDS
-###########
-
-hazlist <- list(
-  new_hazard(CVD_haz,
-             c("age", "bmi"),
-             list(new_transition(transition_fn, c("death", "~STEP"), "death"))
-             ),
-  new_hazard(life_fn,
-             c("age", "~STEP"),
-             list(new_transition(transition_fn, c("death", "~STEP"), "death"))
-             )
-)
-
-
-###############
-## TRAJACTORIES
-###############
-
-trajlist <- list(new_trajectory(age_traj, c("age", "death"), "age"),
-                 new_trajectory(bmi_traj, c("age"), "bmi")
-                 )
 
 
 ##############
@@ -176,28 +180,37 @@ fwrite(ret$pop, "outPop.csv")
 fwrite(ret$history, "outHistory.csv")
 
 ## initial pop
-ggplot(initPop,aes(x=age,fill=factor(male),group=male))+
+ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
   geom_histogram()
+
 
 ## still alive
-ggplot(ret$pop[death==-1],
-       aes(x=age,fill=factor(male),group=male))+
+ggplot(
+  ret$pop[death == -1],
+  aes(x = age, fill = factor(male), group = male)
+) +
   geom_histogram()
 
+
 ## now dead
-ggplot(ret$pop[death>0],
-       aes(x=age,fill=factor(male),group=male))+
+ggplot(
+  ret$pop[death > 0],
+  aes(x = age, fill = factor(male), group = male)
+) +
   geom_histogram()
+
 
 ## TODO this generates a warning,
 ## and we may want inclusion of step done by sim
 ## perhaps with ~STEP name?
-ret$history[,step:=1:nrow(ret$history)]
+ret$history[, step := 1:nrow(ret$history)]
 
 ## history: number alive
-ggplot(ret$history, aes(step,`no. alive`))+
+ggplot(ret$history, aes(step, `no. alive`)) +
   geom_line()
 
+
 ## average age:
-ggplot(ret$history, aes(step,`av. age alive`))+
+ggplot(ret$history, aes(step, `av. age alive`)) +
   geom_line()
+
