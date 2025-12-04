@@ -10,32 +10,34 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// is_odd
-bool is_odd(int d);
-RcppExport SEXP _eldoradosim_is_odd(SEXP dSEXP) {
+// create_cohort
+List create_cohort(List demog, unsigned int N);
+RcppExport SEXP _eldoradosim_create_cohort(SEXP demogSEXP, SEXP NSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type d(dSEXP);
-    rcpp_result_gen = Rcpp::wrap(is_odd(d));
+    Rcpp::traits::input_parameter< List >::type demog(demogSEXP);
+    Rcpp::traits::input_parameter< unsigned int >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(create_cohort(demog, N));
     return rcpp_result_gen;
 END_RCPP
 }
-// is_odd_vector
-LogicalVector is_odd_vector(IntegerVector x);
-RcppExport SEXP _eldoradosim_is_odd_vector(SEXP xSEXP) {
+// run_simulation
+List run_simulation(List initPop, List parameters);
+RcppExport SEXP _eldoradosim_run_simulation(SEXP initPopSEXP, SEXP parametersSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(is_odd_vector(x));
+    Rcpp::traits::input_parameter< List >::type initPop(initPopSEXP);
+    Rcpp::traits::input_parameter< List >::type parameters(parametersSEXP);
+    rcpp_result_gen = Rcpp::wrap(run_simulation(initPop, parameters));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_eldoradosim_is_odd", (DL_FUNC) &_eldoradosim_is_odd, 1},
-    {"_eldoradosim_is_odd_vector", (DL_FUNC) &_eldoradosim_is_odd_vector, 1},
+    {"_eldoradosim_create_cohort", (DL_FUNC) &_eldoradosim_create_cohort, 2},
+    {"_eldoradosim_run_simulation", (DL_FUNC) &_eldoradosim_run_simulation, 2},
     {NULL, NULL, 0}
 };
 

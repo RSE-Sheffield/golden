@@ -20,5 +20,7 @@ Imports: Rcpp (>= 1.1.0)
 LinkingTo: Rcpp
 SystemRequirements: C++11, OpenMP
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    data.table,
+    SciViews
 Config/testthat/edition: 3

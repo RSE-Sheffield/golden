@@ -63,20 +63,16 @@ jobs:
             devtools
             tinytex
           cache: "always"
+          dependencies: "TRUE"
+          
       ## Output R version in user
       - name: "Print R Version"
         run: "R --version"
       
       # This step may be redundant, these dynamic files are normally commit
-      # In future run this in pull requests and modify the PR?
-      - name: "Build Package (devtools)"
+      # In future run this in pull requests and modify the PR?        
+      - name: "Rcpp compile"
         run: Rscript ".github/scripts/build.R"
-        
-      - name: "Install Package (devtools)"
-        run: Rscript ".github/scripts/install.R"
-        
-      - name: "Test Package"
-        run: Rscript ".github/scripts/test.R"
         
       - name: "Build Package (R CMD)"
         run: R CMD build .
@@ -84,6 +80,12 @@ jobs:
       # Don't bother trying to build manual with latex on Windows
       - name: "Check Package (R CMD)"
         run: R CMD check . --no-manual
+        
+      - name: "Install Package (R CMD)"
+        run: R CMD INSTALL --dependencies=TRUE .
+        
+      - name: "Test Package"
+        run: Rscript ".github/scripts/test.R"
         
       # Could then have an upload artifact step
   

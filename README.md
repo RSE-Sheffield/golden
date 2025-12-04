@@ -1,6 +1,25 @@
 # rcpp-test
 A minimal best practice (ci, docs, test) rcpp package to be used as a template.
 
+## Development
+
+If making changes to the package locally, you will need both rebuild and reinstall it.
+
+```r
+library(Rcpp)
+library(devtools)
+Rcpp::compileAttributes() # Only required if new exported functions have been added
+devtools::load_all()
+```
+
+*If this fails, it may be necessary to close all R sessions, they appear to share an installed package index.*
+
+Tests can then be executed using `testthat`.
+
+```R
+library(testthat)
+test_file(test_path("test-example.R"))
+```
 
 ## Creation From Scratch
 
