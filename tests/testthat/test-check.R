@@ -1,6 +1,5 @@
 library(testthat)
 library(eldoradosim)
-library(data.table)
 
 #
 # Tests in this file cover
@@ -589,5 +588,15 @@ test_that("Column filter args length does not match fn args triggers stop()", {
         "does not match number of arguments required",
         info = "filter args cant be used if they don't match fn")
 })
+test_that("Column cannot be named '~STEP'", {
+    # No error by default
+    clm <- new_column("test", empty_reduction_fn, c("a"))
+    expect_no_error(check_column(clm))
+    # If column name is set to ~STEP an error will be returned
+    clm$name <- "~STEP"
+    expect_error(check_column(clm),
+        "cannot be '~STEP' this column will be automatically generated as part of the returned history data table")
+})
 
 # Column filter_args passed without filter_fn causes error
+# Columns with duplicate names cause error

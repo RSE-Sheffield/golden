@@ -1,6 +1,5 @@
 library(testthat)
 library(eldoradosim)
-library(data.table)
 
 #
 # Tests in this file cover the functionality of history collection during run_simulation()
@@ -28,6 +27,9 @@ test_that("History function collects expected data", {
     )
     # Execute the simulation
     ret <- run_simulation(initPop, parms)
+    # Validate that returned data tables are type data.table
+    expect_true(data.table::is.data.table(ret$pop))
+    expect_true(data.table::is.data.table(ret$history))
     # Validate results match what we calculate
     init_sum_a = sum(1:N)
     # Test each step's result matches what we calculate
@@ -35,6 +37,12 @@ test_that("History function collects expected data", {
       # Calculate the impact of this step's trajectory fn
       init_sum_a = init_sum_a + N
       expect_equal(init_sum_a, i)
+    }
+    # Test that ~STEP column has been generated correctly
+    t = 1
+    for (i in ret$history[["~STEP"]]) {
+      expect_equal(t, i)
+      t = t + 1
     }
 })
 test_that("History function collects expected data with non-1 frequency", {
@@ -69,6 +77,12 @@ test_that("History function collects expected data with non-1 frequency", {
       expect_equal(init_sum_a, i)
       # Subsequent histories follow FREQ steps
       init_sum_a = init_sum_a + N * FREQ
+    }
+    # Test that ~STEP column has been generated correctly
+    t = 1
+    for (i in ret$history[["~STEP"]]) {
+      expect_equal(t, i)
+      t = t + 3
     }
 })
 test_that("Filtered history function collects expected data", {
