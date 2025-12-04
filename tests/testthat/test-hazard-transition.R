@@ -1,6 +1,5 @@
 library(testthat)
 library(eldoradosim)
-library(data.table)
 
 #
 # Tests in this file cover the functionality of hazards and transitions
@@ -63,6 +62,10 @@ test_that("Single Hazard fn/param, single transition fn/param", {
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
     expect_equal(step4$a, ret_test)
+    
+    # Validate that returned data tables are type data.table
+    expect_true(data.table::is.data.table(step1))
+    expect_true(data.table::is.data.table(step4))
 })
 
 test_that("Single Hazard fn/param, multiple transition fn/param", {

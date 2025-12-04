@@ -12,6 +12,9 @@ check_column <- function(column, initPop = NULL) {
   # ---- name ----
   if (!(is.character(column$name) && length(column$name) == 1)) {
     stop("'column$name' must be a string")
+  } else if (column$name == "~STEP") {
+    # Check that column name is not reserved
+    stop("'column$name' cannot be '~STEP' this column will be automatically generated as part of the returned history data table.")
   }
   # ---- fn ----
   if (!is.function(column$fn)) {

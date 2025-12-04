@@ -1,6 +1,5 @@
 library(testthat)
 library(eldoradosim)
-library(data.table)
 
 #
 # Tests in this file cover the functionality of trajectories

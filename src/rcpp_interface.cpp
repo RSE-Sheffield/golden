@@ -121,6 +121,16 @@ List run_simulation(List initPop, List parameters) {
     }
     // Init History Data-table
     List history_dt = List::create();
+    if (history.size()) {
+        // Create the ~STEP column
+        const int history_freq = history["frequency"];
+        const int history_rows = STEPS / history_freq;
+        IntegerVector stepv = IntegerVector(history_rows, 0);
+        for (int i = 0; i < history_rows; ++i) {
+            stepv[i] = (i * history_freq) + 1;
+        }
+        history_dt["~STEP"] = stepv;
+    }
     // Simulation loop
     for (int i = 0; i < STEPS; ++i) {
         int h_i = 1;  // 1 index'd similar to R
@@ -259,11 +269,14 @@ List run_simulation(List initPop, List parameters) {
     }
     printf("\rSimulation Complete!\n");
     
+    // Mark outpop as a data table
+    outPop.attr("class") = CharacterVector::create("data.table", "data.frame");
+    outPop.attr("row.names") = IntegerVector::create(NA_INTEGER, -Rf_length(outPop[0]));    
     if (history.size()) {
         // Mark history as a data table
-        // (This can't be done before it has columns)
-        const unsigned int freq = history["frequency"];
-        const int history_rows = STEPS / freq;
+        // (This must be done after we're finished adding columns)
+        const int history_freq = history["frequency"];
+        const int history_rows = STEPS / history_freq;
         history_dt.attr("class") = CharacterVector::create("data.table", "data.frame");
         history_dt.attr("row.names") = IntegerVector::create(NA_INTEGER, -history_rows);
         // Package it into a structure for return

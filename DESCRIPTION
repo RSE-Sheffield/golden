@@ -16,7 +16,9 @@ Authors@R:
            comment = c(ORCID = "0000-0002-6983-2759")))
 Description: More about what it does (maybe more than one line).
 License: GPL (>= 2)
-Imports: Rcpp (>= 1.1.0)
+Imports:
+    Rcpp (>= 1.1.0),
+    data.table
 LinkingTo: Rcpp
 SystemRequirements: C++11, OpenMP
 Suggests: 
