@@ -111,14 +111,6 @@ List run_simulation(List initPop, List parameters) {
     // Create a deep-copy of the initial pop, that we will return with changes at the end
     // @todo create other columns, to log last hazard score?
     List outPop = clone(initPop);
-    // Add/init required columns
-    if (!outPop.containsElementNamed("death")) {
-        IntegerVector death_col(Rf_length(outPop[0]), -1);
-        outPop.push_back(death_col);
-    } else {
-        IntegerVector death_col(Rf_length(outPop[0]), -1);
-        outPop["death"] = death_col;
-    }
     // Init History Data-table
     List history_dt = List::create();
     if (history.size()) {
@@ -144,8 +136,8 @@ List run_simulation(List initPop, List parameters) {
                 // Build arg list to execute hazard chance
                 List call_args = build_args(hazard["args"], outPop, i);
                 // Execute hazard function and process results
-                // Result should be a vector of death chance, need to process these as a vector vs random
-                // Then update the death flag for affected agents
+                // Result should be a vector of chance, need to process these as a vector vs random
+                // Then apply transition functions to affected agents
                 NumericVector hazard_result = dynamic_call(hazard["fn"], call_args);
                 if (DEBUG)
                     check_result(i, "hazard", h_i, hazard_result);
