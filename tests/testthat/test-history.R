@@ -132,3 +132,49 @@ test_that("Filtered history function collects expected data", {
       expect_equal(sum_odd(test_a), i)
     }
 })
+
+test_that("Column & column filter functions cannot return wrong length", {
+    N <- 100
+    initPop <- sample_pop2(N)
+    parms <- new_parameters(
+      hazards = list(),
+      trajectories = list(),
+      steps = 1,
+      history = new_history(new_column("sum_a", sum, c("a")))
+    )
+    parms$debug = TRUE
+    
+    # Default runs safely
+    expect_no_error(run_simulation(initPop, parms))
+    
+    # Update with a bad column fn
+    parms$history$columns[[1]]$fn <- bad_len_fn1
+    # Running will now produce an error
+    check_parameters(parms, initPop)
+    expect_error(run_simulation(initPop, parms), "return had wrong length")
+    
+    # Update with a bad column fn
+    parms$history$columns[[1]]$fn <- bad_len_fn2
+    # Running will now produce an error
+    expect_error(run_simulation(initPop, parms), "return had wrong length")
+    
+    # Reset parms, check it works again
+    parms <- new_parameters(
+      hazards = list(),
+      trajectories = list(),
+      steps = 1,
+      history = new_history(new_column("sum_a", sum, c("a"), filter_fn, c("a")))
+    )
+    parms$debug = TRUE
+    expect_no_error(run_simulation(initPop, parms))
+    
+    # Update with a bad transition
+    parms$history$columns[[1]]$filter_fn <- bad_len_fn1
+    # Running will now produce an error
+    expect_error(run_simulation(initPop, parms), "return had wrong length")
+    
+    # Update with a bad hazard
+    parms$history$columns[[1]]$filter_fn <- bad_len_fn2
+    # Running will now produce an error
+    expect_error(run_simulation(initPop, parms), "return had wrong length")
+})

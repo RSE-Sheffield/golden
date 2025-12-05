@@ -132,7 +132,7 @@ void Simulation::stepHazards() {
             NumericVector p = 1 - exp(-h * dt);
             NumericVector rng = runif(Rf_length(h));  // Generate vector of random float [0, 1)
             if (DEBUG)
-                check_hazard_result(step, hazard["name"], h);
+                check_hazard_result(step, hazard["name"], h, Rf_length(population[0]));
             // Process hazard's transitions
             List transition_list = hazard["transitions"];
             int t_i = 1;  // 1 index'd similar to R
@@ -150,7 +150,7 @@ void Simulation::stepHazards() {
                 if (Rf_isNumeric(population[ts_name])) {
                     NumericVector transition_result = _transition_result;
                     if (DEBUG)
-                        check_result(step, transition["name"], transition_result);
+                        check_result(step, transition["name"], transition_result, Rf_length(population[0]));
                     NumericVector transition_state = population[ts_name];
                     population[ts_name] = ifelse(rng < p, transition_result, transition_state);
                 } else if (Rf_isInteger(population[ts_name])) {
@@ -188,7 +188,7 @@ void Simulation::stepTrajectories() {
             String trajectory_prop = trajectory["property"];            
             population[trajectory_prop] = trajectory_result;
             if (DEBUG)
-                check_result(step, trajectory["name"], population[trajectory_prop]);
+                check_result(step, trajectory["name"], population[trajectory_prop], Rf_length(population[0]));
         } else {
             // Multiple return values (returned list, should be a list of columns)
             List trajectory_returns = trajectory_result;
@@ -199,7 +199,7 @@ void Simulation::stepTrajectories() {
                 String trajectory_prop = trajectory_properties[i];
                 population[trajectory_prop] = trajectory_returns[i];
                 if (DEBUG) // Possibly want to make naming of which return vector clearer
-                    check_result(step, trajectory["name"], population[trajectory_prop]);
+                    check_result(step, trajectory["name"], population[trajectory_prop], Rf_length(population[0]));
             }
         }
         t_i++;
@@ -219,6 +219,8 @@ void Simulation::stepHistory() {
                 if (col["filter_fn"] != R_NilValue) {
                     List call_args = build_args(col["filter_args"], population, step);
                     filter_v = dynamic_call(col["filter_fn"], call_args);
+                    if (DEBUG)
+                        check_result(step, col["name"], filter_v, Rf_length(population[0]));
                 }
                 // Columns may be filtered here
                 List call_args = col["filter_fn"] != R_NilValue
@@ -227,6 +229,8 @@ void Simulation::stepHistory() {
                 // Call the dynamic function
                 SEXP result = dynamic_call(col["fn"], call_args);
                 columnTimers[col["name"]].stop();
+                if (DEBUG)
+                    check_result(step, col["name"], result, 1);
                 if (hist_i == 0) {
                     // Detect the type of the result and create corresponding vector
                     if (Rf_isNumeric(result)) {
