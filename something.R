@@ -176,19 +176,8 @@ parms <- new_parameters(
 
 ret <- run_simulation(initPop, parms)
 
-fwrite(ret$pop, "outPop.csv")
-fwrite(ret$history, "outHistory.csv")
-
 ## initial pop
 ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
-  geom_histogram()
-
-
-## still alive
-ggplot(
-  ret$pop[death == -1],
-  aes(x = age, fill = factor(male), group = male)
-) +
   geom_histogram()
 
 
@@ -200,17 +189,12 @@ ggplot(
   geom_histogram()
 
 
-## TODO this generates a warning,
-## and we may want inclusion of step done by sim
-## perhaps with ~STEP name?
-ret$history[, step := 1:nrow(ret$history)]
-
 ## history: number alive
-ggplot(ret$history, aes(step, `no. alive`)) +
+ggplot(ret$history, aes(`~STEP`, `no. alive`)) +
   geom_line()
 
 
 ## average age:
-ggplot(ret$history, aes(step, `av. age alive`)) +
+ggplot(ret$history, aes(`~STEP`, `av. age alive`)) +
   geom_line()
 
