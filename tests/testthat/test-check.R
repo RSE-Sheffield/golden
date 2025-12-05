@@ -507,6 +507,13 @@ test_that("Parameters passed column, as opposed to list of,is valid", {
     # No error by default
     expect_no_error(check_history(hist))
 })
+test_that("History cannot contain two columns with the same name", {
+    # No error by default
+    col1 <- new_column("test", empty_reduction_fn, c("a"))
+    col2 <- new_column("test", empty_trajectory_fn, c("a"))
+    expect_error(new_history(list(col1, col2)),
+        "Each element of history\\$columns must have a unique name")
+})
 
 test_that("Column with missing attribute triggers stop()", {
     # Column subfields
@@ -649,6 +656,15 @@ test_that("Column cannot be named '~STEP'", {
     expect_error(check_column(clm),
         "cannot be '~STEP' this column will be automatically generated as part of the returned history data table")
 })
+test_that("Column filter_args without filter_fn is invalid", {
+    # No error by default
+    clm <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("a"))
+    expect_no_error(check_column(clm))
+    # If column name is set to ~STEP an error will be returned
+    clm$filter_fn <- NULL
+    expect_error(check_column(clm),
+        "'column\\$filter_args' provided without 'column\\$filter_fn'")
+})
 
 test_that("No args fn is valid/invalid", {
     no_arg_fn <- function() { return (12) }
@@ -662,6 +678,3 @@ test_that("No args fn is valid/invalid", {
     expect_error(new_column("test", no_arg_fn, c()),
         "'column\\$args' must not be empty")
 })
-
-# Column filter_args passed without filter_fn causes error
-# Columns with duplicate names cause error
