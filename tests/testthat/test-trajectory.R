@@ -213,4 +213,20 @@ test_that("Trajectory function cannot return wrong length", {
     parms$trajectories[[1]]$fn <- bad_len_fn2
     # Running will now produce an error
     expect_error(run_simulation(initPop, parms), "return had wrong length")
+    
+    # Now test multivariate trajectory returning wrong length
+    parms <- get_parms()
+    parms$trajectories[[1]]$property <- c("a", "b")
+    
+    # Function returns 1 value
+    parms$trajectories[[1]]$fn <- function(a) {
+        return (sum(a))
+    }
+    expect_error(run_simulation(initPop, parms), "Trajectory function return value contains a different number of properties than expected.")
+    
+    # Function returns 3 values
+    parms$trajectories[[1]]$fn <- function(a) {
+        return (list(a, a+1, a*2))
+    }
+    expect_error(run_simulation(initPop, parms), "Trajectory function return value contains a different number of properties than expected.")
 })
