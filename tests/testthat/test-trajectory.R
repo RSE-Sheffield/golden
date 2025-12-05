@@ -195,3 +195,22 @@ test_that("No arg trajectory works correctly", {
     step4 = run_simulation(initPop, parms)
     expect_equal(step4$pop$b, rep(12.0, N))
 })
+
+test_that("Trajectory function cannot return wrong length", {
+    N <- 100
+    initPop <- sample_pop2(N)
+    parms <- get_parms()
+    parms$debug = TRUE
+    
+    # Default runs safely
+    expect_no_error(run_simulation(initPop, parms))
+    
+    # Update with a bad trajectory
+    parms$trajectories[[1]]$fn <- bad_len_fn1
+    # Running will now produce an error
+    expect_error(run_simulation(initPop, parms), "return had wrong length")
+    # Update with a bad trajectory
+    parms$trajectories[[1]]$fn <- bad_len_fn2
+    # Running will now produce an error
+    expect_error(run_simulation(initPop, parms), "return had wrong length")
+})

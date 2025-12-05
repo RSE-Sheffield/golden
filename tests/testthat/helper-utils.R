@@ -33,6 +33,15 @@ empty_trajectory_fn <- function(age) {
 }
 plus_1_fn <- empty_trajectory_fn
 
+#' Bad general function, returns a vector of 1 less length than input
+bad_len_fn1 <- function(a) {
+    return (head(a, -1))
+}
+#' Bad general function, returns a vector of 1 more length than input
+bad_len_fn2 <- function(a) {
+    return (c(a, 0))
+}
+
 #' Create a sample data.table with two columns a and b, both zero init
 sample_pop2 <- function(N) {
       a <- rep(0, N)
