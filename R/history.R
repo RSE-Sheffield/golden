@@ -12,6 +12,11 @@ check_history <- function(history, initPop = NULL) {
   # ---- columns & nested transitions ----
   # Check every element is a 'columns' S3 object
   validate_S3_list(history$columns, "history$columns", "eldoradosim_history_column")
+  # Check that every column has a unique name
+  names_vec <- vapply(history$columns, `[[`, character(1), "name")
+  if(length(unique(names_vec)) != length(names_vec)) {
+    stop("Each element of history$columns must have a unique name")
+  }
   if (!is.null(initPop)) {
     for (cl in history$columns) {
       check_column(cl, initPop)
