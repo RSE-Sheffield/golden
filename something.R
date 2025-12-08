@@ -1,11 +1,12 @@
 devtools::load_all()
 #Sys.setenv(RCPP_DEVEL_DEBUG = "1")
 #options(error = recover)
-library(LCTMtools)
-library(CVrisk)
-library(lme4)
 library(data.table)
 library(ggplot2)
+## https://github.com/boyercb/globorisk
+library(globorisk)
+## https://github.com/PPgp/wpp2024
+library(wpp2024)
 
 ##################
 # AGE TRAJECTORY #
@@ -20,48 +21,73 @@ age_traj <- function(age, death_time) {
 ##################
 # BMI TRAJECTORY #
 ##################
-
+## TODO better data? this is fake
 # load data.frame from LCTMtools
 # id/age/bmi/true_class
 data(bmi_long, package = "LCTMtools")
-
-## create a mixed model fit to bmi_long data
-mm <- lmer(bmi ~ 1 + age + I(age^2) + (1 | id),
+mm <- lm(bmi ~ 1 + age + I(age^2),
   data = bmi_long
-)
+) # regression
 
-## extract fixed effects for simple trajectory model
-## This is a tiny 3 column 1 row data table
-(B <- coef(summary(mm))[, 1])
 
-## Define a function to calculate bmi from age using the quadratic model
+## Define a function to calculate bmi from age
+## illustration of using predict from a regression analysis
 bmi_traj <- function(age) {
-  unname(B[1] + age * B[2] + age^2 * B[3])
+  predict(mm, newdata = data.table(age = age))
 }
 
 # bmi_traj(25) # test
+
+
+
+## TODO example of bivariate random walk for randomness & multivariateness
 
 ##############
 # CVD HAZARD #
 ##############
 
 
-## Define a function to calculate risk of death via CVD from age and bmi
-CVD_haz <- function(age, bmi) {
-  # Clamp age in bounds of model to avoid NA
-  age <- pmin(pmax(age, 30), 74)
-  risk10 <- ascvd_10y_frs_simple(
-    gender = "male", age = age,
-    bmi = bmi, sbp = 140,
-    bp_med = 0, smoker = 0, diabetes = 0
+## adatped from the globorisk R package
+## slow: could defo do better with same package data
+globohaz <- function(sex, age, bmi) {
+  n <- length(sex)
+  if (length(sex) != length(age) || length(sex) != length(bmi)) {
+    stop("Arguments must be equal length!\n")
+  }
+  age_arg <- pmin(pmax(age, 41), 75)
+  ans <- globorisk(
+    sex = sex,
+    age = age_arg,
+    sbp = rep(140, n),
+    tc = rep(4.5, n),
+    dm = rep(0, n),
+    smk = rep(0, n),
+    bmi = bmi,
+    iso = rep("USA", n),
+    year = rep(2000, n),
+    version = "lab",
+    type = "all"
   )
-  1 - (1 - risk10 / 100)^0.1 # horrible approximation
+  ans$hzcvd_0
 }
+
+
+## tests
+globohaz(c(0, 1, 1), c(00, 50, 90), rep(25, 3))
+
+## TODO check & write a faster version of above function
+## globorisk:::cvdr
+## globorisk:::rf
+## globorisk:::coefs
+
+
 
 
 ########################
 # GENERAL DEATH HAZARD #
 ########################
+
+## TODO use a package to do a better job
 
 # Read the CSV and convert qx into a matrix [age, year]
 rows_per_year <- 101
@@ -97,18 +123,40 @@ transition_fn <- function(state, i) {
 ######################
 # INITIAL POPULATION #
 ######################
+data(popAge1dt)
 
-# Pop CSV
-# Read the CSV, coerce columns and pass to create_cohort() to make pop List
-demographics <- read.csv("tests/data/pop.csv")
-demographics$AgeGrp <- as.integer(demographics$AgeGrp)
-demographics$PopMale <- as.numeric(demographics$PopMale)
-demographics$PopFemale <- as.numeric(demographics$PopFemale)
-demographics$PopTotal <- as.numeric(demographics$PopTotal)
-# List with fields male, age, bmi, death
-initPop <- create_cohort(demographics, N=1e4)
+M <- as.matrix(popAge1dt[
+  name == "Afghanistan" &
+    year == 2000 &
+    age < 80,
+  .(popM, popF)
+])
+N <- 1e4
+popcounts <- rmultinom(1, size = N, prob = c(M))
+sexes <- rep(1, sum(popcounts[1:nrow(M)]))
+sexes <- c(sexes, rep(0, N - length(sexes)))
+initPop <- data.table(
+  male = as.integer(sexes),
+  age = as.integer(0),
+  death = as.integer(rep(-1, N))
+)
+## do ages
+ageref <- rep(0:79, 2)
+k <- 1
+for (i in 1:length(popcounts)) {
+  initPop[k:(popcounts[i] + k - 1), age := ageref[i]]
+  k <- k + popcounts[i]
+}
+
+
+
+## TODO sample using population data above
 # Init bmi (hazards run before trajectories)
 initPop$bmi <- bmi_traj(initPop$age)
+
+## initial pop
+ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
+  geom_histogram()
 
 
 
@@ -118,8 +166,8 @@ initPop$bmi <- bmi_traj(initPop$age)
 
 hazlist <- list(
   new_hazard(
-    CVD_haz,
-    c("age", "bmi"),
+    globohaz,
+    c("male", "age", "bmi"),
     list(new_transition(transition_fn, c("death", "~STEP"), "death"))
   ),
   new_hazard(
@@ -128,6 +176,7 @@ hazlist <- list(
     list(new_transition(transition_fn, c("death", "~STEP"), "death"))
   )
 )
+
 
 
 
@@ -151,8 +200,6 @@ filter_fn <- function(x) {
 
 history <- new_history(
   columns = list(
-    new_column("sum age", sum, "age"),
-    new_column("sum age alive", sum, c("age"), filter_fn, "death"),
     new_column("no. alive", length, c("age"), filter_fn, c("death")),
     new_column("av. age alive", mean, c("age"), filter_fn, c("death"))
   ),
@@ -173,12 +220,8 @@ parms <- new_parameters(
   history = history
 )
 
-
+## run the simulation
 ret <- run_simulation(initPop, parms)
-
-## initial pop
-ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
-  geom_histogram()
 
 
 ## now dead
@@ -193,8 +236,20 @@ ggplot(
 ggplot(ret$history, aes(`~STEP`, `no. alive`)) +
   geom_line()
 
+## SUGGESTIONS/QUERIES
+## TODO don't think hazard implementation in C++ is correct
+## TODO would be good to have progress/timing options
+## including which function calls were slowest?
+## TODO functions with no args?
 
-## average age:
-ggplot(ret$history, aes(`~STEP`, `av. age alive`)) +
-  geom_line()
 
+## FOR VIGNETTE
+## NOTE if you rewrite functions, this is not enough: need to remake objects
+## should be noted in guide
+
+## OTHER EXAMPLES
+## TODO example of timed event
+## TODO multivariate & random (see above)
+
+## TODO
+## simple exponential example as a test
