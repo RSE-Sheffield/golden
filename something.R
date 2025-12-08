@@ -80,7 +80,71 @@ globohaz(c(0, 1, 1), c(00, 50, 90), rep(25, 3))
 ## globorisk:::rf
 ## globorisk:::coefs
 
+## convert these to restricted/faster look-up tables
+mycoefs <- as.data.table(globorisk:::coefs)
+mycoefs <- mycoefs[type == "office" & lac == 0]
 
+myrf <- as.data.table(globorisk:::rf)
+myrf <- myrf[iso == "USA"]
+myrf[, agesex := paste(agec, sex, sep = "_")]
+setkey(myrf, agesex)
+myrf[c("1_1", "1_0")]
+
+
+mycvdr <- as.data.table(globorisk:::cvdr)
+mycvdr <- mycdr[
+  iso == "USA" & type == "FNF" & year == 2000,
+  .(agec, sex, cvd_0)
+]
+mycvdr <- unique(mycvdr)
+mycvdr[, agesex := paste(agec, sex, sep = "_")]
+setkey(mycvdr, agesex)
+mycvdr[c("1_1", "1_0")]
+
+
+
+globohaz2 <- function(sex, age, bmi) {
+  n <- length(sex)
+  if (length(sex) != length(age) || length(sex) != length(bmi)) {
+    stop("Arguments must be equal length!\n")
+  }
+  ## my checks/additions
+  age <- pmin(pmax(age, 41), 75)
+  sbp <- rep(140, n)
+  tc <- rep(4.5, n)
+  dm <- rep(0, n)
+  smk <- rep(0, n)
+  ## globorisk transforms
+  agec <- as.integer(ifelse(age < 85, trunc(age / 5) - 7, 10))
+  sbp <- sbp / 10
+  dm <- as.integer(dm)
+  smk <- as.integer(smk)
+  bmi <- bmi / 5
+  ## center
+  agc_sex <- paste(agec, sex, sep = "_")
+  sbp_c <- sbp - myrf[agc_sex][, mean_sbp]
+  tc_c <- tc - myrf[agc_sex][, mean_tc]
+  dm_c <- dm - myrf[agc_sex][, mean_dm]
+  smk_c <- smk - myrf[agc_sex][, mean_smk]
+  bmi_c <- bmi - myrf[agc_sex][, mean_bmi]
+  ## compute hazard ratios
+  HR <- sbp_c * mycoefs[["main_sbpc"]] +
+    bmi_c * mycoefs[["main_bmi5c"]] +
+    smk_c * mycoefs[["main_smokc"]] +
+    sex * smk_c * mycoefs[["main_sexsmokc"]] +
+    age * sbp_c * mycoefs[["tvc_sbpc"]] +
+    age * smk_c * mycoefs[["tvc_smokc"]] +
+    age * bmi_c * mycoefs[["tvc_bmi5c"]]
+  HR <- exp(HR) # un-log
+  ## baseline hazard
+  h <- mycvdr[agc_sex][, cvd_0]
+  ## return
+  h * HR
+}
+
+## BUG currently these differ - understand why
+globohaz(c(0, 1, 1), c(00, 50, 90), rep(25, 3))
+globohaz2(c(0, 1, 1), c(00, 50, 90), rep(25, 3))
 
 
 ########################
@@ -166,7 +230,7 @@ ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
 
 hazlist <- list(
   new_hazard(
-    globohaz,
+    globohaz2,
     c("male", "age", "bmi"),
     list(new_transition(transition_fn, c("death", "~STEP"), "death"))
   ),
@@ -237,7 +301,6 @@ ggplot(ret$history, aes(`~STEP`, `no. alive`)) +
   geom_line()
 
 ## SUGGESTIONS/QUERIES
-## TODO don't think hazard implementation in C++ is correct
 ## TODO would be good to have progress/timing options
 ## including which function calls were slowest?
 ## TODO functions with no args?
