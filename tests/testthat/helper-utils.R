@@ -6,6 +6,10 @@
 empty_hazard_fn <- function(property) {
     return (rep(0.5, length(property)))
 }
+# 0.7 return works out to approximately 50% chance
+fifty_fifty_hazard <- function(a) {
+    return (rep(0.7, length(a)))
+}
 #' Empty hazard transition function example
 #'
 #' @param a This value is directly returned
