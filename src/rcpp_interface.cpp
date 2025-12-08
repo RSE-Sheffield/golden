@@ -147,7 +147,7 @@ List run_simulation(List initPop, List parameters) {
                 NumericVector p = 1 - exp(-h * dt);
                 NumericVector rng = runif(Rf_length(h));  // Generate vector of random float [0, 1)
                 if (DEBUG)
-                    check_result(i, "hazard", h_i, h);
+                    check_hazard_result(i, hazard["name"], h);
                 // Process hazard's transitions
                 List transition_list = hazard["transitions"];
                 int t_i = 1;  // 1 index'd similar to R
@@ -161,7 +161,7 @@ List run_simulation(List initPop, List parameters) {
                     if (Rf_isNumeric(outPop[ts_name])) {
                         NumericVector transition_result = dynamic_call(transition["fn"], call_args);
                         if (DEBUG)
-                            check_result(i, "transition", t_i, transition_result, "hazard", h_i);
+                            check_result(i, transition["name"], transition_result);
                         NumericVector transition_state = outPop[ts_name];
                         outPop[ts_name] = ifelse(rng < p, transition_result, transition_state);
                     } else if (Rf_isInteger(outPop[ts_name])) {
@@ -194,18 +194,18 @@ List run_simulation(List initPop, List parameters) {
                 String trajectory_prop = trajectory["property"];
                 outPop[trajectory_prop] = dynamic_call(trajectory["fn"], call_args);
                 if (DEBUG)
-                    check_result(i, "trajectory", t_i, outPop[trajectory_prop]);
+                    check_result(i, trajectory["name"], outPop[trajectory_prop]);
             } else {
                 // Multiple return values (returned list, should be a list of columns)
                 List trajectory_returns = dynamic_call(trajectory["fn"], call_args);
                 CharacterVector trajectory_properties = trajectory["property"];
                 if (Rf_length(trajectory_properties) != Rf_length(trajectory_returns))
                     stop("Trajectory function return value contains a different number of properties than expected.");
-                for (int i = 0; i < Rf_length(trajectory_properties); ++i ) {
+                for (int i = 0; i < Rf_length(trajectory_properties); ++i) {
                     String trajectory_prop = trajectory_properties[i];
                     outPop[trajectory_prop] = trajectory_returns[i];
-                    if (DEBUG)
-                        check_result(i, "trajectory", t_i, outPop[trajectory_prop]);
+                    if (DEBUG) // Possibly want to make naming of which return vector clearer
+                        check_result(i, trajectory["name"], outPop[trajectory_prop]);
                 }
             }
             t_i++;

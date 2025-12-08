@@ -34,6 +34,11 @@ check_trajectory <- function(trajectory, initPop = NULL) {
         stop("initial population columns do not contain trajectory$property: ", trajectory$property)
       }
   }
+  
+  # ---- name ----
+  if (!(is.null(trajectory$name) || (is.character(trajectory$name) && length(trajectory$name) == 1))) {
+    stop("'trajectory$name' must be a string")
+  }
 
   return (NULL)
 }
@@ -43,14 +48,16 @@ check_trajectory <- function(trajectory, initPop = NULL) {
 #' @param fn Function defining the trajectory function
 #' @param args Character vector of parameter names expected by fn
 #' @param property Name(s) of the column(s) where the result(s) of the trajectory function is to be stored
+#' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
 #' @return An object of class "eldoradosim_trajectory"
 #' @note If a list if passed to property, fn must return a list of equal length
-new_trajectory <- function(fn, args, property) {
+new_trajectory <- function(fn, args, property, name = NULL) {
   # Initialise new trajectory (S3 class)
   trajectory <- list(
     fn = fn,
     args = args,
-    property = property
+    property = property,
+    name = get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
   )
   # Assign S3 class
   class(trajectory) <- "eldoradosim_trajectory"
