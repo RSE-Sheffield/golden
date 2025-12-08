@@ -136,11 +136,18 @@ List run_simulation(List initPop, List parameters) {
                 // Build arg list to execute hazard chance
                 List call_args = build_args(hazard["args"], outPop, i);
                 // Execute hazard function and process results
-                // Result should be a vector of chance, need to process these as a vector vs random
-                // Then apply transition functions to affected agents
-                NumericVector hazard_result = dynamic_call(hazard["fn"], call_args);
+                // p=1-exp(-h*dt)
+                // p = probability
+                // h = hazard result
+                // dt = 1 (could vary in practice, but currently fixed)
+                // if rng < p for an agent, then transition function is applied
+                // hence p >= 1 is guaranteed, p > 1 potentially erroneous
+                NumericVector h = dynamic_call(hazard["fn"], call_args);
+                const int dt = 1;
+                NumericVector p = 1 - exp(-h * dt);
+                NumericVector rng = runif(Rf_length(h));  // Generate vector of random float [0, 1)
                 if (DEBUG)
-                    check_result(i, "hazard", h_i, hazard_result);
+                    check_result(i, "hazard", h_i, h);
                 // Process hazard's transitions
                 List transition_list = hazard["transitions"];
                 int t_i = 1;  // 1 index'd similar to R
@@ -149,8 +156,6 @@ List run_simulation(List initPop, List parameters) {
                     call_args = build_args(transition["args"], outPop, i);
                     // @todo can this be hidden inside a util function cleanly?
                     // Only apply transitions in cases where hazard occurred
-                    // This may be faster unvectorised cpp?
-                    NumericVector chance = runif(Rf_length(hazard_result));  // Generate vector of random float [0, 1)
                     String ts_name = transition["state"];
                     // Select correct output based on output state type
                     if (Rf_isNumeric(outPop[ts_name])) {
@@ -158,15 +163,15 @@ List run_simulation(List initPop, List parameters) {
                         if (DEBUG)
                             check_result(i, "transition", t_i, transition_result, "hazard", h_i);
                         NumericVector transition_state = outPop[ts_name];
-                        outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
+                        outPop[ts_name] = ifelse(rng < p, transition_result, transition_state);
                     } else if (Rf_isInteger(outPop[ts_name])) {
                         IntegerVector transition_result = dynamic_call(transition["fn"], call_args);
                         IntegerVector transition_state = outPop[ts_name];
-                        outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
+                        outPop[ts_name] = ifelse(rng < p, transition_result, transition_state);
                     } else if (Rf_isLogical(outPop[ts_name])) {
                         LogicalVector transition_result = dynamic_call(transition["fn"], call_args);
                         LogicalVector transition_state = outPop[ts_name];
-                        outPop[ts_name] = ifelse(hazard_result >= chance, transition_result, transition_state);
+                        outPop[ts_name] = ifelse(rng < p, transition_result, transition_state);
                     } else {
                         // @todo Support other types?(Complex, String, Date, Datetime)
                         stop("Unsupported type at transition processing");
