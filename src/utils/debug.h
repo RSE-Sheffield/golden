@@ -43,18 +43,29 @@ void check_hazard_result(int s_i, const std::string &name, SEXP _result) {
         NumericVector result = _result;
         // R
         check_result(s_i, name, _result);
-        int range_count = 0;
+        int negative_range_count = 0;
+        int high_range_count = 0;
         for (const double &t : result) {
             if (t < 0) {
-                ++range_count;
+                ++negative_range_count;
+            } else if (t > 1) {
+                ++high_range_count;
             }
         }
-        if (range_count) {
+        if (negative_range_count) {
             // Special case, warn if hazard return is <0
             std::stringstream err;
             err << "[DEBUG]During step " << s_i << " " << name;
-            err << " return contained " << range_count <<" negative values.\n";
+            err << " return contained " << negative_range_count <<" negative values.\n";
             err << "Hazards are expected to return values greater than or equal to 0\n";
+            warning(err.str());
+        }
+        if (high_range_count) {
+            // Special case, warn if hazard return is <0
+            std::stringstream err;
+            err << "[DEBUG]During step " << s_i << " " << name;
+            err << " return contained " << high_range_count <<" values > 1.\n";
+            err << "Frequent hazard returns exceeding 1 may be indicative of an error.\n";
             warning(err.str());
         }
     } else {
