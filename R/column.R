@@ -3,11 +3,11 @@
 #' @param column An S3 object of class "golden_history_column"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_column <- function(column, initPop = NULL) {
-  validate_S3(column, "Object", "golden_history_column")
+  .validate_S3(column, "Object", "golden_history_column")
 
   # Are the expected fields present
   required_fields <- c("name", "fn", "args")
-  validate_fields_present(column, "golden_history_column", required_fields)
+  .validate_fields_present(column, "golden_history_column", required_fields)
 
   # ---- name ----
   if (!(is.character(column$name) && length(column$name) == 1)) {
@@ -26,13 +26,13 @@ check_column <- function(column, initPop = NULL) {
   if (is.null(column$args)) {
     stop("'column$args' must not be empty")
   }
-  column$args <- validate_convert_char_vector(column$args, "column$args")
+  column$args <- .validate_convert_char_vector(column$args, "column$args")
   # Check named columns exist
   if (!is.null(initPop)) {
-    validate_columns_exist(column$args, "column$args", initPop)
+    .validate_columns_exist(column$args, "column$args", initPop)
   }
   # Check number of args matches what function requires
-  validate_function_args(column$args, "column$args", column$fn)
+  .validate_function_args(column$args, "column$args", column$fn)
 
   # ---- filter_fn ----
   if (!is.null(column$filter_fn)) {
@@ -42,13 +42,13 @@ check_column <- function(column, initPop = NULL) {
 
       # ---- filter_args ----
       # Attempt to convert lists to character vectors
-      column$filter_args <- validate_convert_char_vector(column$filter_args, "column$filter_args")
+      column$filter_args <- .validate_convert_char_vector(column$filter_args, "column$filter_args")
       # Check named columns exist
       if (!is.null(initPop)) {
-        validate_columns_exist(column$filter_args, "column$filter_args", initPop)
+        .validate_columns_exist(column$filter_args, "column$filter_args", initPop)
       }
       # Check number of args matches what function requires
-      validate_function_args(column$filter_args, "column$filter_args", column$filter_fn)
+      .validate_function_args(column$filter_args, "column$filter_args", column$filter_fn)
   } else if (!is.null(column$filter_args)) {
       stop("'column$filter_args' provided without 'column$filter_fn'")
   }
@@ -79,6 +79,11 @@ new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
   return(column)
 }
 
+#' Print the contents of a golden_history_column type S3 object
+#'
+#' @param x The object to be printed
+#' @param ... Not used. Included for S3 method compatibility.
+#' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 print.golden_history_column <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

@@ -11,7 +11,7 @@ new_transition(fn, args, state, name = NULL)
 
 \item{args}{Character vector of parameter names expected by fn}
 
-\item{state}{Name of the column where the result of the transition function is to be stored}
+\item{state}{Name(s) of the column(s) where the result of the transition function is to be stored}
 
 \item{name}{(Optional) Name used in error messages and similar. Defaults to an automatic name}
 }

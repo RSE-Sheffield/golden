@@ -13,6 +13,10 @@ TODO
 \source{
 TODO
 }
+\usage{
+lifetable_data
+}
 \description{
 details TODO
 }
+\keyword{datasets}

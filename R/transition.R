@@ -3,11 +3,11 @@
 #' @param transition An S3 object of class "golden_transition"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_transition <- function(transition, initPop = NULL) {
-  validate_S3(transition, "Object", "golden_transition")
+  .validate_S3(transition, "Object", "golden_transition")
 
   # Are the expected fields present
   required_fields <- c("fn", "args", "state")
-  validate_fields_present(transition, "golden_transition", required_fields)
+  .validate_fields_present(transition, "golden_transition", required_fields)
 
   # ---- fn ----
   if (!is.function(transition$fn)) {
@@ -16,13 +16,13 @@ check_transition <- function(transition, initPop = NULL) {
 
   # ---- args ----
   # Attempt to convert lists to character vectors
-  transition$args <- validate_convert_char_vector(transition$args, "transition$args")
+  transition$args <- .validate_convert_char_vector(transition$args, "transition$args")
   # Check named columns exist
   if (!is.null(initPop)) {
-    validate_columns_exist(transition$args, "transition$args", initPop)
+    .validate_columns_exist(transition$args, "transition$args", initPop)
   }
   # Check number of params matches what function requires
-  validate_function_args(transition$args, "transition$args", transition$fn)
+  .validate_function_args(transition$args, "transition$args", transition$fn)
 
   # ---- state ----
   if (!is.character(transition$state) || length(transition$state) == 0L) {
@@ -56,7 +56,7 @@ new_transition <- function(fn, args, state, name = NULL) {
     fn = fn,
     args = args,
     state = state,
-    name = get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
+    name = .get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
   )
   # Assign S3 class
   class(transition) <- "golden_transition"
@@ -66,6 +66,11 @@ new_transition <- function(fn, args, state, name = NULL) {
   return(transition)
 }
 
+#' Print the contents of a golden_transition type S3 object
+#'
+#' @param x The object to be printed
+#' @param ... Not used. Included for S3 method compatibility.
+#' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 print.golden_transition <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

@@ -15,5 +15,5 @@ create_cohort(demog, N)
 A sample population data.table
 }
 \description{
-Create a new cohort
+Temporary testing method, probably replaced in future with R's simdata package or similar
 }

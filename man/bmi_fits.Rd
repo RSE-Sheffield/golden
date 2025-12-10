@@ -13,6 +13,10 @@ TODO
 \source{
 TODO
 }
+\usage{
+bmi_fits
+}
 \description{
 details TODO
 }
+\keyword{datasets}

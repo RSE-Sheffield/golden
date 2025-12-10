@@ -3,11 +3,11 @@
 #' @param trajectory An S3 object of class "golden_trajectory"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_trajectory <- function(trajectory, initPop = NULL) {
-  validate_S3(trajectory, "Object", "golden_trajectory")
+  .validate_S3(trajectory, "Object", "golden_trajectory")
 
   # Are the expected fields present
   required_fields <- c("fn", "args", "property")
-  validate_fields_present(trajectory, "golden_trajectory", required_fields)
+  .validate_fields_present(trajectory, "golden_trajectory", required_fields)
 
   # ---- fn ----
   if (!is.function(trajectory$fn)) {
@@ -16,13 +16,13 @@ check_trajectory <- function(trajectory, initPop = NULL) {
 
   # ---- args ----
   # Attempt to convert lists to character vectors
-  trajectory$args <- validate_convert_char_vector(trajectory$args, "trajectory$args")
+  trajectory$args <- .validate_convert_char_vector(trajectory$args, "trajectory$args")
   # Check named columns exist
   if (!is.null(initPop)) {
-    validate_columns_exist(trajectory$args, "trajectory$args", initPop)
+    .validate_columns_exist(trajectory$args, "trajectory$args", initPop)
   }
   # Check number of params matches what function requires
-  validate_function_args(trajectory$args, "trajectory$args", trajectory$fn)
+  .validate_function_args(trajectory$args, "trajectory$args", trajectory$fn)
 
   # ---- property ----
   if (!is.character(trajectory$property) || length(trajectory$property) == 0L) {
@@ -57,7 +57,7 @@ new_trajectory <- function(fn, args, property, name = NULL) {
     fn = fn,
     args = args,
     property = property,
-    name = get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
+    name = .get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
   )
   # Assign S3 class
   class(trajectory) <- "golden_trajectory"
@@ -67,6 +67,11 @@ new_trajectory <- function(fn, args, property, name = NULL) {
   return(trajectory)
 }
 
+#' Print the contents of a golden_trajectory type S3 object
+#'
+#' @param x The object to be printed
+#' @param ... Not used. Included for S3 method compatibility.
+#' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 print.golden_trajectory <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
