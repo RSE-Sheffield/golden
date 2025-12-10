@@ -49,7 +49,7 @@ bmi_traj <- function(age) {
 
 ## adatped from the globorisk R package
 ## slow: could defo do better with same package data
-globohaz <- function(sex, age, bmi) {
+globohaz <- function(sex, age, bmi, full_out = FALSE) {
   n <- length(sex)
   if (length(sex) != length(age) || length(sex) != length(bmi)) {
     stop("Arguments must be equal length!\n")
@@ -65,20 +65,18 @@ globohaz <- function(sex, age, bmi) {
     bmi = bmi,
     iso = rep("USA", n),
     year = rep(2000, n),
-    version = "lab",
+    version = "office",
     type = "all"
   )
-  ans$hzcvd_0
+  if (full_out) {
+    return(ans)
+  } else {
+    return(ans$hzcvd_0)
+  }
 }
-
 
 ## tests
 globohaz(c(0, 1, 1), c(00, 50, 90), rep(25, 3))
-
-## TODO check & write a faster version of above function
-## globorisk:::cvdr
-## globorisk:::rf
-## globorisk:::coefs
 
 ## convert these to restricted/faster look-up tables
 mycoefs <- as.data.table(globorisk:::coefs)
@@ -92,7 +90,7 @@ myrf[c("1_1", "1_0")]
 
 
 mycvdr <- as.data.table(globorisk:::cvdr)
-mycvdr <- mycdr[
+mycvdr <- mycvdr[
   iso == "USA" & type == "FNF" & year == 2000,
   .(agec, sex, cvd_0)
 ]
@@ -100,7 +98,6 @@ mycvdr <- unique(mycvdr)
 mycvdr[, agesex := paste(agec, sex, sep = "_")]
 setkey(mycvdr, agesex)
 mycvdr[c("1_1", "1_0")]
-
 
 
 globohaz2 <- function(sex, age, bmi) {
@@ -142,7 +139,6 @@ globohaz2 <- function(sex, age, bmi) {
   h * HR
 }
 
-## BUG currently these differ - understand why
 globohaz(c(0, 1, 1), c(00, 50, 90), rep(25, 3))
 globohaz2(c(0, 1, 1), c(00, 50, 90), rep(25, 3))
 
@@ -155,7 +151,16 @@ globohaz2(c(0, 1, 1), c(00, 50, 90), rep(25, 3))
 
 # Read the CSV and convert qx into a matrix [age, year]
 rows_per_year <- 101
-lifetable <- read.csv("tests/data/life_table.csv", header = TRUE)
+## lifetable <- fread("tests/data/life_table.csv") #TODO delete
+
+lifetable <- mx1dt[
+  name == "United States of America" &
+    year >= 2024,
+  .(year, age, qx = mxB)
+]
+
+
+
 life_qx <- as.numeric(lifetable$qx)
 n_years <- length(life_qx) / rows_per_year
 qx_mat <- matrix(life_qx, nrow = rows_per_year, ncol = n_years)
@@ -189,31 +194,32 @@ transition_fn <- function(state, i) {
 ######################
 data(popAge1dt)
 
-M <- as.matrix(popAge1dt[
-  name == "Afghanistan" &
-    year == 2000 &
-    age < 80,
-  .(popM, popF)
-])
-N <- 1e4
-popcounts <- rmultinom(1, size = N, prob = c(M))
-sexes <- rep(1, sum(popcounts[1:nrow(M)]))
-sexes <- c(sexes, rep(0, N - length(sexes)))
-initPop <- data.table(
-  male = as.integer(sexes),
-  age = as.integer(0),
-  death = as.integer(rep(-1, N))
-)
-## do ages
-ageref <- rep(0:79, 2)
-k <- 1
-for (i in 1:length(popcounts)) {
-  initPop[k:(popcounts[i] + k - 1), age := ageref[i]]
-  k <- k + popcounts[i]
+make_cohort <- function(N, country_name) {
+  M <- as.matrix(popAge1dt[
+    name == country_name &
+      year == 2000 &
+      age < 80,
+    .(popM, popF)
+  ])
+  popcounts <- rmultinom(1, size = N, prob = c(M))
+  sexes <- rep(1, sum(popcounts[1:nrow(M)]))
+  sexes <- c(sexes, rep(0, N - length(sexes)))
+  initPop <- data.table(
+    male = as.integer(sexes),
+    age = as.integer(0),
+    death = as.integer(rep(-1, N))
+  )
+  ## do ages
+  ageref <- rep(0:79, 2)
+  k <- 1
+  for (i in 1:length(popcounts)) {
+    initPop[k:(popcounts[i] + k - 1), age := ageref[i]]
+    k <- k + popcounts[i]
+  }
+  initPop
 }
 
-
-
+initPop <- make_cohort(1e4, "United States of America")
 ## TODO sample using population data above
 # Init bmi (hazards run before trajectories)
 initPop$bmi <- bmi_traj(initPop$age)
@@ -301,8 +307,6 @@ ggplot(ret$history, aes(`~STEP`, `no. alive`)) +
   geom_line()
 
 ## SUGGESTIONS/QUERIES
-## TODO would be good to have progress/timing options
-## including which function calls were slowest?
 ## TODO functions with no args?
 
 
