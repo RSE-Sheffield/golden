@@ -10,15 +10,15 @@ check_parameters <- function(parameters, initPop = NULL) {
     }
   }
 
-  validate_S3(parameters, "Object", "golden_parameters")
+  .validate_S3(parameters, "Object", "golden_parameters")
 
   # Are the expected fields present
   required_fields <- c("hazards", "trajectories", "steps", "random_seed", "debug", "print_timing")
-  validate_fields_present(parameters, "golden_parameters", required_fields)
+  .validate_fields_present(parameters, "golden_parameters", required_fields)
   
   # ---- hazards & nested transitions ----
   # Check every element is a 'hazard' S3 object
-  validate_S3_list(parameters$hazards, "parameters$hazards", "golden_hazard")
+  .validate_S3_list(parameters$hazards, "parameters$hazards", "golden_hazard")
   if (!is.null(initPop)) {
     for (hz in parameters$hazards) {
       check_hazard(hz, initPop)
@@ -37,7 +37,7 @@ check_parameters <- function(parameters, initPop = NULL) {
   }
   
   # ---- trajectories ----
-  validate_S3_list(parameters$trajectories, "parameters$trajectories", "golden_trajectory")
+  .validate_S3_list(parameters$trajectories, "parameters$trajectories", "golden_trajectory")
   if (!is.null(initPop)) {
     for (trj in parameters$trajectories) {
       check_trajectory(trj, initPop)
@@ -51,23 +51,23 @@ check_parameters <- function(parameters, initPop = NULL) {
   } 
   
   # ---- steps ----
-  validate_whole_number(parameters$steps, "parameters$steps")
+  .validate_whole_number(parameters$steps, "parameters$steps")
   # ---- history ----  
   if (!is.null(parameters$history)) {  
-    validate_S3(parameters$history, "parameters$history", "golden_history")
+    .validate_S3(parameters$history, "parameters$history", "golden_history")
     if (!is.null(initPop)) {
       check_history(parameters$history, initPop)
     }
   }
   
   # ---- random_seed ----
-  validate_whole_number(parameters$random_seed, "parameters$random_seed")
+  .validate_whole_number(parameters$random_seed, "parameters$random_seed")
   
   # ---- debug ----
-  validate_logical(parameters$debug, "parameters$debug")
+  .validate_logical(parameters$debug, "parameters$debug")
   
   # ---- print_timing ----
-  validate_logical(parameters$print_timing, "parameters$print_timing")
+  .validate_logical(parameters$print_timing, "parameters$print_timing")
   
   return (parameters)
 }
@@ -110,6 +110,11 @@ new_parameters <- function(hazards = list(), trajectories = list(), steps, rando
   return(parameters)
 }
 
+#' Print the contents of a golden_parameters type S3 object
+#'
+#' @param x The object to be printed
+#' @param ... Not used. Included for S3 method compatibility.
+#' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 print.golden_parameters <- function(x, ..., indent = 0) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

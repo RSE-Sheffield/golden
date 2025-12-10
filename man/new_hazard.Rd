@@ -9,7 +9,7 @@ new_hazard(
   args,
   transitions,
   freq = 1,
-  first = 0,
+  first = 1,
   last = 2147483647,
   name = NULL
 )
@@ -21,11 +21,11 @@ new_hazard(
 
 \item{transitions}{Transition object(s) to be applied where the hazard is successful}
 
-\item{freq}{(Optional) The frequency of hazard execution}
+\item{freq}{(Optional) The frequency of hazard execution, hazards always execute on first step}
 
-\item{first}{(Optional) First step the hazard should be enabled}
+\item{first}{(Optional) First step the hazard should be enabled (initial step is index 1)}
 
-\item{last}{(Optional) Last step the hazard should be enabled}
+\item{last}{(Optional) Last step the hazard should be enabled (initial step is index 1)}
 
 \item{name}{(Optional) Name used in error messages and similar. Defaults to an automatic name}
 }

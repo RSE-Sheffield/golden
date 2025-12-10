@@ -3,11 +3,11 @@
 #' @param hazard An S3 object of class "golden_hazard"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_hazard <- function(hazard, initPop = NULL) {
-  validate_S3(hazard, "Object", "golden_hazard")
+  .validate_S3(hazard, "Object", "golden_hazard")
 
   # Are the expected fields present
   required_fields <- c("fn", "args", "transitions", "freq", "first", "last")
-  validate_fields_present(hazard, "golden_hazard", required_fields)
+  .validate_fields_present(hazard, "golden_hazard", required_fields)
 
   # ---- fn ----
   if (!is.function(hazard$fn)) {
@@ -16,17 +16,17 @@ check_hazard <- function(hazard, initPop = NULL) {
 
   # ---- args ----
   # Attempt to convert lists to character vectors
-  hazard$args <- validate_convert_char_vector(hazard$args, "hazard$args")
+  hazard$args <- .validate_convert_char_vector(hazard$args, "hazard$args")
   # Check named columns exist
   if (!is.null(initPop)) {
-    validate_columns_exist(hazard$args, "hazard$args", initPop)
+    .validate_columns_exist(hazard$args, "hazard$args", initPop)
   }
   # Check number of params matches what function requires
-  validate_function_args(hazard$args, "hazard$args", hazard$fn)
+  .validate_function_args(hazard$args, "hazard$args", hazard$fn)
 
   # ---- transitions ----
   # Check every element is a 'golden_transition' S3 object
-  validate_S3_list(hazard$transitions, "hazard$transitions", "golden_transition")
+  .validate_S3_list(hazard$transitions, "hazard$transitions", "golden_transition")
   # Nested column check
   if (!is.null(initPop)) {
     for (trn in hazard$transitions) {
@@ -35,13 +35,13 @@ check_hazard <- function(hazard, initPop = NULL) {
   }
   
   # ---- freq ----
-  validate_whole_number(hazard$freq, "hazard$freq")
+  .validate_whole_number(hazard$freq, "hazard$freq")
   
   # ---- first ----
-  validate_whole_number(hazard$first, "hazard$first")
+  .validate_whole_number(hazard$first, "hazard$first")
   
   # ---- last ----
-  validate_whole_number(hazard$last, "hazard$last")
+  .validate_whole_number(hazard$last, "hazard$last")
   
   # ---- name ----
   if (!(is.null(hazard$name) || (is.character(hazard$name) && length(hazard$name) == 1))) {
@@ -74,7 +74,7 @@ new_hazard <- function(fn, args, transitions, freq = 1, first = 1, last = 214748
     freq = freq,
     first = first,
     last = last,
-    name = get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
+    name = .get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
   )  
   # Assign S3 class
   class(hazard) <- "golden_hazard"
@@ -84,6 +84,11 @@ new_hazard <- function(fn, args, transitions, freq = 1, first = 1, last = 214748
   return(hazard)
 }
 
+#' Print the contents of a golden_hazard type S3 object
+#'
+#' @param x The object to be printed
+#' @param ... Not used. Included for S3 method compatibility.
+#' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 print.golden_hazard <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

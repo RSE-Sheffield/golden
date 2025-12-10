@@ -10,6 +10,7 @@ new_parameters(
   steps,
   random_seed = 0,
   debug = TRUE,
+  print_timing = TRUE,
   history = NULL
 )
 }
@@ -23,6 +24,8 @@ new_parameters(
 \item{random_seed}{Seed to be used for random generation. If set 0, current R random state will be used.}
 
 \item{debug}{(TRUE/FALSE) flag indicating whether validation checks are enabled. These catch NaN, but reduce performance}
+
+\item{print_timing}{(TRUE/FALSE) flag indicating whether a per-function timing report should be printed after the simulation, this will always be suppressed for fast (<= 1 second) simulations.}
 
 \item{history}{golden_history S3 object representing the columns of data to be aggregated during simulation}
 }

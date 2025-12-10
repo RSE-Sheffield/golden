@@ -3,15 +3,15 @@
 #' @param history An S3 object of class "golden_history"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_history <- function(history, initPop = NULL) {
-  validate_S3(history, "Object", "golden_history")
+  .validate_S3(history, "Object", "golden_history")
 
   # Are the expected fields present
   required_fields <- c("columns", "frequency")
-  validate_fields_present(history, "golden_history", required_fields)
+  .validate_fields_present(history, "golden_history", required_fields)
   
   # ---- columns & nested transitions ----
   # Check every element is a 'columns' S3 object
-  validate_S3_list(history$columns, "history$columns", "golden_history_column")
+  .validate_S3_list(history$columns, "history$columns", "golden_history_column")
   # Check that every column has a unique name
   names_vec <- vapply(history$columns, `[[`, character(1), "name")
   if(length(unique(names_vec)) != length(names_vec)) {
@@ -56,6 +56,11 @@ new_history <- function(columns, frequency = 1) {
   return(history)
 }
 
+#' Print the contents of a golden_history type S3 object
+#'
+#' @param x The object to be printed
+#' @param ... Not used. Included for S3 method compatibility.
+#' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 print.golden_history <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
