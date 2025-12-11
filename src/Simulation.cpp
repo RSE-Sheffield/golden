@@ -66,13 +66,21 @@ List Simulation::run(List initPop) {
     }
     
     // Simulation loop
-    for (step = 0; step < STEPS; ++step) {
+    timerSim.start();
+    for (step = 0; step < STEPS;) {
         stepHazards();
         stepTrajectories();
         stepHistory();
-        printf("\rStep %d/%d complete", step + 1, STEPS);
+        // Increment step count
+        ++step;
+        // Calculate eta
+        const float currentRuntime = timerSim.getRunningSeconds();
+        const float avgStepTime = currentRuntime / step;
+        const float remainingTime = avgStepTime * (STEPS - step);
+        Rprintf("\rStep %d/%d complete, est. %.0fs remaining.", step, STEPS, remainingTime);
     }
-    printf("\rSimulation Complete!\n");
+    timerSim.stop();
+    Rprintf("\rSimulation Complete in %.2f seconds!      \n", timerSim.getElapsedSeconds());
     
     return buildOutput();
 }

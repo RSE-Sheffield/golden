@@ -1,10 +1,14 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
+#include <map>
 #include <set>
+#include <string>
 
 #include <Rcpp.h>
 using namespace Rcpp;
+
+#include "utils/Timer.h"
 
 class Simulation {
     static const std::set<std::string> SPECIAL_ARGS;
@@ -28,6 +32,11 @@ class Simulation {
     void stepHistory();
     
     List buildOutput();
+    
+    Timer timerSim;
+    std::map<std::string, Timer> HazardTimers;
+    std::map<std::string, Timer> TrajectoryTimers;
+    std::map<std::string, Timer> TransitionTimers;
     
   public:
     /**
