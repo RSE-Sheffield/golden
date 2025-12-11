@@ -86,15 +86,15 @@ test_that("Single Hazard fn/param, single transition fn/param", {
     
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
-    expect_equal(step1$a, ret_test)
+    expect_equal(step1$pop$a, ret_test)
     
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
-    expect_equal(step4$a, ret_test * 4)
+    expect_equal(step4$pop$a, ret_test * 4)
     
     # Validate that returned data tables are type data.table
-    expect_true(data.table::is.data.table(step1))
-    expect_true(data.table::is.data.table(step4))
+    expect_true(data.table::is.data.table(step1$pop))
+    expect_true(data.table::is.data.table(step4$pop))
 })
 
 test_that("Single Hazard fn/param, multiple transition fn/param", {
@@ -111,13 +111,13 @@ test_that("Single Hazard fn/param, multiple transition fn/param", {
     
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
-    expect_equal(step1$a, ret_test1)
-    expect_equal(step1$b, ret_test2)
+    expect_equal(step1$pop$a, ret_test1)
+    expect_equal(step1$pop$b, ret_test2)
     
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
-    expect_equal(step4$a, ret_test1 * 4)
-    expect_equal(step4$b, ret_test2 * 4)
+    expect_equal(step4$pop$a, ret_test1 * 4)
+    expect_equal(step4$pop$b, ret_test2 * 4)
     
     # Multiple transitions of same hazard share RNG
     parms$hazards[[1]]$fn = fifty_fifty_hazard
@@ -125,13 +125,13 @@ test_that("Single Hazard fn/param, multiple transition fn/param", {
     
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
-    expect_equal(step1$a * 1.5, step1$b)
+    expect_equal(step1$pop$a * 1.5, step1$pop$b)
     
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
-    expect_equal(step1$a * 1.5, step1$b)
+    expect_equal(step4$pop$a * 1.5, step4$pop$b)
     
     parms$steps = 7
-    step4 = run_simulation(initPop, parms)
-    expect_equal(step1$a * 1.5, step1$b)
+    step7 = run_simulation(initPop, parms)
+    expect_equal(step7$pop$a * 1.5, step7$pop$b)
 })
