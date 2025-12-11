@@ -50,11 +50,11 @@ test_that("Trajectory function is reflected in results", {
     # 1 step
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
-    expect_equal(step1$b, rep(2, N))
+    expect_equal(step1$pop$b, rep(2, N))
     # 4 steps
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
-    expect_equal(step4$b, rep(8, N))
+    expect_equal(step4$pop$b, rep(8, N))
     
     ## Second: ~STEP->b
     parms$trajectories <- list(new_trajectory(
@@ -65,11 +65,11 @@ test_that("Trajectory function is reflected in results", {
     # 1 step
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
-    expect_equal(step1$b, rep(0, N))
+    expect_equal(step1$pop$b, rep(0, N))
     # 4 step
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
-    expect_equal(step4$b, rep(3, N))
+    expect_equal(step4$pop$b, rep(3, N))
     
     ## Third: a+b->b
     parms$trajectories <- list(new_trajectory(
@@ -81,11 +81,11 @@ test_that("Trajectory function is reflected in results", {
     # 1 step
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
-    expect_equal(step1$b, rep(3, N))
+    expect_equal(step1$pop$b, rep(3, N))
     # 4 step
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
-    expect_equal(step4$b, rep(12, N))
+    expect_equal(step4$pop$b, rep(12, N))
     
     ## Fourth: Two trajectories (combine second and third above tests)
     initPop <- sample_pop3(N)
@@ -105,15 +105,15 @@ test_that("Trajectory function is reflected in results", {
     # 1 step
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
-    expect_equal(step1$a, rep(4, N))
-    expect_equal(step1$b, rep(4, N))
-    expect_equal(step1$c, rep(0, N))
+    expect_equal(step1$pop$a, rep(4, N))
+    expect_equal(step1$pop$b, rep(4, N))
+    expect_equal(step1$pop$c, rep(0, N))
     # 4 step
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
-    expect_equal(step4$a, rep(4, N))
-    expect_equal(step4$b, rep(16, N))
-    expect_equal(step4$c, rep(3, N))
+    expect_equal(step4$pop$a, rep(4, N))
+    expect_equal(step4$pop$b, rep(16, N))
+    expect_equal(step4$pop$c, rep(3, N))
     
     
     ## Fifth: Repeat the previous test, however the trajectories are dependent
@@ -144,13 +144,13 @@ test_that("Multivariate trajectory function is reflected in results", {
     # 1 step
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
-    expect_equal(step1$b, rep(2, N))
-    expect_equal(step1$c, rep(0, N))
+    expect_equal(step1$pop$b, rep(2, N))
+    expect_equal(step1$pop$c, rep(0, N))
     # 4 steps
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
-    expect_equal(step4$b, rep(8, N))
-    expect_equal(step4$c, rep(3, N))
+    expect_equal(step4$pop$b, rep(8, N))
+    expect_equal(step4$pop$c, rep(3, N))
         
     ## Second: a+b->b AND ~STEP->c
     multi_2_fn <- function(a, b, step) {
@@ -168,11 +168,11 @@ test_that("Multivariate trajectory function is reflected in results", {
     # 1 step
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
-    expect_equal(step1$b, rep(3, N))
-    expect_equal(step1$c, rep(0, N))
+    expect_equal(step1$pop$b, rep(3, N))
+    expect_equal(step1$pop$c, rep(0, N))
     # 4 step
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
-    expect_equal(step4$b, rep(12, N))
-    expect_equal(step4$c, rep(3, N))
+    expect_equal(step4$pop$b, rep(12, N))
+    expect_equal(step4$pop$c, rep(3, N))
 })
