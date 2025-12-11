@@ -26,17 +26,39 @@ class Simulation {
     List population;
     List historyLog;
     int step = 0; // Simulation iteration index (0-indexed)
+    // Timers
+    Timer simTimer;
+    std::map<std::string, Timer> hazardTimers;
+    std::map<std::string, Timer> transitionTimers;
+    std::map<std::string, Timer> trajectoryTimers;
+    std::map<std::string, Timer> columnTimers;
     
+    /**
+     * Execute all hazards (and child transitions) which are active for the current step
+     */
     void stepHazards();
+    /**
+     * Execute all trajectories
+     */
     void stepTrajectories();
+    /**
+     * Execute all columns active for the current step
+     */
     void stepHistory();
     
+    /**
+     * Construct the structure to be returned by run()
+     */
     List buildOutput();
-    
-    Timer timerSim;
-    std::map<std::string, Timer> HazardTimers;
-    std::map<std::string, Timer> TrajectoryTimers;
-    std::map<std::string, Timer> TransitionTimers;
+    /**
+     * Construct a nested list of each function's runtime
+     */
+    List buildTimingReport();
+    /**
+     * Crude method for printing the result of buildTimingReport() to console
+     * @param timing List returned by buildTimingReport()
+     */
+    void printTimingReport(List timing);
     
   public:
     /**

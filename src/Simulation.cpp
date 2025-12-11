@@ -44,9 +44,20 @@ Simulation::Simulation(List parameters)
     if (DEBUG) {
         warning("eldoradosim's model debug checks are enabled, these may impact performance.");
     }
+    // Create function timers
+    for (const List h : hazards) {
+        hazardTimers[h["name"]] = Timer();
+        List transitions = h["transitions"];
+        for (const List t : transitions)
+            transitionTimers[t["name"]] = Timer();
+    }
+    for (const List t : trajectories)
+        trajectoryTimers[t["name"]] = Timer();
     // Init History columns (difficult to do this in init list as requires assignment)
     if (history.size()) {
         columns = history["columns"];
+    for (const List c : columns)
+        columnTimers[c["name"]] = Timer();
     }
 }
 
@@ -54,6 +65,16 @@ List Simulation::run(List initPop) {
     // Create a deep-copy of the initial pop, that we will return with changes at the end
     // @todo create other columns, to log last hazard score?
     population = clone(initPop);
+    
+    // Reset timers
+    for (auto &timer : hazardTimers)
+        timer.second.resetDuration();
+    for (auto &timer : transitionTimers)
+        timer.second.resetDuration();
+    for (auto &timer : trajectoryTimers)
+        timer.second.resetDuration();
+    for (auto &timer : columnTimers)
+        timer.second.resetDuration();
         
     // Init History Data-table
     if (history.size()) {
@@ -66,7 +87,7 @@ List Simulation::run(List initPop) {
     }
     
     // Simulation loop
-    timerSim.start();
+    simTimer.start();
     for (step = 0; step < STEPS;) {
         stepHazards();
         stepTrajectories();
@@ -74,13 +95,13 @@ List Simulation::run(List initPop) {
         // Increment step count
         ++step;
         // Calculate eta
-        const float currentRuntime = timerSim.getRunningSeconds();
+        const float currentRuntime = simTimer.getRunningSeconds();
         const float avgStepTime = currentRuntime / step;
         const float remainingTime = avgStepTime * (STEPS - step);
         Rprintf("\rStep %d/%d complete, est. %.0fs remaining.", step, STEPS, remainingTime);
     }
-    timerSim.stop();
-    Rprintf("\rSimulation Complete in %.2f seconds!      \n", timerSim.getElapsedSeconds());
+    simTimer.stop();
+    Rprintf("\rSimulation Complete in %.2f seconds!      \n", simTimer.getElapsedSeconds());
     
     return buildOutput();
 }
@@ -103,7 +124,9 @@ void Simulation::stepHazards() {
             // dt = 1 (could vary in practice, but currently fixed)
             // if rng < p for an agent, then transition function is applied
             // hence p >= 1 is guaranteed, p > 1 potentially erroneous
+            hazardTimers[hazard["name"]].start();
             NumericVector h = dynamic_call(hazard["fn"], call_args);
+            hazardTimers[hazard["name"]].stop();
             const int dt = 1;
             NumericVector p = 1 - exp(-h * dt);
             NumericVector rng = runif(Rf_length(h));  // Generate vector of random float [0, 1)
@@ -118,19 +141,23 @@ void Simulation::stepHazards() {
                 // @todo can this be hidden inside a util function cleanly?
                 // Only apply transitions in cases where hazard occurred
                 String ts_name = transition["state"];
+                // Execute transition
+                transitionTimers[transition["name"]].start();
+                SEXP _transition_result = dynamic_call(transition["fn"], call_args);
+                transitionTimers[transition["name"]].stop();
                 // Select correct output based on output state type
                 if (Rf_isNumeric(population[ts_name])) {
-                    NumericVector transition_result = dynamic_call(transition["fn"], call_args);
+                    NumericVector transition_result = _transition_result;
                     if (DEBUG)
                         check_result(step, transition["name"], transition_result);
                     NumericVector transition_state = population[ts_name];
                     population[ts_name] = ifelse(rng < p, transition_result, transition_state);
                 } else if (Rf_isInteger(population[ts_name])) {
-                    IntegerVector transition_result = dynamic_call(transition["fn"], call_args);
+                    IntegerVector transition_result = _transition_result;
                     IntegerVector transition_state = population[ts_name];
                     population[ts_name] = ifelse(rng < p, transition_result, transition_state);
                 } else if (Rf_isLogical(population[ts_name])) {
-                    LogicalVector transition_result = dynamic_call(transition["fn"], call_args);
+                    LogicalVector transition_result = _transition_result;
                     LogicalVector transition_state = population[ts_name];
                     population[ts_name] = ifelse(rng < p, transition_result, transition_state);
                 } else {
@@ -151,16 +178,19 @@ void Simulation::stepTrajectories() {
         // Build arg list to execute trajectory chance
         List call_args = build_args(trajectory["args"], population, step);
         // Execute trajectory function and store result directly in trajectory's property
+        trajectoryTimers[trajectory["name"]].start();
+        SEXP trajectory_result = dynamic_call(trajectory["fn"], call_args);
+        trajectoryTimers[trajectory["name"]].stop();
         // Slightly different path, depending on whether it returns 1 or multiple properties
         if (Rf_length(trajectory["property"]) == 1) {
             // Single return value (returned list should be a column)
-            String trajectory_prop = trajectory["property"];
-            population[trajectory_prop] = dynamic_call(trajectory["fn"], call_args);
+            String trajectory_prop = trajectory["property"];            
+            population[trajectory_prop] = trajectory_result;
             if (DEBUG)
                 check_result(step, trajectory["name"], population[trajectory_prop]);
         } else {
             // Multiple return values (returned list, should be a list of columns)
-            List trajectory_returns = dynamic_call(trajectory["fn"], call_args);
+            List trajectory_returns = trajectory_result;
             CharacterVector trajectory_properties = trajectory["property"];
             if (Rf_length(trajectory_properties) != Rf_length(trajectory_returns))
                 stop("Trajectory function return value contains a different number of properties than expected.");
@@ -183,6 +213,7 @@ void Simulation::stepHistory() {
             for (List col : columns) {
                 String name = col["name"];
                 // Calculate filter vector if required by column
+                columnTimers[col["name"]].start();
                 LogicalVector filter_v = LogicalVector();
                 if (col["filter_fn"] != R_NilValue) {
                     List call_args = build_args(col["filter_args"], population, step);
@@ -194,6 +225,7 @@ void Simulation::stepHistory() {
                     : build_args(col["args"], population, step);
                 // Call the dynamic function
                 SEXP result = dynamic_call(col["fn"], call_args);
+                columnTimers[col["name"]].stop();
                 if (hist_i == 0) {
                     // Detect the type of the result and create corresponding vector
                     if (Rf_isNumeric(result)) {
@@ -240,10 +272,107 @@ List Simulation::buildOutput() {
         // Package it into a structure for return
         List ret = List::create(
             _["pop"]   = population,
-            _["history"] = historyLog
+            _["history"] = historyLog,
+            _["timing"] = buildTimingReport()
         );
         return ret;
     } else {
-        return population;
+        // Package it into a structure for return
+        List ret = List::create(
+            _["pop"]   = population,
+            _["history"] = historyLog,
+            _["timing"] = buildTimingReport()
+        );
+        return ret;
     }
+}
+
+List Simulation::buildTimingReport() {
+    List hazardTimes;
+    List transitionTimes;
+    for (const List h : hazards) {
+        Timer &htimer = hazardTimers[h["name"]];
+        // Round up as hazard currently occurs first step
+        const unsigned int ct = static_cast<unsigned int>(ceil(STEPS / static_cast<float>(h["freq"])));
+        hazardTimes.push_back(List::create(
+            _["total"] = htimer.getDurationSeconds(),
+            _["average"] = htimer.getDurationSeconds() / ct
+        ), h["name"]);
+        List transitions = h["transitions"];
+        for (const List t : transitions) {
+            Timer &ttimer = transitionTimers[t["name"]];
+            transitionTimes.push_back(List::create(
+                _["total"] = ttimer.getDurationSeconds(),
+                _["average"] = ttimer.getDurationSeconds()/ct
+            ), t["name"]);
+        }
+    }
+    List trajectoryTimes;
+    for (const List t : trajectories) {
+        Timer &ttimer = trajectoryTimers[t["name"]];
+        trajectoryTimes.push_back(List::create(
+            _["total"] = ttimer.getDurationSeconds(),
+            _["average"] = ttimer.getDurationSeconds()/STEPS
+        ), t["name"]);
+    }
+    List ret = List::create(
+        _["hazard"]   = hazardTimes,
+        _["transition"] = transitionTimes,
+        _["trajectory"] = trajectoryTimes
+    );
+    if (history.size()) {
+        List columnTimes;
+        columns = history["columns"];
+        for (const List c : columns) {
+            Timer &ctimer = columnTimers[c["name"]];
+            columnTimes.push_back(List::create(
+                _["total"] = ctimer.getDurationSeconds(),
+                _["average"] = ctimer.getDurationSeconds()/STEPS
+            ), c["name"]);
+        }
+        ret.push_back(columnTimes, "columns");
+    }
+    printTimingReport(ret);
+    return ret;
+}
+
+// Helper to print a named timing list
+void printTimingSection(const std::string &title, List section) {
+    if (section.size()) {
+        Rprintf("\n>>>>>> %s <<<<<<\n", title.c_str());
+        Rprintf("%10s | %10s | %s\n", "Total s", "Average s", "Name");
+        Rprintf("-----------|------------|----------------\n");
+
+        CharacterVector nms = section.names();
+        for (int i = 0; i < section.size(); ++i) {
+            const std::string name = as<std::string>(nms[i]);
+            List t = section[i];
+            const double total = t["total"];
+            const double avg   = t["average"];
+            // Fixed width: 10 chars for numbers, 6 decimals
+            Rprintf("%10.6f | %10.6f | %s\n", total, avg, name.c_str());
+        }
+    }
+}
+
+void Simulation::printTimingReport(List timing) {
+    Rprintf("====== Timing Summary ======\n");
+
+    if (timing.containsElementNamed("hazard")) {
+        printTimingSection("Hazard Times", timing["hazard"]);
+    }
+
+    if (timing.containsElementNamed("transition")) {
+        printTimingSection("Transition Times", timing["transition"]);
+    }
+
+    if (timing.containsElementNamed("trajectory")) {
+        printTimingSection("Trajectory Times", timing["trajectory"]);
+    }
+
+    if (timing.containsElementNamed("column")) {
+        printTimingSection("Column (& Filter) Times", timing["column"]);
+    }
+
+    Rprintf("\n");
 }
