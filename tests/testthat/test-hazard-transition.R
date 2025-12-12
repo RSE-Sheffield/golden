@@ -76,6 +76,92 @@ get_parms2 <- function() {
     )
 }
 
+test_that("Hazard$first works", {
+    N = 100
+    initPop <- sample_pop2(N)
+    parms <- get_parms()
+    ## All odd indices "a" parameter transitions from 0 to 2, even remain 0
+    ret_test <- rep(0.0, N)
+    ret_test[seq(2, N, by = 2)] <- 2
+    
+    # Hazard on no steps
+    parms$hazards[[1]]$first <- 2
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, rep(0.0, N))
+    
+    # Hazard on steps 2,3,4 (x3) (skip 1)
+    parms$hazards[[1]]$first <- 2
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test * 3)
+    
+    # Hazard on steps 3,4,5 (x3) (skip 1,2)
+    parms$hazards[[1]]$first <- 3
+    parms$steps = 5
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test * 3)
+})
+test_that("Hazard$last works", {
+    N = 100
+    initPop <- sample_pop2(N)
+    parms <- get_parms()
+    ## All odd indices "a" parameter transitions from 0 to 2, even remain 0
+    ret_test <- rep(0.0, N)
+    ret_test[seq(2, N, by = 2)] <- 2
+    
+    # Hazard on steps 1
+    parms$hazards[[1]]$last <- 3
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, ret_test)
+    
+    # Hazard on steps 1,2,3 (x3) (skip 4)
+    parms$hazards[[1]]$last <- 3
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test * 3)
+    
+    # Hazard on steps 1,2,3 (x3) (skip 4-40)
+    parms$hazards[[1]]$last <- 3
+    parms$steps = 40
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test * 3)
+})
+test_that("Hazard$freq works", {
+    N = 100
+    initPop <- sample_pop2(N)
+    parms <- get_parms()
+    ## All odd indices "a" parameter transitions from 0 to 2, even remain 0
+    ret_test <- rep(0.0, N)
+    ret_test[seq(2, N, by = 2)] <- 2
+    
+    parms$hazards[[1]]$freq <- 2
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, ret_test)
+    
+    parms$hazards[[1]]$freq <- 2
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test * 2)
+    
+    parms$hazards[[1]]$freq <- 3
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, ret_test)
+    
+    parms$hazards[[1]]$freq <- 3
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test * 2)
+    
+    parms$hazards[[1]]$freq <- 3
+    parms$steps = 6
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test * 2)
+})
+
 test_that("Single Hazard fn/param, single transition fn/param", {
     N = 100
     initPop <- sample_pop2(N)

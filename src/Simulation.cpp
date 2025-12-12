@@ -113,9 +113,10 @@ void Simulation::stepHazards() {
     for (List hazard : hazards) {
         // If hazard is active this step
         const unsigned int freq = hazard["freq"];
-        const int before = hazard["last"];
-        const int after = hazard["first"];
-        if(step % freq == 0 && step <= before && step >= after) {
+        const int last = hazard["last"];
+        const int first = hazard["first"];
+        const int step1 = step + 1;
+        if(step % freq == 0 && step1 <= last && step1 >= first) {
             // Build arg list to execute hazard chance
             List call_args = build_args(hazard["args"], population, step);
             // Execute hazard function and process results

@@ -56,12 +56,12 @@ check_hazard <- function(hazard, initPop = NULL) {
 #' @param fn Function which calculates the hazard likelihood
 #' @param args Character vector of parameter names expected by fn
 #' @param transitions Transition object(s) to be applied where the hazard is successful
-#' @param freq (Optional) The frequency of hazard execution
-#' @param first (Optional) First step the hazard should be enabled
-#' @param last (Optional) Last step the hazard should be enabled
+#' @param freq (Optional) The frequency of hazard execution, hazards always execute on first step
+#' @param first (Optional) First step the hazard should be enabled (initial step is index 1)
+#' @param last (Optional) Last step the hazard should be enabled (initial step is index 1)
 #' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
 #' @return An object of class "eldoradosim_hazard"
-new_hazard <- function(fn, args, transitions, freq = 1, first = 0, last = 2147483647, name = NULL) {
+new_hazard <- function(fn, args, transitions, freq = 1, first = 1, last = 2147483647, name = NULL) {
   # If transitions is not already a list, upgrade it
   if (inherits(transitions, "eldoradosim_transition")) {
     transitions <- list(transitions)
