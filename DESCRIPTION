@@ -26,3 +26,8 @@ Suggests:
     data.table,
     SciViews
 Config/testthat/edition: 3
+Depends: 
+    R (>= 3.5)
+LazyData: true
+RoxygenNote: 7.3.3
+Encoding: UTF-8
