@@ -16,6 +16,17 @@ check_parameters <- function(parameters, initPop = NULL) {
     for (hz in parameters$hazards) {
       check_hazard(hz, initPop)
     }
+    # Init missing hazard and transition names
+    for (i in seq_len(length(parameters$hazards))) {
+      if (is.null(parameters$hazards[[i]]$name)) {
+        parameters$hazards[[i]]$name = paste0("parameters$hazards[[", i, "]]")
+      }
+      for (j in seq_len(length(parameters$hazards[[i]]$transitions))) {
+        if (is.null(parameters$hazards[[i]]$transitions[[j]]$name)) {
+          parameters$hazards[[i]]$transitions[[j]]$name = paste0("parameters$hazards[[", i, "]]$transitions[[", j, "]]")
+        }
+      }
+    }
   }
   
   # ---- trajectories ----
@@ -23,6 +34,12 @@ check_parameters <- function(parameters, initPop = NULL) {
   if (!is.null(initPop)) {
     for (trj in parameters$trajectories) {
       check_trajectory(trj, initPop)
+    }
+    # Init missing trajectory names
+    for (i in seq_len(length(parameters$trajectories))) {
+      if (is.null(parameters$trajectories[[i]]$name)) {
+        parameters$trajectories[[i]]$name = paste0("parameters$trajectories[[", i, "]]")
+      }
     }
   } 
   
@@ -41,6 +58,8 @@ check_parameters <- function(parameters, initPop = NULL) {
   
   # ---- debug ----
   validate_logical(parameters$debug, "parameters$debug")
+  
+  return (parameters)
 }
 
 #' Create a new eldoradosim_parameters
@@ -73,7 +92,8 @@ new_parameters <- function(hazards, trajectories, steps, random_seed = 0, debug 
   # Assign S3 class
   class(parameters) <- "eldoradosim_parameters"
   # Check parameters has correct members of correct types
-  check_parameters(parameters)
+  # This will also resolve null names
+  parameters <- check_parameters(parameters)
   # Return parameters
   return(parameters)
 }

@@ -129,3 +129,15 @@ validate_function_args <- function(test_object, name, fn) {
       paste(length(test_object), ">", length(formals(args(fn)))))
   }
 }
+
+get_name <- function(fn, name) {
+  if (is.null(name)) {
+    # Only use t as name if it's a name (e.g. it could be a full function body)
+    # A string containing a space is a good sign it's not a variable name
+    if (!grepl(" ", fn)) {
+        return (fn)
+    }
+    # If name remains null, it will be addressed at the final check
+  }
+  return (name)
+}

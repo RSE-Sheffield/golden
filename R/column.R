@@ -57,7 +57,7 @@ check_column <- function(column, initPop = NULL) {
 #' @param fn Reduction function, which converts the input columns to a single value
 #' @param args Names of columns and special variables to be passed to fn
 #' @param filter_fn (Optional) Filter function, which returns a bool vector denoting which rows should be reduced
-#' @param filter_args (Optional) Names of columns and special variables to be passed to filter_fn. Required if filter_fn is used.
+#' @param filter_args (Optional) Names of columns and special variables to be passed to filter_fn. Required if filter_fn is 
 #' @return An object of class "eldoradosim_history_column"
 new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
   # Initialise new parameters (S3 class)

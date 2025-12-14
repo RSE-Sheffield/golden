@@ -42,6 +42,11 @@ check_hazard <- function(hazard, initPop = NULL) {
   
   # ---- last ----
   validate_whole_number(hazard$last, "hazard$last")
+  
+  # ---- name ----
+  if (!(is.null(hazard$name) || (is.character(hazard$name) && length(hazard$name) == 1))) {
+    stop("'hazard$name' must be a string")
+  }
 
   return (NULL)
 }
@@ -54,8 +59,9 @@ check_hazard <- function(hazard, initPop = NULL) {
 #' @param freq (Optional) The frequency of hazard execution
 #' @param first (Optional) First step the hazard should be enabled
 #' @param last (Optional) Last step the hazard should be enabled
+#' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
 #' @return An object of class "eldoradosim_hazard"
-new_hazard <- function(fn, args, transitions, freq = 1, first = 0, last = 2147483647) {
+new_hazard <- function(fn, args, transitions, freq = 1, first = 0, last = 2147483647, name = NULL) {
   # If transitions is not already a list, upgrade it
   if (inherits(transitions, "eldoradosim_transition")) {
     transitions <- list(transitions)
@@ -67,7 +73,8 @@ new_hazard <- function(fn, args, transitions, freq = 1, first = 0, last = 214748
     transitions = transitions,
     freq = freq,
     first = first,
-    last = last
+    last = last,
+    name = get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
   )  
   # Assign S3 class
   class(hazard) <- "eldoradosim_hazard"

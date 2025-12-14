@@ -34,6 +34,11 @@ check_transition <- function(transition, initPop = NULL) {
         stop("initial population columns do not contain transition$state: ", transition$state)
       }
   }
+  
+  # ---- name ----
+  if (!(is.null(transition$name) || (is.character(transition$name) && length(transition$name) == 1))) {
+    stop("'transition$name' must be a string")
+  }
 
   return (NULL)
 }
@@ -43,13 +48,15 @@ check_transition <- function(transition, initPop = NULL) {
 #' @param fn Function defining the transition functions
 #' @param args Character vector of parameter names expected by fn
 #' @param state Name of the column where the result of the transition function is to be stored
+#' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
 #' @return An object of class "eldoradosim_transition"
-new_transition <- function(fn, args, state) {
+new_transition <- function(fn, args, state, name = NULL) {
   # Initialise new transition (S3 class)
   transition <- list(
     fn = fn,
     args = args,
-    state = state
+    state = state,
+    name = get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
   )
   # Assign S3 class
   class(transition) <- "eldoradosim_transition"
