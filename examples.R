@@ -58,7 +58,7 @@ ret0 <- run_simulation(pop0, parms0)
 
 ## TODO finish
 ## TODO version of this with decay parameters assigned to individuals (PSA eg)
-
+## TODO version with multiple transitions?
 
 
 ## ========== less trivial example
@@ -73,7 +73,26 @@ age_traj <- function(age, death_time) {
 
 
 
-## TODO example of bivariate random walk for randomness & multivariateness
+## multivariate trajectory example
+## sbp & tc as correlated geometric random walk
+bptc_traj <- function(sbp, tc, death_time) {
+  lsbp <- log(sbp)
+  ltc <- log(tc)
+  alive <- death_time < 0
+  if (sum(alive) > 1) {
+    U <- matrix(rnorm(2 * sum(alive)), nrow = sum(alive), ncol = 2)
+    U[, 2] <- U[, 2] + U[, 1] / 2 # correlation
+    U <- U / 100 # rescale
+    lsbp[alive] <- lsbp[alive] + U[, 1]
+    ltc[alive] <- ltc[alive] + U[, 2]
+  }
+  list(sbp = exp(lsbp), tc = exp(ltc))
+}
+
+bptc_traj(rep(140, 5), rep(4.5, 5), rep(-1, 5))
+bptc_traj(rep(140, 5), rep(4.5, 5), rep(1, 5))
+
+
 
 ##############
 # CVD HAZARD #
@@ -81,19 +100,18 @@ age_traj <- function(age, death_time) {
 
 
 ## version only focussed on relevant output
-globohaz <- function(death, sex, age, bmi) {
+globohaz <- function(death, sex, age, bmi, sbp = 140, tc = 4.5) {
   n <- length(sex)
   if (length(sex) != length(age) || length(sex) != length(bmi)) {
     stop("Arguments must be equal length!\n")
   }
   ## checks/additions
   age <- pmin(pmax(age, 41), 75)
-  sbp <- rep(140, n)
-  tc <- rep(4.5, n)
   dm <- rep(0, n)
   smk <- rep(0, n)
   ## globorisk transforms
   agec <- as.integer(ifelse(age < 85, trunc(age / 5) - 7, 10))
+  ## TODO CHECK 10 not actualy in risks?
   sbp <- sbp / 10
   dm <- as.integer(dm)
   smk <- as.integer(smk)
@@ -125,7 +143,16 @@ globohaz <- function(death, sex, age, bmi) {
 }
 
 
-globohaz(c(-1, -1, 1), c(0, 1, 1), c(00, 50, 90), rep(25, 3))
+
+globohaz(
+  c(-1, -1, 1), #alive
+  c(0, 1, 1),   #sex
+  c(00, 50, 90), #age
+  rep(25, 3),    #BMI
+  rep(145, 3),   #SBP
+  rep(5, 3)      #TC
+)
+
 
 cvd_update <- function(cvd_count) {
   cvd_count + 1
@@ -135,10 +162,7 @@ cvd_update <- function(cvd_count) {
 ########################
 # GENERAL DEATH HAZARD #
 ########################
-
-
-
-lifetable_data[year == 2000]
+lifetable_data
 
 
 
@@ -158,10 +182,7 @@ mort_fn <- function(sex, age, year) {
 }
 
 
-
 mort_fn(rep(1, 10), rep(50, 10), rep(70, 10))
-
-
 
 
 
@@ -195,7 +216,6 @@ make_cohort <- function(N) {
   }
   initPop
 }
-
 
 initPop <- make_cohort(1e4)
 initPop[, acat := fcase(
@@ -235,11 +255,23 @@ bmi_traj <- function(age) {
   predict(mm, newdata = data.table(age = age))
 }
 
-# bmi_traj(25) # test
+bmi_traj(25) # test
 
 ## initial pop
 ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
   geom_histogram()
+
+
+## merge in SBP and TC
+initPop[, agec := as.integer(ifelse(age < 85, trunc(age / 5) - 7, 10))]
+initPop[agec < 1, agec := 1]
+initPop[agec > 9, agec := 9]
+
+initPop <- merge(
+  initPop,
+  globorisk_rf[, .(agec, male = sex, sbp = 10 * mean_sbp, tc = mean_tc)],
+  by = c("agec", "male")
+)
 
 
 
@@ -248,13 +280,17 @@ ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
 #############
 
 hazlist <- list(
+  ## CVD event
   new_hazard(
     globohaz,
-    c("death", "male", "age", "bmi"), #input args for hazard
-    list(new_transition(cvd_update,
-                        "cvd_count", #input args for transition
-                        "cvd_count")) #vars affected by transition
+    c("death", "male", "age", "bmi", "sbp", "tc"), # input args for hazard
+    list(new_transition(
+      cvd_update,  # transition function for event
+      "cvd_count", # input args for transition
+      "cvd_count"  # vars affected by transition
+    ))
   ),
+  ## deaths
   new_hazard(
     mort_fn,
     c("male", "age", "~STEP"),
@@ -263,14 +299,26 @@ hazlist <- list(
 )
 
 
+
 ##################
 ## TRAJECTORIES ##
 ##################
 
 trajlist <- list(
+  ## age
   new_trajectory(age_traj, c("age", "death"), "age"),
-  new_trajectory(bmi_traj, c("age"), "bmi")
+  ## BMI
+  new_trajectory(bmi_traj, c("age"), "bmi"),
+  ## SBP & TC handled in bivariate fashion
+  new_trajectory(
+    bptc_traj,                    #trajectory fn
+    c("sbp", "tc", "death"), # trajectory args
+    c("sbp", "tc") # outputs (list of vectors from fn)
+  )
 )
+
+
+
 
 ###########
 # HISTORY #
@@ -322,7 +370,7 @@ ggplot(ret$history, aes(`~STEP`, `av. cvd events`)) +
 
 ## SUGGESTIONS/QUERIES
 ## TODO functions with no args? **
-
+## Does parms take a list of histories? If not slightly different behaviour
 
 ## FOR VIGNETTE
 ## NOTE if you rewrite functions, this is not enough: need to remake objects
@@ -330,5 +378,4 @@ ggplot(ret$history, aes(`~STEP`, `av. cvd events`)) +
 
 ## OTHER EXAMPLES
 ## TODO example of timed event: how was this to work again? **
-## TODO multivariate & random (see above)
 ## TODO data documentation not working **
