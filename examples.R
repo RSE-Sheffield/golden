@@ -3,6 +3,7 @@ devtools::load_all()
 ## Sys.setenv(RCPP_DEVEL_DEBUG = "1")
 ## options(error = recover)
 
+
 library(data.table)
 library(ggplot2)
 
@@ -91,32 +92,31 @@ globohaz(c(0, 1, 1), c(00, 50, 90), rep(25, 3))
 # GENERAL DEATH HAZARD #
 ########################
 
-## TODO
 
-
-## Read the CSV and convert qx into a matrix [age, year]
-rows_per_year <- 101
-lifetable <- fread("tests/data/life_table.csv") #TODO delete
-life_qx <- as.numeric(lifetable$qx)
-n_years <- length(life_qx) / rows_per_year
-qx_mat <- matrix(life_qx, nrow = rows_per_year, ncol = n_years)
-# Calculates the general death hazard chance for a given age/year
-life_fn <- function(age, year) {
-  # Convert to 1-indexed and clamp in bounds
-  n_rows <- nrow(qx_mat)
-  n_cols <- ncol(qx_mat)
-  row_index <- pmin(pmax(age + 1, 1), n_rows)
-  col_index <- pmin(pmax(year + 1, 1), n_cols)
-  qx_mat[row_index, col_index]
-}
-life_fn(50, 70)
+## ## Read the CSV and convert qx into a matrix [age, year]
+## rows_per_year <- 101
+## lifetable <- fread("tests/data/life_table.csv") #TODO delete
+## life_qx <- as.numeric(lifetable$qx)
+## n_years <- length(life_qx) / rows_per_year
+## qx_mat <- matrix(life_qx, nrow = rows_per_year, ncol = n_years)
+## # Calculates the general death hazard chance for a given age/year
+## life_fn <- function(age, year) {
+##   # Convert to 1-indexed and clamp in bounds
+##   n_rows <- nrow(qx_mat)
+##   n_cols <- ncol(qx_mat)
+##   row_index <- pmin(pmax(age + 1, 1), n_rows)
+##   col_index <- pmin(pmax(year + 1, 1), n_cols)
+##   qx_mat[cbind(row_index, col_index)]
+## }
+## life_fn(50, 70)
+## life_fn(rep(50, 10), rep(70, 10))
 
 
 
 lifetable_data[year == 2000]
 
 
-## BUG?
+
 n_ages <- 101
 n_years <- nrow(lifetable_data) / n_ages
 qx_array <- array(0, dim = c(2, n_ages, n_years))
@@ -129,11 +129,13 @@ mort_fn <- function(sex, age, year) {
   n_cols <- d[3]
   row_index <- pmin(pmax(age + 1, 1), n_rows)
   col_index <- pmin(pmax(year + 1, 1), n_cols)
-  qx_array[sex + 1, row_index, col_index] #zero index female
+  qx_array[cbind(sex + 1, row_index, col_index)] # zero index female
 }
 
 
-mort_fn(1, 50, 70)
+
+mort_fn(rep(1, 10), rep(50, 10), rep(70, 10))
+
 
 
 
@@ -189,19 +191,6 @@ ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
 ## HAZARDS ##
 #############
 
-## hazlist <- list(
-##   new_hazard(
-##     globohaz,
-##     c("male", "age", "bmi"),
-##     list(new_transition(transition_fn, c("death", "~STEP"), "death"))
-##   ),
-##   new_hazard(
-##     mort_fn,
-##     c("male", "age", "~STEP"),
-##     list(new_transition(transition_fn, c("death", "~STEP"), "death"))
-##   )
-## )
-
 hazlist <- list(
   new_hazard(
     globohaz,
@@ -209,11 +198,24 @@ hazlist <- list(
     list(new_transition(transition_fn, c("death", "~STEP"), "death"))
   ),
   new_hazard(
-    life_fn,
-    c("age", "~STEP"),
+    mort_fn,
+    c("male", "age", "~STEP"),
     list(new_transition(transition_fn, c("death", "~STEP"), "death"))
   )
 )
+
+## hazlist <- list(
+##   new_hazard(
+##     globohaz,
+##     c("male", "age", "bmi"),
+##     list(new_transition(transition_fn, c("death", "~STEP"), "death"))
+##   ),
+##   new_hazard(
+##     life_fn,
+##     c("age", "~STEP"),
+##     list(new_transition(transition_fn, c("death", "~STEP"), "death"))
+##   )
+## )
 
 
 
