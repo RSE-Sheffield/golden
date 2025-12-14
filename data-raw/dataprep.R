@@ -145,7 +145,7 @@ usethis::use_data(
 ## load some fits of BMI data
 ## see https://github.com/petedodd/bmitb
 load("~/Documents/bmitb/data/DRB.Rdata")
-DRB[iso3 == "USA"] #NB 2022
+DRB <- DRB[iso3 == "USA"] #NB 2022
 
 bmi_fits <- DRB[, .(sex = Sex, acat = age, k, theta)]
 
