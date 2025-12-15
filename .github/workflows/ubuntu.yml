@@ -82,15 +82,15 @@ jobs:
         
       - name: "Build Package (R CMD)"
         run: R CMD build .
-      
-      - name: "Check Package (R CMD)"
-        run: R CMD check .
         
       - name: "Install Package (R CMD)"
-        run: R CMD INSTALL --dependencies=TRUE .
+        run: R CMD INSTALL --dependencies=TRUE --install-tests .
         
       - name: "Test Package"
         run: Rscript ".github/scripts/test.R"
+      
+      - name: "Check Package (R CMD)"
+        run: R CMD check .
         
       # Could then have an upload artifact step
   
