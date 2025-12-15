@@ -27,6 +27,7 @@ class  Timer {
             this->stopTime = std::chrono::steady_clock::now();
             this->stopEventRecorded = true;
             this->durationMillis += getElapsedMilliseconds();
+            ++durationCount;
         } else {
             throw std::logic_error("start() must be called prior to calling stop()");
         }
@@ -36,7 +37,7 @@ class  Timer {
      * Get the time since start() in milliseconds
      * @return elapsed time in seconds
      */
-    float getRunningMilliseconds() {
+    float getRunningMilliseconds() const {
         if (!startEventRecorded) {
             throw std::logic_error("start() must be called prior to getRunning*()");
         }
@@ -49,7 +50,7 @@ class  Timer {
      * Get the time since start() in seconds
      * @return running time in seconds
      */
-    float getRunningSeconds() {
+    float getRunningSeconds() const {
         return this->getRunningMilliseconds() / 1000.0f;
     }
 
@@ -57,7 +58,7 @@ class  Timer {
      * Get the elapsed time between calls to start() and stop() in milliseconds
      * @return elapsed time in milliseconds
      */
-    float getElapsedMilliseconds() {
+    float getElapsedMilliseconds() const {
         if (!startEventRecorded) {
             throw std::logic_error("start() must be called prior to getElapsed*()");
         }
@@ -65,7 +66,7 @@ class  Timer {
             throw std::logic_error("stop() must be called prior to getElapsed*()");
         }
         std::chrono::duration<double> elapsed = this->stopTime - this->startTime;
-        float ms = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
+        const float ms = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
         return ms;
     }
 
@@ -73,7 +74,7 @@ class  Timer {
      * Get the elapsed time between calls to start() and stop() in seconds
      * @return elapsed time in seconds
      */
-    float getElapsedSeconds() {
+    float getElapsedSeconds() const {
         return this->getElapsedMilliseconds() / 1000.0f;
     }
     
@@ -81,21 +82,25 @@ class  Timer {
      * Get the combined duration of each start() stop() pair since init in milliseconds
      * @return combined duration in milliseconds
      */
-    float getDurationMilliseconds() {
+    float getDurationMilliseconds() const {
         return durationMillis;
     }
     /**
      * Get the combined duration of each start() stop() pair since init in seconds
      * @return combined duration in seconds
      */
-    float getDurationSeconds() {
+    float getDurationSeconds() const {
         return durationMillis / 1000;
+    }
+    unsigned int getDurationCount() const {
+        return durationCount;
     }
     /**
      * Reset the combined duration tracker
      */
     void resetDuration() {
         durationMillis = 0;
+        durationCount = 0;
     }
 
  private:
@@ -111,6 +116,10 @@ class  Timer {
      *
      */
     float durationMillis = 0;
+    /**
+     * The number of stop-start pairs, since last resetDuration()
+     */
+    unsigned int durationCount = 0;
     /**
      * Flag indicating if the start event has been recorded or not.
      */

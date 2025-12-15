@@ -313,18 +313,18 @@ List Simulation::buildTimingReport() {
     List transitionTimes;
     for (const List h : hazards) {
         Timer &htimer = hazardTimers[h["name"]];
-        // Round up as hazard currently occurs first step
-        const unsigned int ct = static_cast<unsigned int>(ceil(STEPS / static_cast<float>(h["freq"])));
         hazardTimes.push_back(List::create(
             _["total"] = htimer.getDurationSeconds(),
-            _["average"] = htimer.getDurationSeconds() / ct
+            _["average"] = htimer.getDurationSeconds() / htimer.getDurationCount(),
+            _["percent"] = htimer.getDurationSeconds() / simTimer.getDurationSeconds()
         ), h["name"]);
         List transitions = h["transitions"];
         for (const List t : transitions) {
             Timer &ttimer = transitionTimers[t["name"]];
             transitionTimes.push_back(List::create(
                 _["total"] = ttimer.getDurationSeconds(),
-                _["average"] = ttimer.getDurationSeconds()/ct
+                _["average"] = ttimer.getDurationSeconds() / ttimer.getDurationCount(),
+                _["percent"] = ttimer.getDurationSeconds() / simTimer.getDurationSeconds()
             ), t["name"]);
         }
     }
@@ -333,7 +333,8 @@ List Simulation::buildTimingReport() {
         Timer &ttimer = trajectoryTimers[t["name"]];
         trajectoryTimes.push_back(List::create(
             _["total"] = ttimer.getDurationSeconds(),
-            _["average"] = ttimer.getDurationSeconds()/STEPS
+            _["average"] = ttimer.getDurationSeconds() / ttimer.getDurationCount(),
+            _["percent"] = ttimer.getDurationSeconds() / simTimer.getDurationSeconds()
         ), t["name"]);
     }
     List ret = List::create(
@@ -348,7 +349,8 @@ List Simulation::buildTimingReport() {
             Timer &ctimer = columnTimers[c["name"]];
             columnTimes.push_back(List::create(
                 _["total"] = ctimer.getDurationSeconds(),
-                _["average"] = ctimer.getDurationSeconds()/STEPS
+                _["average"] = ctimer.getDurationSeconds() / ctimer.getDurationCount(),
+                _["percent"] = ctimer.getDurationSeconds() / simTimer.getDurationSeconds()
             ), c["name"]);
         }
         ret.push_back(columnTimes, "columns");
@@ -361,8 +363,8 @@ List Simulation::buildTimingReport() {
 void printTimingSection(const std::string &title, List section) {
     if (section.size()) {
         Rprintf("\n>>>>>> %s <<<<<<\n", title.c_str());
-        Rprintf("%10s | %10s | %s\n", "Total s", "Average s", "Name");
-        Rprintf("-----------|------------|----------------\n");
+        Rprintf("%10s | %10s | %5s | %s\n", "Total s", "Average s", "%", "Name");
+        Rprintf("-----------|------------|-------|----------------\n");
 
         CharacterVector nms = section.names();
         for (int i = 0; i < section.size(); ++i) {
@@ -370,8 +372,9 @@ void printTimingSection(const std::string &title, List section) {
             List t = section[i];
             const double total = t["total"];
             const double avg   = t["average"];
+            const double percent = t["percent"];
             // Fixed width: 10 chars for numbers, 6 decimals
-            Rprintf("%10.6f | %10.6f | %s\n", total, avg, name.c_str());
+            Rprintf("%10.6f | %10.6f | %5.2f |%s\n", total, avg, percent*100, name.c_str());
         }
     }
 }
