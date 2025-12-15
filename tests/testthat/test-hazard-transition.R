@@ -135,3 +135,31 @@ test_that("Single Hazard fn/param, multiple transition fn/param", {
     step7 = run_simulation(initPop, parms)
     expect_equal(step7$pop$a * 1.5, step7$pop$b)
 })
+
+test_that("Hazard that returns Inf is treated as 100% chance", {
+    inf_hazard <- function(a) {
+        ret <- rep(Inf, length(a))
+        return (ret)
+    }
+    # Can't test the difference between 99.999% and 100% with RNG
+    # Mostly looking that it still produces correct output
+    N = 10000
+    initPop <- sample_pop3(N)
+    parms <- get_parms2()
+    parms$hazards[[1]]$fn <- inf_hazard
+    ## Add second transition
+    ## All  "a" parameter transitions from 0 to 2
+    ret_test1 <- rep(2, N)
+    ## All odd indices "b" parameter transitions from 0 to 3
+    ret_test2 <- rep(3, N)
+    
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, ret_test1)
+    expect_equal(step1$pop$b, ret_test2)
+    
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test1 * 4)
+    expect_equal(step4$pop$b, ret_test2 * 4)
+})
