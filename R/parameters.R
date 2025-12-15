@@ -71,7 +71,7 @@ check_parameters <- function(parameters, initPop = NULL) {
 #' @param debug (TRUE/FALSE) flag indicating whether validation checks are enabled. These catch NaN, but reduce performance
 #' @param history eldoradosim_history S3 object representing the columns of data to be aggregated during simulation
 #' @return An object of class "eldoradosim_parameters"
-new_parameters <- function(hazards, trajectories, steps, random_seed = 0, debug = TRUE, history = NULL) {
+new_parameters <- function(hazards = list(), trajectories = list(), steps, random_seed = 0, debug = TRUE, history = NULL) {
   # If hazards is not already a list, upgrade it
   if (inherits(hazards, "eldoradosim_hazard")) {
     hazards <- list(hazards)

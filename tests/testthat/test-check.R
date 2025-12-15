@@ -393,6 +393,27 @@ test_that("Parameters passed trajectory, as opposed to list of,is valid", {
     # No error by default
     expect_no_error(check_parameters(prm))
 })
+test_that("Parameters passed hazard, as opposed to list of,is valid", {
+    # This also tests that new_parameters having list() passed to trajectories is acceptable
+    trn <- new_transition(empty_transition_fn, c("age"), "age")
+    haz <- new_hazard(empty_hazard_fn, c("age"), trn)
+    prm <- new_parameters(haz, list(), 12, 12, FALSE)
+    # It has been replaced by a list containing only the original item
+    expect_equal(length(prm$hazards), 1)
+    expect_equal(prm$hazards[[1]], haz)
+    # No error by default
+    expect_no_error(check_parameters(prm))
+})
+test_that("Parameters passed trajectory, as opposed to list of,is valid", {
+    # This also tests that new_parameters having list() passed to hazards is acceptable
+    trj <- new_trajectory(empty_trajectory_fn, c("age"), "age")
+    prm <- new_parameters(list(), trj, 12, 12, FALSE)
+    # It has been replaced by a list containing only the original item
+    expect_equal(length(prm$trajectories), 1)
+    expect_equal(prm$trajectories[[1]], trj)
+    # No error by default
+    expect_no_error(check_parameters(prm))
+})
 
 
 test_that("History with missing attribute triggers stop()", {
