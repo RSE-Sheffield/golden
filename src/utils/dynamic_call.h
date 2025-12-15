@@ -10,30 +10,23 @@
 using namespace Rcpp;
 
 /**
- * Dynamically call an R function from cpp
- *
- * R functions may require any number of arguments
- * The RCPP Function::operator() cannot be called in a varadic manner
- * (e.g. dynamically changing the number of arguments at runtime)
- * Hence this method instead acts as a wrapper, whereby a vector of arguments can be passed to the function
- * @param f The R function to be called
- * @param args A List of arguments to be passed.
+ * Promote the scalar x to a vector of length N
+ * effectively the same as rep(x, N) in REAL
+ * @param x Scalar value to be repeated
+ * @param N Number of times to repeat x
+ * @return A vector the same type as x
  */
-SEXP dynamic_call(Function f, List args) {
-    // Create a call object
-    Language call(f);
+SEXP promote_scalar(SEXP x, int N) {
+  if (Rf_length(x) != 1)
+    stop("Unable to promote none-scalar type");
 
-    // Append all arguments dynamically
-    for (R_xlen_t i = 0; i < args.size(); ++i) {
-        call.push_back(args[i]);
-        // @note To support named arguments a PairList(<name>, args[i]) would be pushed back here.
-    }
-
-    // Evaluate the call
-    // @todo what happens if the call is stored and eval'd twice?
-    return call.eval();
+  switch (TYPEOF(x)) {
+    case INTSXP: return IntegerVector(N, INTEGER(x)[0]);
+    case REALSXP: return NumericVector(N, REAL(x)[0]);
+    case LGLSXP: return LogicalVector(N, LOGICAL(x)[0]);
+    default: stop("Unsupported type in promote_scalar()");
+  }
 }
-
 /**
  * Utility which returns vector v with only elements with corresponding true element inside keep
  * 
@@ -88,13 +81,18 @@ SEXP logical_filter(SEXP v, LogicalVector keep) {
 /**
  * Utility function covering the common task of building up the call arguments to be passed to dynamic_call()
  *
- * @param p String vector of column names and ~SPECIAL values
+ * @param _p String vector of column names and ~SPECIAL values
  * @param table Data table which columns will be taken from
  * @param current_step Value to provided for "~STEP"
  * @return List containing R objects and variables to be passed to dynamic_call()
  */
-List build_args(StringVector p, List table, int current_step) {
+List build_args(SEXP _p, List table, int current_step) {
     List call_args;
+    // Empty character vector is null, and causes exception if converted to StringVector
+    if (Rf_isNull(_p)) {
+        return call_args;
+    }
+    StringVector p = _p;
     for (const String arg:p) {
         const std::string arg_string = arg.get_cstring();
         if (arg_string.length() > 1 && arg_string[0] == '~') {

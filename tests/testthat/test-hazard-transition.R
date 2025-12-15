@@ -163,3 +163,80 @@ test_that("Hazard that returns Inf is treated as 100% chance", {
     expect_equal(step4$pop$a, ret_test1 * 4)
     expect_equal(step4$pop$b, ret_test2 * 4)
 })
+
+test_that("No arg hazard works correctly", {
+    no_arg_hazard <- function() {
+        return (1000.0) # Close to 100%, without being Inf
+    }
+    no_arg_hazard2 <- function() {
+        return (0.0) # Hazard never passes
+    }
+    # Can't test the difference between 99.999% and 100% with RNG
+    # Mostly looking that it still produces correct output
+    N = 10000
+    initPop <- sample_pop3(N)
+    parms <- get_parms2()
+    parms$hazards[[1]] <- new_hazard(
+              no_arg_hazard,
+              c(),
+              list(
+                new_transition(transition_add_2, c("a"), "a"),
+                new_transition(transition_add_3, c("b"), "b")
+              )
+            )
+    ## Add second transition
+    ## All  "a" parameter transitions from 0 to 2
+    ret_test1 <- rep(2, N)
+    ## All odd indices "b" parameter transitions from 0 to 3
+    ret_test2 <- rep(3, N)
+    
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, ret_test1)
+    expect_equal(step1$pop$b, ret_test2)
+    
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test1 * 4)
+    expect_equal(step4$pop$b, ret_test2 * 4)
+    
+    # All hazards return false
+    parms$hazards[[1]]$fn <- no_arg_hazard2
+    
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, initPop$a)
+    expect_equal(step1$pop$b, initPop$b)
+    
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, initPop$a)
+    expect_equal(step4$pop$b, initPop$b)
+})
+test_that("No arg transition works correctly", {
+    no_arg_transition <- function() {
+        return (12.0)
+    }
+    #
+    N = 10000
+    initPop <- sample_pop3(N)
+    parms <- get_parms2()
+    parms$hazards[[1]]$transitions[[2]] <- new_transition(no_arg_transition, c(), "b")
+    ## Add second transition
+    ## All odd indices "a" parameter transitions from 0 to 2, even remain 0
+    ret_test1 <- rep(0.0, N)
+    ret_test1[seq(2, N, by = 2)] <- 2.0
+    ## All odd indices "b" parameter transitions from 0 to 12, even remain 0
+    ret_test2 <- rep(0.0, N)
+    ret_test2[seq(2, N, by = 2)] <- 12.0
+    
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, ret_test1)
+    expect_equal(step1$pop$b, ret_test2)
+    
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test1 * 4)
+    expect_equal(step4$pop$b, ret_test2)
+})
