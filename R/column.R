@@ -23,6 +23,9 @@ check_column <- function(column, initPop = NULL) {
 
   # ---- args ----
   # Attempt to convert lists to character vectors
+  if (is.null(column$args)) {
+    stop("'column$args' must not be empty")
+  }
   column$args <- validate_convert_char_vector(column$args, "column$args")
   # Check named columns exist
   if (!is.null(initPop)) {

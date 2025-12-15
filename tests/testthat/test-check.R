@@ -119,6 +119,15 @@ test_that("Args can be empty string", {
     trj <- new_trajectory(empty_trajectory_fn, c(), "age")
     expect_no_error(check_trajectory(trj))
 })
+test_that("Multivariate trajectory check does not crash", {
+    dt <- data.table(a = integer(),
+                     b = integer(),
+                     c = integer())
+    trj_pass <- new_trajectory(empty_trajectory_fn, c("a"), c("a", "b"))
+    # No error by default when table contains column "a"
+    expect_no_error(check_trajectory(trj_pass))
+    expect_no_error(check_trajectory(trj_pass, dt))
+})
 
 test_that("Hazard with missing attribute triggers stop()", {
     # Hazard subfields
@@ -321,7 +330,7 @@ test_that("Transition state not found in initial pop table triggers stop()", {
 })
 
 test_that("Parameters with missing attribute triggers stop()", {
-    # Trajectory subfields
+    # Parameters subfields
     required_fields <- c(
         "hazards",
         "trajectories",
@@ -486,8 +495,8 @@ test_that("Column with missing attribute triggers stop()", {
     # Column subfields
     required_fields <- c(
         "name",
-        "fn",
-        "args"
+        "args",
+        "fn"
     )
     # No error by default
     clm <- new_column("test", empty_reduction_fn, c("a"))
@@ -622,6 +631,19 @@ test_that("Column cannot be named '~STEP'", {
     clm$name <- "~STEP"
     expect_error(check_column(clm),
         "cannot be '~STEP' this column will be automatically generated as part of the returned history data table")
+})
+
+test_that("No args fn is valid/invalid", {
+    no_arg_fn <- function() { return (12) }
+    # Valid
+    expect_no_error(check_trajectory(new_trajectory(no_arg_fn, c(), "age")))
+    expect_no_error(check_transition(new_transition(no_arg_fn, c(), "age")))
+    trn <- new_transition(empty_transition_fn, c("age"), "age")
+    expect_no_error(check_hazard(new_hazard(no_arg_fn, c(), trn)))
+    # Invalid
+    clm <- 
+    expect_error(new_column("test", no_arg_fn, c()),
+        "'column\\$args' must not be empty")
 })
 
 # Column filter_args passed without filter_fn causes error

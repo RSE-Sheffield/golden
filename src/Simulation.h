@@ -23,6 +23,7 @@ class Simulation {
     List history;
     List columns;
     // Runtime data
+    int POP_SIZE = 0; // Set by run(), never updated
     List population;
     List historyLog;
     int step = 0; // Simulation iteration index (0-indexed)
@@ -45,6 +46,18 @@ class Simulation {
      * Execute all columns active for the current step
      */
     void stepHistory();
+    /**
+     * Dynamically call an R function from cpp
+     *
+     * R functions may require any number of arguments
+     * The RCPP Function::operator() cannot be called in a varadic manner
+     * (e.g. dynamically changing the number of arguments at runtime)
+     * Hence this method instead acts as a wrapper, whereby a vector of arguments can be passed to the function
+     * @param f The R function to be called
+     * @param args A List of arguments to be passed.
+     * @note If args is empty, the return value will be upgraded to a vector of the appropriate length
+     */
+    SEXP dynamic_call(Function f, List args);
     
     /**
      * Construct the structure to be returned by run()

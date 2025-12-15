@@ -65,6 +65,7 @@ List Simulation::run(List initPop) {
     // Create a deep-copy of the initial pop, that we will return with changes at the end
     // @todo create other columns, to log last hazard score?
     population = clone(initPop);
+    POP_SIZE = Rf_length(population[0]);
     
     // Reset timers
     for (auto &timer : hazardTimers)
@@ -255,7 +256,27 @@ void Simulation::stepHistory() {
                 }
             }
         }
-    } 
+    }
+}
+
+SEXP Simulation::dynamic_call(Function f, List args) {
+    // Create a call object
+    Language call(f);
+
+    // Append all arguments dynamically
+    for (R_xlen_t i = 0; i < args.size(); ++i) {
+        call.push_back(args[i]);
+        // @note To support named arguments a PairList(<name>, args[i]) would be pushed back here.
+    }
+
+    // Evaluate the call
+    // @todo what happens if the call is stored and eval'd twice?
+    SEXP ret = call.eval();
+    if (args.size() == 0 && Rf_length(ret) == 1) {
+        // Argless function, it's return value must be upgraded
+        return promote_scalar(ret, POP_SIZE);
+    }
+    return ret;
 }
 
 List Simulation::buildOutput() {
