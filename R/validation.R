@@ -89,7 +89,8 @@ validate_convert_char_vector <- function(test_object, name) {
     }
     test_object <- unlist(test_object, use.names = FALSE)
   }
-  if (!is.character(test_object)) {
+  # Empty char vectors are NULL
+  if (!(is.character(test_object)|| is.null(test_object))) {
     stop("'",name,"' must be a character vector")
   }
   if (any(is.na(test_object)) || any(test_object == "")) {
