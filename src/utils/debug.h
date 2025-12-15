@@ -41,8 +41,21 @@ void check_result(int s_i, const std::string &name, SEXP _result) {
 void check_hazard_result(int s_i, const std::string &name, SEXP _result) {
     if (Rf_isNumeric(_result)) {
         NumericVector result = _result;
-        // R
-        check_result(s_i, name, _result);
+        // Positive Inf is permitted
+        if (Rf_isNumeric(_result)) {
+            NumericVector result = _result;
+            int nan_count = 0;
+            for (const double &t : result) {
+                nan_count += std::isnan(t)?1:0;
+            }
+            if (nan_count) {
+                // This should never be hit
+                std::stringstream err;
+                err << "[DEBUG]During step " << s_i << " " << name;
+                err << " return contained " << nan_count <<" NaN values\n";
+                throw std::runtime_error(err.str());
+            }
+        }
         int negative_range_count = 0;
         int high_range_count = 0;
         for (const double &t : result) {
