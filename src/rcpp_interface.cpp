@@ -75,13 +75,20 @@ List create_cohort(List demog, unsigned int N) {
 
 // [[Rcpp::export]]
 List run_simulation(List initPop, List parameters) {
-    // Call eldoradosim::check_parameters()
-    {        
-        Environment eldoradosim = Environment::namespace_env("eldoradosim");
-        Function check_parameters = eldoradosim["check_parameters"];
-        check_parameters(parameters);
+    try {
+        // Call eldoradosim::check_parameters()
+        {        
+            Environment eldoradosim = Environment::namespace_env("eldoradosim");
+            Function check_parameters = eldoradosim["check_parameters"];
+            check_parameters(parameters);
+        }
+        // Init and run simulation
+        Simulation s(parameters);
+        return s.run(initPop);
+    } catch (std::exception &e) {
+        forward_exception_to_r(e);
+    } catch(...) {
+        ::Rf_error("Unknown C++ exception within run_simulation()"); 
     }
-    // Init and run simulation
-    Simulation s(parameters);
-    return s.run(initPop);
+    return List();
 }
