@@ -80,7 +80,7 @@ List run_simulation(List initPop, List parameters) {
         {        
             Environment eldoradosim = Environment::namespace_env("eldoradosim");
             Function check_parameters = eldoradosim["check_parameters"];
-            check_parameters(parameters);
+            check_parameters(parameters, initPop);
         }
         // Init and run simulation
         Simulation s(parameters);
