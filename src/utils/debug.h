@@ -78,7 +78,8 @@ void check_hazard_result(int s_i, const std::string &name, SEXP _result) {
             std::stringstream err;
             err << "[DEBUG]During step " << s_i << " " << name;
             err << " return contained " << high_range_count <<" values > 1.\n";
-            err << "Frequent hazard returns exceeding 1 may be indicative of an error.\n";
+            err << "Frequent hazard returns exceeding 1 may indicate steps are too long.\n";
+            err << "Consider reparametrizing so the implicit step size is shorter.\n";
             warning(err.str());
         }
     } else {
