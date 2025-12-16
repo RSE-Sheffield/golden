@@ -114,6 +114,23 @@ test_that("Trajectory property not found in initial pop table triggers stop()", 
         "initial population columns do not contain trajectory\\$property",
         info = "property d does not exist in dt")
 })
+test_that("Multivariate trajectory property not found in initial pop table triggers stop()", {
+    dt <- data.table(a = integer(),
+                     b = integer(),
+                     c = integer())
+    trj <- new_trajectory(empty_trajectory_fn, c("a"), c("a", "b"))
+    # No error by default when table contains column "a"
+    expect_no_error(check_trajectory(trj, dt))
+    # Error when property doesn't exist in dt
+    trj$property <- c("a", "d")
+    expect_error(check_trajectory(trj, dt),
+        "initial population columns do not contain trajectory\\$property",
+        info = "property d does not exist in dt")
+    trj$property <- c("d", "a")
+    expect_error(check_trajectory(trj, dt),
+        "initial population columns do not contain trajectory\\$property",
+        info = "property d does not exist in dt")
+})
 test_that("Args can be empty string", {
     # No error by default
     trj <- new_trajectory(empty_trajectory_fn, c(), "age")

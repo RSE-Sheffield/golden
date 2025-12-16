@@ -30,7 +30,7 @@ check_trajectory <- function(trajectory, initPop = NULL) {
   }
   if (!is.null(initPop)) {
       # property exists as a column
-      if (!trajectory$property %in% names(initPop)) {
+      if (any(!(trajectory$property %in% names(initPop)))) {
         stop("initial population columns do not contain trajectory$property: ", trajectory$property)
       }
   }
