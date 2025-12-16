@@ -48,9 +48,9 @@ check_parameters <- function(parameters, initPop = NULL) {
   # ---- history ----  
   if (!is.null(parameters$history)) {  
     validate_S3(parameters$history, "parameters$history", "eldoradosim_history")
-  }
-  if (!is.null(initPop)) {
-    check_history(parameters$history, initPop)
+    if (!is.null(initPop)) {
+      check_history(parameters$history, initPop)
+    }
   }
   
   # ---- random_seed ----
