@@ -56,10 +56,15 @@ parms0 <- new_parameters(
 ## run the simulation
 result0 <- run_simulation(pop0, parms0)
 
-## TODO plot of this data with comparison to analytical result
+## plot
+ggplot(result0$history, aes(`~STEP`, `no. alive`)) +
+  geom_line() +
+  geom_point() +
+  geom_function(fun = function(x) N * exp(-x / 10), col = 2)
+
 
 ## ----
-## TODO extension of this to work with age &
+## extension of this to work with age &
 ## illustrate dependence on individual-level data
 
 ## Define a function to increment by 1
@@ -69,15 +74,16 @@ age_traj <- function(age, death_time) {
 }
 
 ## mortality hazard depending on individual characteristics
-deathrate1 <- function(sbp, tc) {
-  0.1 + sbp / 100 + tc / 10
+deathrate1 <- function(death, sbp, tc) {
+  ifelse(death < 0, 0.1 + sbp / 1000 + tc / 100, 0)
 }
 
 morthaz1 <- new_hazard(
   deathrate1,
-  c("sbp", "tc"),
+  c("death", "sbp", "tc"),
   new_transition(transition_fn, c("death", "~STEP"), "death")
 )
+
 
 ## a trajectory
 age_traj <- new_trajectory(age_traj, c("age", "death"), "age")
@@ -88,17 +94,26 @@ parms1 <- new_parameters(
   hazards = morthaz1,
   trajectories = age_traj,
   steps = 10,
-  debug = TRUE,
+  debug = FALSE,
   history = noalive
 )
 
 ## run the simulation
 result1 <- run_simulation(pop0, parms1)
 
+## BUG? setting debug = FALSE doesn't turn off debug checks?
+
 
 ## ---
 ## extension of this to consider a stochastic, mulivariate trajectory
 ## also illustrating multiple trajectories
+
+## keep everyone alive here to have a look at RW dynamics
+deathrate2 <- function() {
+  0
+}
+morthaz2 <- new_hazard(deathrate2, args = c(), transitions = list())
+
 
 ## multivariate trajectory example
 ## sbp & tc as correlated geometric random walk
@@ -141,49 +156,42 @@ filter_1 <- function(x) {
 noalive2 <- new_history(
   columns = list(
     new_column("no. alive", length, c("age"), filter_fn, c("death")),
-    new_column("sbp1", mean, c("id"), filter_1, c("sbp")),
-    new_column("tc1", mean, c("id"), filter_1, c("tc"))
+    ## 3 ways of returning an individual's value:
+    new_column("sbp1", sum, c("sbp"), filter_1, c("id")),
+    new_column("tc1", mean, c("tc"), filter_1, c("id")),
+    new_column("tc1 v2", function(x) x, c("tc"), filter_1, c("id"))
   ),
   frequency = 1
 )
-## TODO CHECK what happens if typo in arg name
+## TODO should we check for distinct column names in history
 
 ## full parameters
 parms2 <- new_parameters(
-  hazards = morthaz1,
+  hazards = morthaz2,
   trajectories = trajlist2,
-  steps = 10,
+  steps = 1000, #longer
   debug = TRUE,
   history = noalive2
 )
 
 ## run the simulation
-result2 <- run_simulation(pop0, parms2)
+result2 <- run_simulation(pop0[1:50], parms2) #look at a limited population
+plot_data <- melt(result2$history[, .(t = `~STEP`, sbp1, tc1)], id = "t")
 
-## TODO plot the RWs
+
+ggplot(plot_data, aes(t, value, col = variable)) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y") +
+  theme(legend.position = "none")
 
 ## ---
 ## example 3 building on above to include:
 ## multiple transitions for single hazard
 ## timed event via Inf hazard
-
-
-
-## TODO finish
+## TODO
 
 
 ## ========== less trivial example
-
-
-
-
-
-
-
-
-##############
-# CVD HAZARD #
-##############
 
 
 ## version only focussed on relevant output
