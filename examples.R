@@ -34,7 +34,7 @@ morthaz0 <- new_hazard(
   new_transition(transition_fn, c("death", "~STEP"), "death")
 )
 
-## restrict to alive
+## restrict to alive TODO better name
 filter_fn <- function(x) {
   x == -1 # tests alive applied to 'death'
 }
@@ -101,8 +101,6 @@ parms1 <- new_parameters(
 ## run the simulation
 result1 <- run_simulation(pop0, parms1)
 
-## BUG? setting debug = FALSE doesn't turn off debug checks?
-
 
 ## ---
 ## extension of this to consider a stochastic, mulivariate trajectory
@@ -117,7 +115,7 @@ morthaz2 <- new_hazard(deathrate2, args = c(), transitions = list())
 
 ## multivariate trajectory example
 ## sbp & tc as correlated geometric random walk
-bptc_traj <- function(sbp, tc, death_time) {
+bptc_update <- function(sbp, tc, death_time) {
   lsbp <- log(sbp)
   ltc <- log(tc)
   alive <- death_time < 0
@@ -131,19 +129,22 @@ bptc_traj <- function(sbp, tc, death_time) {
   list(sbp = exp(lsbp), tc = exp(ltc))
 }
 
-bptc_traj(rep(140, 5), rep(4.5, 5), rep(-1, 5))
-bptc_traj(rep(140, 5), rep(4.5, 5), rep(1, 5))
+bptc_update(rep(140, 5), rep(4.5, 5), rep(-1, 5))
+bptc_update(rep(140, 5), rep(4.5, 5), rep(1, 5))
+
+
+bptc_traj <- new_trajectory(
+  bptc_update, # trajectory fn
+  c("sbp", "tc", "death"), # trajectory args
+  c("sbp", "tc") # outputs (list of vectors from fn)
+)
 
 ## make trajectories
 trajlist2 <- list(
   ## age
   age_traj,
   ## SBP & TC handled in bivariate fashion
-  new_trajectory(
-    bptc_traj, # trajectory fn
-    c("sbp", "tc", "death"), # trajectory args
-    c("sbp", "tc") # outputs (list of vectors from fn)
-  )
+  bptc_traj
 )
 
 ## filter to 1
@@ -163,7 +164,7 @@ noalive2 <- new_history(
   ),
   frequency = 1
 )
-## TODO should we check for distinct column names in history
+
 
 ## full parameters
 parms2 <- new_parameters(
@@ -188,7 +189,144 @@ ggplot(plot_data, aes(t, value, col = variable)) +
 ## example 3 building on above to include:
 ## multiple transitions for single hazard
 ## timed event via Inf hazard
-## TODO
+
+## extra variables
+pop0[, on_treatment := 0L]
+pop0[, treatment_counter := 0L]
+
+
+## trigger for treatment start:
+## definitely go on treatment if sbp >= 150 or tc >= 4.5
+treatment_start_haz <- function(death, on_treatment, sbp, tc) {
+  ifelse(death > 0 | on_treatment > 0 | (sbp < 150 & tc < 4.5), 0, Inf)
+}
+
+## trigger treatment end:
+## definitely after 5 steps if alive
+treatment_end_haz <- function(death, on_treatment) {
+  ifelse(death > 0 | on_treatment < 5, 0, Inf)
+}
+
+
+## treatment trajectory
+treatment_time_update <- function(death, on_treatment) {
+  ifelse(death < 0 & on_treatment > 0, on_treatment + 1, 0)
+}
+
+## treatment transitions:
+
+## start off
+treatment_start_transition <- function(on_treatment) {
+  rep(1, length(on_treatment))
+}
+
+## update counter
+## (NOTE this could be used in a few places, maybe ageing should not ints?)
+update_counter <- function(x) {
+  x + 1
+}
+
+## finish off
+treatment_end_transition <- function(on_treatment) {
+  rep(0, length(on_treatment))
+}
+
+
+## NOTE do we want to allow transitions to be formulated in this way also?
+## ie to have multiple return columns?
+
+## build parameters
+trajlist3 <- list(
+  ## age
+  age_traj,
+  ## SBP & TC handled in bivariate fashion
+  bptc_traj,
+  ## new trajectory for treatment
+  new_trajectory(
+    treatment_time_update,
+    c("death", "on_treatment"),
+    "on_treatment"
+  )
+)
+
+hazlist3 <- list(
+  ## death
+  morthaz0,
+  ## starting treatment
+  new_hazard(
+    treatment_start_haz,
+    c("death", "on_treatment", "sbp", "tc"),
+    ## (which triggers two transitions)
+    list(
+      new_transition(
+        treatment_start_transition,
+        "on_treatment",
+        "on_treatment"
+      ),
+      new_transition(
+        update_counter,
+        "treatment_counter",
+        "treatment_counter"
+      )
+    )
+  ),
+  ## finishing treatment
+  new_hazard(
+    treatment_end_haz,
+    c("death", "on_treatment"),
+    ## (triggering one transition)
+    new_transition(
+      treatment_end_transition,
+      "on_treatment",
+      "on_treatment"
+    )
+  )
+)
+
+
+## history
+history3 <- new_history(
+  columns = list(
+    new_column("no. alive", length, "age", filter_fn, "death"),
+    new_column(
+      "no. alive on tx",
+      function(x) sum(x > 0),
+      "on_treatment",
+      filter_fn, "death"
+    ),
+    ## an individual's value:
+    new_column("sbp1", sum, "sbp", filter_1, "id"),
+    new_column("tc1", mean, "tc", filter_1, "id")
+  ),
+  frequency = 1
+)
+
+## full parameters
+parms3 <- new_parameters(
+  hazards = hazlist3,
+  trajectories = trajlist3,
+  steps = 20, # longer
+  debug = TRUE,
+  history = history3
+)
+
+## run the simulation
+result3 <- run_simulation(pop0, parms3) # look at a limited population
+
+plot_data <- melt(result3$history[, .(
+  t = `~STEP`,
+  `no. alive`, `no. alive on tx`
+)], id = "t")
+
+
+ggplot(plot_data, aes(t, value, col = variable)) +
+  geom_line() +
+  geom_point() +
+  theme(legend.position = "top")
+
+
+result3$pop
+
 
 
 ## ========== less trivial example
@@ -254,11 +392,10 @@ cvd_update <- function(cvd_count) {
 }
 
 
-########################
-# GENERAL DEATH HAZARD #
-########################
-lifetable_data
 
+########################
+## mortality hazard
+lifetable_data
 
 
 n_ages <- 101
@@ -280,10 +417,8 @@ mort_fn <- function(sex, age, year) {
 mort_fn(rep(1, 10), rep(50, 10), rep(70, 10))
 
 
-
 ######################
-# INITIAL POPULATION #
-######################
+## initial population
 ## bmi fit data
 bmi_fits
 bmi_fits[, male := ifelse(sex == "Men", 1, 0)]
@@ -369,11 +504,7 @@ initPop <- merge(
 )
 
 
-
-#############
-## HAZARDS ##
-#############
-
+## hazards
 hazlist <- list(
   ## CVD event
   new_hazard(
@@ -394,11 +525,7 @@ hazlist <- list(
 )
 
 
-
-##################
-## TRAJECTORIES ##
-##################
-
+## trajectories
 trajlist <- list(
   ## age
   new_trajectory(age_traj, c("age", "death"), "age"),
@@ -412,14 +539,7 @@ trajlist <- list(
   )
 )
 
-
-
-
-###########
-# HISTORY #
-###########
-
-
+## history
 history <- new_history(
   columns = list(
     new_column("no. alive", length, c("age"), filter_fn, c("death")),
@@ -462,15 +582,13 @@ ggplot(ret$history, aes(`~STEP`, `no. alive`)) +
 ## history: number alive
 ggplot(ret$history, aes(`~STEP`, `av. cvd events`)) +
   geom_line()
- 
+
 ## SUGGESTIONS/QUERIES
-## TODO functions with no args? **
-## Does parms take a list of histories? If not slightly different behaviour
 
 ## FOR VIGNETTE
 ## NOTE if you rewrite functions, this is not enough: need to remake objects
 ## should be noted in guide
+## NOTE history: single item not lists
 
 ## OTHER EXAMPLES
-## TODO example of timed event: how was this to work again? **
 ## TODO data documentation not working **
