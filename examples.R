@@ -1,11 +1,8 @@
 ## reworking examples in neater format using package data
 devtools::load_all()
-## Sys.setenv(RCPP_DEVEL_DEBUG = "1")
-## options(error = recover)
-
-
 library(data.table)
 library(ggplot2)
+set.seed(1234)
 
 ## ============ simple exponential decay
 ## generic transition
@@ -16,16 +13,24 @@ transition_fn <- function(state, i) {
 }
 
 ## initial population
-pop0 <- data.table(death = -1)
+N <- 1e4L
+pop0 <- data.table(
+  id = 1:N,
+  death = rep(-1, N),
+  age = rep(40, N),
+  sbp = rlnorm(N, log(140), .05),
+  tc = rlnorm(N, log(4.5), .01)
+)
+
 
 ## constant mortality hazard
-deathrate <- function() {
+deathrate0 <- function() {
   0.1
 }
 
-morthaz <- new_hazard(
-  deathrate,
-  c(), #BUG currently
+morthaz0 <- new_hazard(
+  deathrate0,
+  c(),
   new_transition(transition_fn, c("death", "~STEP"), "death")
 )
 
@@ -33,7 +38,6 @@ morthaz <- new_hazard(
 filter_fn <- function(x) {
   x == -1 # tests alive applied to 'death'
 }
-
 
 noalive <- new_history(
   columns = list(
@@ -43,27 +47,20 @@ noalive <- new_history(
 )
 
 parms0 <- new_parameters(
-  hazards = morthaz,
-  ## trajectories = trajlist,#TODO how will this be handled?
-  ## empty list? with default? (same for hazards)
+  hazards = morthaz0,
   steps = 10,
   debug = TRUE,
   history = noalive
 )
 
 ## run the simulation
-ret0 <- run_simulation(pop0, parms0)
+result0 <- run_simulation(pop0, parms0)
 
+## TODO plot of this data with comparison to analytical result
 
-
-## TODO finish
-## TODO version of this with decay parameters assigned to individuals (PSA eg)
-## TODO version with multiple transitions?
-
-
-## ========== less trivial example
-
-
+## ----
+## TODO extension of this to work with age &
+## illustrate dependence on individual-level data
 
 ## Define a function to increment by 1
 ## If dead, age is not changed
@@ -71,7 +68,37 @@ age_traj <- function(age, death_time) {
   ifelse(death_time == -1, age + 1, age)
 }
 
+## mortality hazard depending on individual characteristics
+deathrate1 <- function(sbp, tc) {
+  0.1 + sbp / 100 + tc / 10
+}
 
+morthaz1 <- new_hazard(
+  deathrate1,
+  c("sbp", "tc"),
+  new_transition(transition_fn, c("death", "~STEP"), "death")
+)
+
+## a trajectory
+age_traj <- new_trajectory(age_traj, c("age", "death"), "age")
+
+
+## full parameters
+parms1 <- new_parameters(
+  hazards = morthaz1,
+  trajectories = age_traj,
+  steps = 10,
+  debug = TRUE,
+  history = noalive
+)
+
+## run the simulation
+result1 <- run_simulation(pop0, parms1)
+
+
+## ---
+## extension of this to consider a stochastic, mulivariate trajectory
+## also illustrating multiple trajectories
 
 ## multivariate trajectory example
 ## sbp & tc as correlated geometric random walk
@@ -91,6 +118,66 @@ bptc_traj <- function(sbp, tc, death_time) {
 
 bptc_traj(rep(140, 5), rep(4.5, 5), rep(-1, 5))
 bptc_traj(rep(140, 5), rep(4.5, 5), rep(1, 5))
+
+## make trajectories
+trajlist2 <- list(
+  ## age
+  age_traj,
+  ## SBP & TC handled in bivariate fashion
+  new_trajectory(
+    bptc_traj, # trajectory fn
+    c("sbp", "tc", "death"), # trajectory args
+    c("sbp", "tc") # outputs (list of vectors from fn)
+  )
+)
+
+## filter to 1
+filter_1 <- function(x) {
+  x == 1
+}
+
+## history to also include random walk variables for id==1
+## NOTE mean not doing anything here
+noalive2 <- new_history(
+  columns = list(
+    new_column("no. alive", length, c("age"), filter_fn, c("death")),
+    new_column("sbp1", mean, c("id"), filter_1, c("sbp")),
+    new_column("tc1", mean, c("id"), filter_1, c("tc"))
+  ),
+  frequency = 1
+)
+## TODO CHECK what happens if typo in arg name
+
+## full parameters
+parms2 <- new_parameters(
+  hazards = morthaz1,
+  trajectories = trajlist2,
+  steps = 10,
+  debug = TRUE,
+  history = noalive2
+)
+
+## run the simulation
+result2 <- run_simulation(pop0, parms2)
+
+## TODO plot the RWs
+
+## ---
+## example 3 building on above to include:
+## multiple transitions for single hazard
+## timed event via Inf hazard
+
+
+
+## TODO finish
+
+
+## ========== less trivial example
+
+
+
+
+
 
 
 
@@ -219,17 +306,17 @@ make_cohort <- function(N) {
 
 initPop <- make_cohort(1e4)
 initPop[, acat := fcase(
-  age >= 25 & age < 29, "25-29",
+  age >= 25 & age < 30, "25-29",
   age >= 30 & age < 35, "30-34",
-  age >= 35 & age < 39, "35-39",
+  age >= 35 & age < 40, "35-39",
   age >= 40 & age < 45, "40-44",
-  age >= 45 & age < 49, "45-49",
+  age >= 45 & age < 50, "45-49",
   age >= 50 & age < 55, "50-54",
-  age >= 55 & age < 59, "55-59",
+  age >= 55 & age < 60, "55-59",
   age >= 60 & age < 65, "60-64",
-  age >= 65 & age < 69, "65-69",
+  age >= 65 & age < 70, "65-69",
   age >= 70 & age < 75, "70-74",
-  age >= 75 & age < 79, "75-79",
+  age >= 75 & age < 80, "75-79",
   age >= 80 & age < 85, "80-84",
   age >= 85, "85plus",
   default = "20-24"
@@ -367,7 +454,7 @@ ggplot(ret$history, aes(`~STEP`, `no. alive`)) +
 ## history: number alive
 ggplot(ret$history, aes(`~STEP`, `av. cvd events`)) +
   geom_line()
-
+ 
 ## SUGGESTIONS/QUERIES
 ## TODO functions with no args? **
 ## Does parms take a list of histories? If not slightly different behaviour
