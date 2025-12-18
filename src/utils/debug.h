@@ -74,7 +74,7 @@ void check_hazard_result(int s_i, const std::string &name, SEXP _result, const i
         for (const double &t : result) {
             if (t < 0) {
                 ++negative_range_count;
-            } else if (t > 1) {
+            } else if (t > 1 && !std::isinf(t)) {
                 ++high_range_count;
             }
         }
