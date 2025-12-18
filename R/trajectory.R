@@ -70,8 +70,12 @@ new_trajectory <- function(fn, args, property, name = NULL) {
 str.eldoradosim_trajectory <- function(x, ...) {
   cat("<eldoradosim_trajectory>\n")
   cat("  fn (name):", x$name, "\n")
-  cat("  args:", x$args, "\n")
-  cat("  property:", x$property, "\n")
+  cat("  args: [", paste(x$args, collapse = ", "), "]\n", sep = "")
+  if (length(x$property) == 1) {
+    cat("  property:", x$property, "\n", sep = "")
+  } else {
+    cat("  property:[", paste(x$property, collapse = ", "), "]\n", sep = "")
+  }
 }
 print.eldoradosim_trajectory <- function(x, ...) {
   str(x)
