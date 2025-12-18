@@ -8,6 +8,14 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+void check_length(int s_i, const std::string &name, SEXP _result, const int expected_length) {
+    if (Rf_length(_result) != expected_length) {
+        std::stringstream err;
+        err << "[DEBUG]During step " << s_i << " " << name;
+        err << "return had wrong length " << Rf_length(_result) <<", expected length " << expected_length << "\n";
+        throw std::runtime_error(err.str());
+    }
+}
 /**
  * Debug method to check output of dynamic methods, to ensure they don't contain NaN/Inf
  * 
@@ -18,12 +26,7 @@ using namespace Rcpp;
  * @note Not sure R has a concept of Inf, everything so far seems to be NA, which I assume to be NaN
  */
 void check_result(int s_i, const std::string &name, SEXP _result, const int expected_length) {
-    if (Rf_length(_result) != expected_length) {
-        std::stringstream err;
-        err << "[DEBUG]During step " << s_i << " " << name;
-        err << "return had wrong length " << Rf_length(_result) <<", expected length " << expected_length << "\n";
-        throw std::runtime_error(err.str());
-    }
+    check_length(s_i, name, _result, expected_length);
     if (Rf_isNumeric(_result)) {
         NumericVector result = _result;
         int nan_count = 0;
@@ -45,13 +48,8 @@ void check_result(int s_i, const std::string &name, SEXP _result, const int expe
  * Extended variant with additional hazard only checks
  * @see check_result(int, const std::string&, SEXP)
  */
-void check_hazard_result(int s_i, const std::string &name, SEXP _result, const int expected_length) {    
-    if (Rf_length(_result) != expected_length) {
-        std::stringstream err;
-        err << "[DEBUG]During step " << s_i << " " << name;
-        err << "return had wrong length " << Rf_length(_result) <<", expected length " << expected_length << "\n";
-        throw std::runtime_error(err.str());
-    }
+void check_hazard_result(int s_i, const std::string &name, SEXP _result, const int expected_length) {
+    check_length(s_i, name, _result, expected_length);
     if (Rf_isNumeric(_result)) {
         NumericVector result = _result;
         // Positive Inf is permitted

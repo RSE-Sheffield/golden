@@ -25,12 +25,12 @@ check_transition <- function(transition, initPop = NULL) {
   validate_function_args(transition$args, "transition$args", transition$fn)
 
   # ---- state ----
-  if (!is.character(transition$state) || length(transition$state) != 1L) {
-    stop("'transition$state' must be a string (character vector length 1)")
+  if (!is.character(transition$state) || length(transition$state) == 0L) {
+    stop("'transition$state' must be a character vector of 1 or more strings")
   }
-  # state exists as a column
   if (!is.null(initPop)) {
-      if (!transition$state %in% names(initPop)) {
+      # state exists as a column
+      if (any(!(transition$state %in% names(initPop)))) {
         stop("initial population columns do not contain transition$state: ", transition$state)
       }
   }
@@ -47,7 +47,7 @@ check_transition <- function(transition, initPop = NULL) {
 #'
 #' @param fn Function defining the transition functions
 #' @param args Character vector of parameter names expected by fn
-#' @param state Name of the column where the result of the transition function is to be stored
+#' @param state Name(s) of the column(s) where the result of the transition function is to be stored
 #' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
 #' @return An object of class "eldoradosim_transition"
 new_transition <- function(fn, args, state, name = NULL) {

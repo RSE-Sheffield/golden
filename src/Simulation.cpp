@@ -143,29 +143,64 @@ void Simulation::stepHazards() {
                 call_args = build_args(transition["args"], population, step);
                 // @todo can this be hidden inside a util function cleanly?
                 // Only apply transitions in cases where hazard occurred
-                String ts_name = transition["state"];
                 // Execute transition
                 transitionTimers[transition["name"]].start();
                 SEXP _transition_result = dynamic_call(transition["fn"], call_args);
                 transitionTimers[transition["name"]].stop();
-                // Select correct output based on output state type
-                if (Rf_isNumeric(population[ts_name])) {
-                    NumericVector transition_result = _transition_result;
+                // Slightly different path, depending on whether it returns 1 or multiple properties
+                if (Rf_length(transition["state"]) == 1) {
+                    // Single return value (returned list should be a column)
+                    // Select correct output based on output state type
+                    String ts_name = transition["state"];
                     if (DEBUG)
-                        check_result(step, transition["name"], transition_result, Rf_length(population[0]));
-                    NumericVector transition_state = population[ts_name];
-                    population[ts_name] = ifelse(rng < p, transition_result, transition_state);
-                } else if (Rf_isInteger(population[ts_name])) {
-                    IntegerVector transition_result = _transition_result;
-                    IntegerVector transition_state = population[ts_name];
-                    population[ts_name] = ifelse(rng < p, transition_result, transition_state);
-                } else if (Rf_isLogical(population[ts_name])) {
-                    LogicalVector transition_result = _transition_result;
-                    LogicalVector transition_state = population[ts_name];
-                    population[ts_name] = ifelse(rng < p, transition_result, transition_state);
+                        check_length(step, transition["name"], _transition_result, Rf_length(population[0]));
+                    if (Rf_isNumeric(population[ts_name])) {
+                        NumericVector transition_result = _transition_result;
+                        if (DEBUG)
+                            check_result(step, transition["name"], transition_result, Rf_length(population[0]));
+                        NumericVector transition_state = population[ts_name];
+                        population[ts_name] = ifelse(rng < p, transition_result, transition_state);
+                    } else if (Rf_isInteger(population[ts_name])) {
+                        IntegerVector transition_result = _transition_result;
+                        IntegerVector transition_state = population[ts_name];
+                        population[ts_name] = ifelse(rng < p, transition_result, transition_state);
+                    } else if (Rf_isLogical(population[ts_name])) {
+                        LogicalVector transition_result = _transition_result;
+                        LogicalVector transition_state = population[ts_name];
+                        population[ts_name] = ifelse(rng < p, transition_result, transition_state);
+                    } else {
+                        // @todo Support other types?(Complex, String, Date, Datetime)
+                        stop("Unsupported type at transition processing");
+                    }
                 } else {
-                    // @todo Support other types?(Complex, String, Date, Datetime)
-                    stop("Unsupported type at transition processing");
+                    // Multiple return values (returned list, should be a list of columns)
+                    List transition_results = _transition_result;
+                    CharacterVector transition_states = transition["state"];
+                    if (Rf_length(transition_results) != Rf_length(transition_states))
+                        stop("Transition function return value contains a different number of states than expected.");
+                    for (int i = 0; i < Rf_length(transition_states); ++i) {
+                        String ts_name = transition_states[i];
+                        if (DEBUG)
+                            check_length(step, transition["name"], transition_results[i], Rf_length(population[0]));
+                        if (Rf_isNumeric(population[ts_name])) {
+                            NumericVector transition_result = transition_results[i];
+                            if (DEBUG)
+                                check_result(step, transition["name"], transition_result, Rf_length(population[0]));
+                            NumericVector transition_state = population[ts_name];
+                            population[ts_name] = ifelse(rng < p, transition_result, transition_state);
+                        } else if (Rf_isInteger(population[ts_name])) {
+                            IntegerVector transition_result = transition_results[i];
+                            IntegerVector transition_state = population[ts_name];
+                            population[ts_name] = ifelse(rng < p, transition_result, transition_state);
+                        } else if (Rf_isLogical(population[ts_name])) {
+                            LogicalVector transition_result = transition_results[i];
+                            LogicalVector transition_state = population[ts_name];
+                            population[ts_name] = ifelse(rng < p, transition_result, transition_state);
+                        } else {
+                            // @todo Support other types?(Complex, String, Date, Datetime)
+                            stop("Unsupported type at transition processing");
+                        }
+                    }
                 }
                 ++t_i;
             }
