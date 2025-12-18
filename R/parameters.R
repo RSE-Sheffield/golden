@@ -6,7 +6,7 @@ check_parameters <- function(parameters, initPop = NULL) {
   validate_S3(parameters, "Object", "eldoradosim_parameters")
 
   # Are the expected fields present
-  required_fields <- c("hazards", "trajectories", "steps", "random_seed", "debug")
+  required_fields <- c("hazards", "trajectories", "steps", "random_seed", "debug", "print_timing")
   validate_fields_present(parameters, "eldoradosim_parameters", required_fields)
   
   # ---- hazards & nested transitions ----
@@ -59,6 +59,9 @@ check_parameters <- function(parameters, initPop = NULL) {
   # ---- debug ----
   validate_logical(parameters$debug, "parameters$debug")
   
+  # ---- print_timing ----
+  validate_logical(parameters$print_timing, "parameters$print_timing")
+  
   return (parameters)
 }
 
@@ -69,9 +72,10 @@ check_parameters <- function(parameters, initPop = NULL) {
 #' @param steps Number of steps to run
 #' @param random_seed Seed to be used for random generation. If set 0, current R random state will be used.
 #' @param debug (TRUE/FALSE) flag indicating whether validation checks are enabled. These catch NaN, but reduce performance
+#' @param print_timing (TRUE/FALSE) flag indicating whether a per-function timing report should be printed after the simulation, this will always be suppressed for fast (<= 1 second) simulations.
 #' @param history eldoradosim_history S3 object representing the columns of data to be aggregated during simulation
 #' @return An object of class "eldoradosim_parameters"
-new_parameters <- function(hazards = list(), trajectories = list(), steps, random_seed = 0, debug = TRUE, history = NULL) {
+new_parameters <- function(hazards = list(), trajectories = list(), steps, random_seed = 0, debug = TRUE, print_timing = TRUE, history = NULL) {
   # If hazards is not already a list, upgrade it
   if (inherits(hazards, "eldoradosim_hazard")) {
     hazards <- list(hazards)
@@ -87,7 +91,8 @@ new_parameters <- function(hazards = list(), trajectories = list(), steps, rando
     steps = steps,
     history = history,
     random_seed = random_seed,
-    debug = debug
+    debug = debug,
+    print_timing = print_timing
   )
   # Assign S3 class
   class(parameters) <- "eldoradosim_parameters"

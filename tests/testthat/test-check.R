@@ -353,7 +353,8 @@ test_that("Parameters with missing attribute triggers stop()", {
         "trajectories",
         "steps",
         "random_seed",
-        "debug"
+        "debug",
+        "print_timing"
     )
     # No error by default
     prm <- new_parameters(list(), list(), 12, 12, FALSE)
@@ -375,7 +376,8 @@ test_that("Parameters attribute of incorrect type triggers stop()", {
         "steps",
         "history",
         "random_seed",
-        "debug"
+        "debug",
+        "print_timing"
     )
     # No error by default
     prm <- new_parameters(list(), list(), 12, 12, FALSE)

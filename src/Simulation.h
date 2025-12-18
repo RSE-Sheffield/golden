@@ -15,6 +15,7 @@ class Simulation {
     const int STEPS;
     const int RANDOM_SEED;
     const bool DEBUG;
+    const bool PRINT_TIMING;
     const int HISTORY_FREQ;
     const int HISTORY_ROWS;
     // Param
