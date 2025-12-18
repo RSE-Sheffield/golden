@@ -7,9 +7,13 @@ using namespace Rcpp;
 
 #include "Simulation.h"
 
-/**
- * Temporary testing method, probably replaced in future with R's simdata package or similar
- */
+//' Create a new cohort
+//'
+//' Temporary testing method, probably replaced in future with R's simdata package or similar
+//'
+//' @param demog 
+//' @param N 
+//' @return A sample population data.table
 // [[Rcpp::export]]
 List create_cohort(List demog, unsigned int N) {
     // Validate demog contains the required columns
@@ -73,6 +77,11 @@ List create_cohort(List demog, unsigned int N) {
     return ret;
 }
 
+//' Execute a patient trajectory simulation
+//'
+//' @param initPop data.table containing initial population for simulation
+//' @param parameters Simulation configuration
+//' @return An list containing final population, history and timing data.tables
 // [[Rcpp::export]]
 List run_simulation(List initPop, List parameters) {
     try {

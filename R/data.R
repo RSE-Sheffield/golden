@@ -7,7 +7,10 @@
 #'   \item{foo}{bar}
 #' }
 #' @source TODO
-"bmi_fits.rda"
+#' @name bmi_fits
+#' @docType data
+#' @export
+"bmi_fits"
 
 #' Example globorisk coefficients
 #'
@@ -18,7 +21,10 @@
 #'   \item{foo}{bar}
 #' }
 #' @source TODO
-"globorisk_coefs.rda"
+#' @name globorisk_coefs
+#' @docType data
+#' @export
+"globorisk_coefs"
 
 #' Example globorisk baseline hazard
 #'
@@ -29,7 +35,10 @@
 #'   \item{foo}{bar}
 #' }
 #' @source TODO
-"globorisk_cvdr.rda"
+#' @name globorisk_cvdr
+#' @docType data
+#' @export
+"globorisk_cvdr"
 
 #' Example globorisk reference values
 #'
@@ -40,7 +49,10 @@
 #'   \item{foo}{bar}
 #' }
 #' @source TODO
-"globorisk_rf.rda"
+#' @name globorisk_rf
+#' @docType data
+#' @export
+"globorisk_rf"
 
 #' Example life table data
 #'
@@ -51,7 +63,10 @@
 #'   \item{foo}{bar}
 #' }
 #' @source TODO
-"lifetable_data.rda"
+#' @name lifetable_data
+#' @docType data
+#' @export
+"lifetable_data"
 
 #' Example population structure
 #'
@@ -62,4 +77,7 @@
 #'   \item{foo}{bar}
 #' }
 #' @source TODO
-"pop_snapshot.rda"
+#' @name pop_snapshot
+#' @docType data
+#' @export
+"pop_snapshot"

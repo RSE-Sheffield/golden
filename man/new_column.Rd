@@ -15,7 +15,7 @@ new_column(name, fn, args, filter_fn = NULL, filter_args = NULL)
 
 \item{filter_fn}{(Optional) Filter function, which returns a bool vector denoting which rows should be reduced}
 
-\item{filter_args}{(Optional) Names of columns and special variables to be passed to filter_fn. Required if filter_fn is used.}
+\item{filter_args}{(Optional) Names of columns and special variables to be passed to filter_fn. Required if filter_fn is}
 }
 \value{
 An object of class "eldoradosim_history_column"
