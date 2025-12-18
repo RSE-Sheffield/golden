@@ -183,6 +183,32 @@ test_that("Single Hazard fn/param, single transition fn/param", {
     expect_true(data.table::is.data.table(step4$pop))
 })
 
+test_that("Multivariate transition function is reflected in results", {
+    N = 100
+    initPop <- sample_pop3(N)
+    parms <- get_parms()
+    ## First: a->a+2 AND ~STEP->c
+    multi_1_fn <- function(a, step) {
+        return (list(a+2, rep(step, length(a))))
+    }    
+    parms$hazards[[1]]$transitions <- list(
+        new_transition(multi_1_fn, c("a", "~STEP"), c("a", "c"))
+    )
+    ## All odd indices "a" parameter transitions from 0 to 2, even remain 0
+    ret_test <- rep(0.0, N)
+    ret_test[seq(2, N, by = 2)] <- 1
+    
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, ret_test * 2)
+    expect_equal(step1$pop$c, ret_test * 0) # at time first step hasn't finished hence 0
+    
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test * 8)
+    expect_equal(step4$pop$c, ret_test * 3) # ..hence 3
+})
+
 test_that("Single Hazard fn/param, multiple transition fn/param", {
     N = 100
     initPop <- sample_pop3(N)
