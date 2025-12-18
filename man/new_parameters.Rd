@@ -5,8 +5,8 @@
 \title{Create a new eldoradosim_parameters}
 \usage{
 new_parameters(
-  hazards,
-  trajectories,
+  hazards = list(),
+  trajectories = list(),
   steps,
   random_seed = 0,
   debug = TRUE,

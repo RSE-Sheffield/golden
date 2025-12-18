@@ -4,7 +4,15 @@
 \alias{new_hazard}
 \title{Create a new hazard object}
 \usage{
-new_hazard(fn, args, transitions, freq = 1, first = 0, last = 2147483647)
+new_hazard(
+  fn,
+  args,
+  transitions,
+  freq = 1,
+  first = 0,
+  last = 2147483647,
+  name = NULL
+)
 }
 \arguments{
 \item{fn}{Function which calculates the hazard likelihood}
@@ -18,6 +26,8 @@ new_hazard(fn, args, transitions, freq = 1, first = 0, last = 2147483647)
 \item{first}{(Optional) First step the hazard should be enabled}
 
 \item{last}{(Optional) Last step the hazard should be enabled}
+
+\item{name}{(Optional) Name used in error messages and similar. Defaults to an automatic name}
 }
 \value{
 An object of class "eldoradosim_hazard"
