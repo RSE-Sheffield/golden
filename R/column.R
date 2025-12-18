@@ -78,3 +78,14 @@ new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
   # Return column
   return(column)
 }
+
+str.eldoradosim_history_column <- function(x, ...) {
+  cat("<eldoradosim_history_column>\n")
+  cat("  name:", x$name, "\n")
+  cat("  args:", x$args, "\n")
+  cat("  filter_args:", x$filter_args, "\n")
+}
+print.eldoradosim_history_column <- function(x, ...) {
+  str(x)
+  invisible(x)
+}

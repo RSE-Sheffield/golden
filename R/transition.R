@@ -65,3 +65,14 @@ new_transition <- function(fn, args, state, name = NULL) {
   # Return transition
   return(transition)
 }
+
+str.eldoradosim_transition <- function(x, ...) {
+  cat("<eldoradosim_transition>\n")
+  cat("  fn (name):", x$name, "\n")
+  cat("  args:", x$args, "\n")
+  cat("  state:", x$state, "\n")
+}
+print.eldoradosim_transition <- function(x, ...) {
+  str(x)
+  invisible(x)
+}

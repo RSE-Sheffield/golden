@@ -83,3 +83,17 @@ new_hazard <- function(fn, args, transitions, freq = 1, first = 1, last = 214748
   # Return hazard  
   return(hazard)
 }
+
+str.eldoradosim_hazard <- function(x, ...) {
+  cat("<eldoradosim_hazard>\n")
+  cat("  fn (name):", x$name, "\n")
+  cat("  args:", x$args, "\n")
+  cat("  transitions:", x$transitions, "\n")
+  cat("  freq:", x$freq, "\n")
+  cat("  first:", x$first, "\n")
+  cat("  last:", x$last, "\n")
+}
+print.eldoradosim_hazard <- function(x, ...) {
+  str(x)
+  invisible(x)
+}

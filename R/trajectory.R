@@ -66,3 +66,14 @@ new_trajectory <- function(fn, args, property, name = NULL) {
   # Return trajectory
   return(trajectory)
 }
+
+str.eldoradosim_trajectory <- function(x, ...) {
+  cat("<eldoradosim_trajectory>\n")
+  cat("  fn (name):", x$name, "\n")
+  cat("  args:", x$args, "\n")
+  cat("  property:", x$property, "\n")
+}
+print.eldoradosim_trajectory <- function(x, ...) {
+  str(x)
+  invisible(x)
+}

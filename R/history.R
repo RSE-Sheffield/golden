@@ -55,3 +55,13 @@ new_history <- function(columns, frequency = 1) {
   # Return history
   return(history)
 }
+
+str.eldoradosim_history <- function(x, ...) {
+  cat("<eldoradosim_history>\n")
+  cat("  columns:", x$columns, "\n")
+  cat("  frequency:", x$frequency, "\n")
+}
+print.eldoradosim_history <- function(x, ...) {
+  str(x)
+  invisible(x)
+}
