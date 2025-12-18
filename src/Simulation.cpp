@@ -27,6 +27,7 @@ Simulation::Simulation(List parameters)
 #else
     , DEBUG(true)
 #endif
+    , PRINT_TIMING(static_cast<bool>(parameters["print_timing"]))
     , HISTORY_FREQ(initHistoryFreq(parameters))
     , HISTORY_ROWS(initHistoryRows(parameters))
     , columns(R_NilValue)
@@ -360,7 +361,10 @@ List Simulation::buildTimingReport() {
         }
         ret.push_back(columnTimes, "columns");
     }
-    printTimingReport(ret);
+    // Don't print a full timing report for quick runs
+    if (simTimer.getDurationSeconds() > 1 && PRINT_TIMING) {
+       printTimingReport(ret);
+    }
     return ret;
 }
 
