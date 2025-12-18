@@ -1,7 +1,8 @@
-# rcpp-test
+# golden <img src="man/figures/logo.png" align="right" height="138" alt="" /> #
+
 A minimal best practice (ci, docs, test) rcpp package to be used as a template.
 
-## Development
+## Development ##
 
 If making changes to the package locally, you will need both rebuild and reinstall it.
 
@@ -21,7 +22,7 @@ library(testthat)
 test_file(test_path("test-example.R"))
 ```
 
-## Creation From Scratch
+## Creation From Scratch ##
 
 *Uses of "rcpp.testpkg" in the below example are the name of the package. Package names may only contain alphanumeric characters and periods.*
 
