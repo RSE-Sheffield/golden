@@ -2,7 +2,6 @@
 
 A minimal best practice (ci, docs, test) rcpp package to be used as a template.
 
-
 ## Development ##
 
 If making changes to the package locally, you will need both rebuild and reinstall it.
