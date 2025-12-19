@@ -1,4 +1,10 @@
 #include "Simulation.h"
+/**
+ * defined in R/src/include/Rinterface.h
+ * This bool denotes whether R is executing in interactive mode
+ * CRAN requires that non-interactive runs do not output to console
+ */
+extern Rboolean R_Interactive;
 
 #include "utils/dynamic_call.h"
 #include "utils/debug.h"
@@ -96,11 +102,13 @@ List Simulation::run(List initPop) {
         stepHistory();
         // Increment step count
         ++step;
-        // Calculate eta
-        const float currentRuntime = simTimer.getRunningSeconds();
-        const float avgStepTime = currentRuntime / step;
-        const float remainingTime = avgStepTime * (STEPS - step);
-        Rprintf("\rStep %d/%d complete, est. %.0fs remaining.", step, STEPS, remainingTime);
+        // Calculate eta if running in an interactive console
+        if (R_Interactive) {
+            const float currentRuntime = simTimer.getRunningSeconds();
+            const float avgStepTime = currentRuntime / step;
+            const float remainingTime = avgStepTime * (STEPS - step);
+            Rprintf("\rStep %d/%d complete, est. %.0fs remaining.", step, STEPS, remainingTime);
+        }
     }
     simTimer.stop();
     Rprintf("\rSimulation Complete in %.2f seconds!      \n", simTimer.getElapsedSeconds());
