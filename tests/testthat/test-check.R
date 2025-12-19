@@ -680,3 +680,4 @@ test_that("No args fn is valid/invalid", {
     expect_error(new_column("test", no_arg_fn, c()),
         "'column\\$args' must not be empty")
 })
+

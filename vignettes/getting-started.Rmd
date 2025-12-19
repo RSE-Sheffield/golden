@@ -1,0 +1,908 @@
+---
+title: "Getting Started"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{getting-started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# golden
+
+**golden** is a flexible patient-level microsimulation modelling framework focussed on trajectories of patient risk factors and hazards of events, authored by [Pete Dodd](https://sheffield.ac.uk/smph/people/academic/population-health/pete-dodd) and [Robert Chisholm](https://sheffield.ac.uk/cs/people/research-staff/robert-chisholm).
+
+## Installation
+
+**golden** is not currently available via CRAN, so must be installed via either devtools:
+
+```{r install, eval=FALSE}
+# Note, username may change in future if repository is transferred
+install_github("RSE-Sheffield/golden")
+```
+
+or by manually downloading a `.zip` from the [golden GitHub repository](https://github.com/RSE-Sheffield/golden) to be installed:
+
+```{r eval=FALSE}
+install.packages("<path to .zip>", repos = NULL, type="source")
+```
+
+Following either of the actions, you should now be able to load golden like any other package.
+
+```{r setup}
+library(golden)
+```
+
+# Philosophy & design
+
+**golden** is a framework which provides the glue, allowing R functions either defined by the user or selected from other packages to be combined into a comprehensive patient trajectory model.
+
+The four conceptual components of the framework are **hazards**, **transitions**, **trajectories**, and **histories**. The population state is conceptualized as a `data.frame` or `data.table`, with one row per patient, and columns representing and storing information about the patients.
+
+**Hazards** are functions that determine the likelihood of an event occurring for a patient in a given time step, given their current state (column values). If the random event occurs, an associated set of *transitions* will be applied that change the patient's state. An example hazard might be the mortality rate, with death as an associated transition.
+
+**Trajectories** are rules that determine the evolution of patients' states. An example might be ageing, where ages advance with time while the patient is alive.
+
+**Histories** define what aggregate summaries from the population to record as time series. The final population state will automatically be returned, which can be useful for computing cumulative or final quantities.
+
+
+These concepts are represented by S3 objects in R, with constructors defined below. In order to create these objects, users will typically need to define
+
+- Hazard functions
+- Trajectory functions
+- Transition functions
+- History column functions
+- History column filter functions
+
+Whilst the exact usage of each case differs slightly, they all share a common core whereby users must specify both a function (often shortened to `fn` in the constructor argument names) and the function's arguments (often shorted to `args`).
+
+The arguments passed to a function will typically be the names of columns (within the population data.table) to be passed to the function. The name "~STEP" is a reserved name created to represent the simulation time step.
+
+
+## Scalar Functions
+
+Currently **golden** assumes that all functions are designed to process vectors, rather than individual scalars. If scalar handling is required, we recommend that you wrap your scalar function inside a parent function which calls the scalar function for each element of the vector arguments.
+
+## Understanding the classes
+
+### Hazards and Transitions
+
+Hazards represent an instantaneous chance of a patient transitioning between states. A hazard is passed the requested vector of population data and returns a hazard value which is converted to a probability via Equation \@ref(eq:hazard). A random number is then generated for each patient, which is tested to decide whether the hazard has occurred for that patient. Patients that are selected to be impacted by the hazard, then execute linked transition functions to update one or more of their states.
+
+\begin{equation}
+p = 1 - \exp(-h\, dt)
+\label{eq:hazard}
+\end{equation}
+
+- $p$ is the probability of the hazard occurring
+- $h$ is the value returned by a hazard function
+- $dt$ is the times differential, this value is always currently 1
+
+Each transition is created via `new_transition()` which requires the transition function, it's arguments and the state (population column) that it updates.
+
+```{r, eval = FALSE}
+example_transition <- new_transition(
+  
+)
+```
+
+Each hazard is created via `new_hazard()` which requires the hazard function, it's arguments, and a list of dependent transitions. Hazards also provide optional configuration to decrease the frequency or range of steps that a hazard is active for.
+
+```{r, eval = FALSE}
+example_hazard <- new_hazard(
+  
+)
+```
+
+### Trajectories
+
+Trajectories represent regularly changing states, such as a patient's age or disease progression. They operate very similar to transitions, however trajectories allow multiple states may be updated simultaneously. Multivariate trajectories can return a list of vectors instead of a single vector, one for each state to be updated.
+
+Each trajectory is created via `new_trajectory()` which requires the trajectory function, it's arguments, and the property or properties to be updated.
+
+```{r, eval = FALSE}
+example_trajectory <- new_trajectory(
+  
+)
+```
+
+### History and Columns
+
+History is the **golden** approach to logging aggregate population information (e.g. timeseries) during simulation execution. Individual columns of data to be collected are specified with a corresponding reduction function, with the optional facility to filter down to a sub-population to be reduced (e.g. the average age of living male patients).
+
+Each column is created via `new_column()` which requires a name for the column, the reduction function and arguments to use and an optional filter function and respective arguments.
+
+
+```{r, eval = FALSE}
+example_column <- new_column(
+  
+)
+```
+
+One of more columns are then passed to `new_history()`, alongside the frequency of data collection (which defaults to 1, every step).
+
+
+```{r, eval = FALSE}
+example_history <- new_history(
+  
+)
+```
+
+
+
+### Parameters
+
+With all the components of the simulation defined, they can now be assembled into the main parameter list to pass to the simulation. 
+
+The parameters are created by passing lists of hazards and trajectories, whilst also specifying the number of steps to execute an optional items such as random seed or history.
+
+
+```{r, eval = FALSE}
+example_parameters <- new_parameters(
+  
+)
+```
+
+# Running a simulation: simple examples
+
+To execute a simulation `run_simulation()` is called, passing the initial population table and parameters structure. In the next few sections we will step through a series of related, artificial examples to illustrate particular features.
+
+First, let's load some relevant libraries and set the random seed:
+
+```{r}
+library(golden)  # this package
+library(data.table)   # enhanced data handling
+library(ggplot2)      # plotting
+set.seed(1234)        # PRNG seed
+
+```
+
+
+## Example 0: exponential decay
+
+One of the arguments for `run_simulation` is the initial population. **golden** does not provide utilities to create populations. Users are expected to create there own by resampling data, using packages such as X and Y, or writing their own methods. For these simple examples, we will create an artificual population as a `data.table` with one row per patient and columns containing their data. Here, we are considering ages, systolic blood pressure (SBP), and total cholesterol (TC).
+
+TODO CHECK: check & list what objects are allowed for populations (data.frames, matrices?)
+
+```{r}
+## initial population
+N <- 1e4L # population size
+pop0 <- data.table(
+  id = 1:N,           # patient ids
+  death = rep(-1, N), # time of death
+  age = rep(40, N),   # age
+  sbp = rlnorm(N, log(140), .05), # systolic BP
+  tc = rlnorm(N, log(4.5), .01)   # total cholesterol
+)
+```
+
+For our first example, we will see how to apply a constant hazard of death. We need to write a function that returns this hazard:
+```{r}
+## constant mortality hazard
+deathrate0 <- function() {
+  0.1
+}
+```
+This is actually a special case: usually functions need to return vectors, and should be programmed to return vectors of the same length as their input arguments. 
+This special constant function has no arguments and its scalar return value will be recycled to create a vector of identical element values, with length equal to the population size.
+
+TODO CHECK: what happens with a function depending only on `~STEP`? Case for allowing version that return scalar and handling in the same way
+
+Hazards control how likely events are to happen at each time step. We define what events look like by specifying (a list of) transition functions that will be called to enact changes on the data if a hazard triggers an event. In our initial population we have chosen to include a variable `death` for time of death, which is -1 when people are alive. We can therefore use a generic transition to enact mortality by recording the time of death:
+```{r}
+## generic transition: returns state as input value
+transition_fn <- function(state, i) {
+  # If  result is true, and state is -1, update state to current time
+  ifelse(state == -1, rep(i, length(state)), state)
+}
+
+```
+t
+We will need to create a hazard that understands more context about how apply the hazard function and associated transitions to the data:
+```{r}
+## new_hazard creates a hazard
+morthaz0 <- new_hazard(
+  deathrate0,      # function returning hazard
+  c(),             # arguments for hazard function
+  new_transition(  # creates a transition
+    transition_fn, # 'kills' by death -1 -> time of death
+    c("death", "~STEP"), # args for transition fn
+    "death"              # col transition acts on
+  )
+)
+
+```
+Note that the generic transition will record time of death: the input arguments are `death` (to check not already dead) and `~STEP` (the special current step variable) and, where applied, the function will set `death` to the current step value.
+
+If we want to record aggregate time series data about our population during the simulation, we will need to construct a history object. For this we will need to specify columns, what summary they are computing, and (optionally) what population subset they are considering by providing a filter function that selects rows. As with above, we need to provide vectors of column names that specify which inputs functions are taking as arguments. You can also choose the frequency with which time series statistics are computed and recorded.
+```{r}
+## filter to restrict to alive
+filter_alive <- function(x) {
+  x == -1 # tests alive applied to 'death'
+}
+
+## new_history creates a history
+noalive <- new_history(
+  columns = list(
+    new_column(     # creates a col in history
+      "no. alive",  # column name
+      length,       # summary function
+      "age",        # input args for summary fn
+      filter_alive, # filter to row-restrict 
+      "death"       # input variables for filter
+    )
+  ),
+  frequency = 1     # record history every 1 steps
+)
+```
+
+Now we are in a position to create a parameters object, which will take lists of *hazards*, *trajectories*, and a *history*, as well as other unformation like how many steps to run the model for.
+Note that we haven't said how long a step is: the hazards need to return values in units of per step. If steps are meant to represent years, mortality hazards should return in units of per year; if step are meant to represent weeks; hazards should use units of per week.
+```{r, eval = TRUE}
+parms0 <- new_parameters(
+  hazards = morthaz0,
+  steps = 10,
+  debug = FALSE,
+  history = noalive
+)
+```
+
+Given an initial population and a parameters object, we can run the model:
+```{r}
+## run the simulation
+result0 <- run_simulation(pop0, parms0)
+```
+TODO CHECK: is there a way to handle the ETA gracefully in outputs like this?
+
+This outputs a list of 3 things:
+
+- the final population
+- a 'history': time series summary data
+- timing data
+
+```{r}
+## output list
+str(result0)
+```
+TODO CHECK: is history `NULL` or empty with no history specified?
+
+Final population data can be used to understand final status and to record cumulative data at an individual level. Conversely, history data captures specified summaries, but does so over time.
+
+Here, we can plot the fraction of the population surviving at each time step and compare it to the deterministic expectation: 
+```{r, fig.dim = c(5, 3), fig.cap = "Comparison with analytical result (red)"}
+## plot
+ggplot(result0$history, aes(`~STEP`, `no. alive`)) +
+  geom_line() +
+  geom_point() +
+  geom_function(fun = function(x) N * exp(-x / 10), col = 2)
+```
+
+
+## Example 1: ageing as a trajectory; parametric uncertainty
+
+You may have noticed that the example above did not include a trajectory. That is, none of the data associated with individuals evolved over time, except as a result of events triggered by hazards.
+In this example we will introduce some simple trajectories: deterministic or stochastic rules that specify how continuous variables associated with patients evolve. 
+In realistic use cases, these would represent patient-level risk factors that influence the likelihood of health events. Perhaps the simplest example one could imagine is age.
+
+A variety of quantities may increment with time or in order to record event counts, but age should only advance in those who are alive. Let's define functions for both these possibilities:
+```{r}
+## Define a function to increment by 1
+generic_update <- function(x) {
+  x + 1
+}
+
+## If dead, age is not changed
+age_update <- function(age, death_time) {
+  ifelse(death_time == -1, age + 1, age)
+}
+```
+
+As with *hazards*, we will create a *trajectory* using our update function, but will need to provide information about what the function uses as inputs, and what column it acts upon:
+```{r}
+## new_trajectory creates a trajectory
+age_traj <- new_trajectory(
+              age_update,        # update function 
+              c("age", "death"), # args for update function
+              "age"              # column(s) to be updated
+            )
+```
+
+Let's also consider a marginally more realistic mortality hazard: we'll make our mortality risk increase with SBP and TC:
+```{r}
+## mortality hazard depending on individual characteristics
+deathrate1 <- function(death, sbp, tc) {
+  ifelse(death < 0, 0.1 + sbp / 1000 + tc / 100, 0)
+}
+
+morthaz1 <- new_hazard(
+  deathrate1,             # hazard function     
+  c("death", "sbp", "tc"),# args for hazard fn
+  ## (list of) transitions to apply
+  new_transition(
+    transition_fn,        # generic transition
+    c("death", "~STEP"),  #
+    "death"
+  )
+)
+```
+This time the hazard construction is less trivial, with a vector of column names to be used as input arguments by the mortality rate.
+
+_Note_ also that conceptually, this shows how to include paranetric uncertainty in analyses. Often health economic analyses will perform Probabilistic Sensitivity Analysis (PSA), which means sampling across uncertain parameters to reflect their uncertainty in outputs. Here SBP and TC are patient characteristics that have been sampled to vary between patients, but they could equally represent uncertain global parameters, e.g. an uncertain treatment effect or natural history parameter. In this framework, 'parameters' (and any uncertainty in them) should be included in the 'population'.
+
+In the same way as before, we can create a parameter object and run the simulation (unless they died in the first step).
+```{r}
+## full parameters
+parms1 <- new_parameters(
+  hazards = morthaz1,
+  trajectories = age_traj,
+  steps = 10,
+  debug = FALSE,
+  history = noalive
+)
+
+## run the simulation
+result1 <- run_simulation(pop0, parms1)
+```
+
+This time, one can see that people are no longer 40 year old at the end of the simulation (unless they died in the first step):
+```{r}
+result1$pop
+```
+TODO CHECK: probably need a section somewhere on implementation that includes user-relevant things like ordering of updates/hazards etc
+
+
+## Example 2: a stochastic multivariate trajectory 
+
+In this section we will illustrate how to implement a stochastic multivariate trajectory. 
+However, to keep things simple for inspecting longer runs, let's turn off death:
+```{r}
+## keep everyone alive here to have a look at RW dynamics
+deathrate2 <- function() {
+  0
+}
+morthaz2 <- new_hazard(deathrate2, args = c(), transitions = list())
+```
+
+In may be the case that certain patient-characteristics evolve in a non-independent way. 
+Modern statistical approaches and longitudinal data sets allow development of models that can simultaneously represent the correlated evolution of multiple variables, i.e. are multivariate.
+Here, we consider a toy example of a bivariate trajectory model for SBP and TC. We represent their evolution as a correlated geometric random walk (i.e. a correlated random walk in log transformed space):
+```{r}
+## sbp & tc as correlated geometric random walk
+bptc_update <- function(sbp, tc, death_time) {
+  lsbp <- log(sbp)
+  ltc <- log(tc)
+  alive <- death_time < 0
+  if (sum(alive) > 1) {
+    U <- matrix(rnorm(2 * sum(alive)), nrow = sum(alive), ncol = 2)
+    U[, 2] <- U[, 2] + U[, 1] / 2 # correlation
+    U <- U / 100 # rescale
+    lsbp[alive] <- lsbp[alive] + U[, 1]
+    ltc[alive] <- ltc[alive] + U[, 2]
+  }
+  list(sbp = exp(lsbp), tc = exp(ltc))
+}
+
+bptc_update(rep(140, 5), rep(4.5, 5), rep(-1, 5))
+```
+The two colmns are returned as a list of vectors. _Note_ that even if a group of variables are not evolving in a correlated way, it may be more logical, convenient, or economical of code to group them together rather than writing separate update functions for each of them.
+
+_Note_ also that this example illustrates use of a random function. There is no restriction that the functions provided for use in trajectory updates, or transitions cannot include stochasticity. This is also true of hazard functions, although this would be less common.
+
+TODO CHECK: check can use random hazards.
+
+Having defined our update, we can create a trajectory as before, but now with vectors to specify which columns are affected. Now we have multiple trajectories, we will need to pass a list of them to parameter the constructor.
+```{r}
+bptc_traj <- new_trajectory(
+  bptc_update, # trajectory fn
+  c("sbp", "tc", "death"), # trajectory args
+  c("sbp", "tc") # outputs (list of vectors from fn)
+)
+
+## make list of trajectories for use below
+trajlist2 <- list(
+  ## age
+  age_traj,
+  ## SBP & TC handled in bivariate fashion
+  bptc_traj
+)
+```
+
+In this case, it may convey more to construct a history that picks out a single individual patient trajectory. There are different ways this could be done, since `sum` and `mean` and the identity function `function(x) x` all return the same when applied to a single individual (vector of length 1). 
+```{r}
+## filter to 1
+filter_1 <- function(x) {
+  x == 1
+}
+
+## history to also include random walk variables for id==1
+noalive2 <- new_history(
+  columns = list(
+    new_column("no. alive", length, c("age"), filter_alive, c("death")),
+    ## 3 ways of returning an individual's value:
+    new_column("sbp1", sum, c("sbp"), filter_1, c("id")),
+    new_column("tc1", mean, c("tc"), filter_1, c("id")),
+    new_column("tc1 v2", function(x) x, c("tc"), filter_1, c("id"))
+  ),
+  frequency = 1
+)
+```
+
+For this illustration, let's run the simulation for 1000 steps, but only for the first 50 individuals:
+```{r}
+## full parameters
+parms2 <- new_parameters(
+  hazards = morthaz2,
+  trajectories = trajlist2,
+  steps = 1000, #longer
+  debug = FALSE,
+  history = noalive2
+)
+
+## run the simulation
+result2 <- run_simulation(pop0[1:50], parms2) #look at a limited population
+```
+
+We can now transform and plot the SBP and TC trajectories for the first individual, which do indeed look like a correlated geometric random walk:
+```{r, fig.dim = c(5, 3), fig.cap = "Correlated geometric random walk trajectory for SBP & TC of a single patient"}
+plot_data <- melt(result2$history[, .(t = `~STEP`, sbp1, tc1)], id = "t")
+
+ggplot(plot_data, aes(t, value, col = variable)) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y") +
+  theme(legend.position = "none")
+```
+
+TODO CHECK: must be super consistent in use of language around event/hazard etc.
+
+## Example 3: timed events & multiple transitions
+
+Sometimes, it may be necessary to represent 'deterministic' events, which happen with certainty in response to some change.
+These are dealt with in **golden** by allowing hazard values to be `Inf`, which guarantees events will occur.
+
+As a simple example, let's suppose we want to put people on 'treatment' if their SBP exceeds 150 or their TC exceeds 4.5.
+First, let's introduce some new variables to our population to describe related states:
+
+```{r}
+## extra variables
+pop0[, on_treatment := 0L]       # time on treatment: 0 means not on treatment
+pop0[, treatment_counter := 0L]  # counter for treatment initiation
+```
+
+We will say we want treatment to start with certainty if the SBP/TC condition above is met, and to finish after 5 steps.
+This means defining hazard functions that become `Inf` when the relevant conditions are met:
+```{r}
+## definitely go on treatment if sbp >= 150 or tc >= 4.5
+treatment_start_haz <- function(death, on_treatment, sbp, tc) {
+  ifelse(death > 0 | on_treatment > 0 | (sbp < 150 & tc < 4.5), 0, Inf)
+}
+
+## definitely end treatment after 5 steps if alive
+treatment_end_haz <- function(death, on_treatment) {
+  ifelse(death > 0 | on_treatment < 5, 0, Inf)
+}
+```
+
+Of course we will also need a trajectory rule to track time-on-treatment, and add this to our list of trajectories:
+```{r}
+## treatment trajectory
+treatment_time_update <- function(death, on_treatment) {
+  ifelse(death < 0 & on_treatment > 0, on_treatment + 1, 0)
+}
+
+## trajectory list
+trajlist3 <- list(
+  ## age
+  age_traj,
+  ## SBP & TC handled in bivariate fashion
+  bptc_traj,
+  ## new trajectory for treatment
+  new_trajectory(
+    treatment_time_update,
+    c("death", "on_treatment"),
+    "on_treatment"
+  )
+)
+```
+
+And we will need to define the transitions associated with starting and finishing treatment:
+```{r}
+## start off
+treatment_start_transition <- function(on_treatment) {
+  rep(1, length(on_treatment))
+}
+
+## finish off
+treatment_end_transition <- function(on_treatment) {
+  rep(0, length(on_treatment))
+}
+```
+
+These will be included in a list of transitions associated with the hazard for starting treatment:
+```{r}
+hazlist3 <- list(
+  ## death
+  morthaz0,
+  ## starting treatment
+  new_hazard(
+    treatment_start_haz,
+    c("death", "on_treatment", "sbp", "tc"),
+    ## (which triggers two transitions)
+    list(
+      new_transition(
+        treatment_start_transition,
+        "on_treatment",
+        "on_treatment"
+      ),
+      new_transition(
+        generic_update,
+        "treatment_counter",
+        "treatment_counter"
+      )
+    )
+  ),
+  ## finishing treatment
+  new_hazard(
+    treatment_end_haz,
+    c("death", "on_treatment"),
+    ## (triggering one transition)
+    new_transition(
+      treatment_end_transition,
+      "on_treatment",
+      "on_treatment"
+    )
+  )
+)
+```
+_Note_: as with trajectories, we can code transitions to act on multiple rows by defining functions that return lists of vectors, and specifying which columns these are via a vector of column names in `new_transition`. This could allow for things like correlated random transitions, but more often may be a more convenient way to specify things. E.g. in the above one could have defined a single `treatment_start_transition` that both turned on treatment and incremented the treatment counter, as opposed to defining these separately and grouping them with the `treatment_start_haz` using a list.
+
+
+For this example, let's add a time series capturing the number on treatment at each time to the history:
+```{r}
+history3 <- new_history(
+  columns = list(
+    new_column("no. alive", length, "age", filter_alive, "death"),
+    ## alive and on treatment:
+    new_column(
+      "no. alive on tx",
+      function(x) sum(x > 0),
+      "on_treatment",
+      filter_alive, "death"
+    ),
+    ## an individual's value:
+    new_column("sbp1", sum, "sbp", filter_1, "id"),
+    new_column("tc1", mean, "tc", filter_1, "id")
+  ),
+  frequency = 1
+)
+```
+
+Finally, let's assemble the parameters and run the model:
+```{r}
+## full parameters
+parms3 <- new_parameters(
+  hazards = hazlist3,
+  trajectories = trajlist3,
+  steps = 20, # longer
+  debug = FALSE,
+  history = history3
+)
+
+## run the simulation
+result3 <- run_simulation(pop0, parms3) # look at a limited population
+result3$pop
+```
+You can see the number of times patients have started treatment in the final population data. This is an example of recording a cumulative variable, and this approach could be used to capture cumulative (discounted) costs etc in health economic applications.
+
+Let's inspect the numbers alive and on treatment:
+
+```{r, fig.dim = c(5, 3), fig.cap = "Numbers alive and on treatment"}
+plot_data <- melt(result3$history[, .(
+  t = `~STEP`,
+  `no. alive`, `no. alive on tx`
+)], id = "t")
+
+ggplot(plot_data, aes(t, value, col = variable)) +
+  geom_line() +
+  geom_point() +
+  theme(legend.position = "top")
+```
+
+This is a very artificial example, but one can see the cyclical pattern with people finishing treatment roughly in sync after 5 steps before restarting; faster evolution of SBP/TC would probably soften this synchronicity.
+
+
+
+# A more realistic example: globorisk 
+
+For a slightly more realistic application of these principles, we will consider [globorisk](https://github.com/boyercb/globorisk) cardiovascular disease (CVD) model, which commendably has an R package including available data to reconstruct baseline hazard for combined CVD event risk. We include data for the US from this package, along with body mass index (BMI) estimates based on [NCD-RisC](https://www.ncdrisc.org/) and population demographic data from the UN Word Population Prospects 2024 (WPP2024) estimates, courtesy of the R package [wpp2024](https://github.com/PPgp/wpp2024).
+
+## Initial population
+
+First, let's construct a population. We provide in the package population demographic structure estimates for the US in 2023: we write a short function to enable sampling a cohort to match these patterns, and apply it to create our initial base cohort, including: age, sex, death, and a CVD event counter:
+
+```{r}
+## population structure data
+head(pop_snapshot)
+
+## function to sample a population using above data
+make_cohort <- function(N) {
+  popcounts <- rmultinom(1, size = N, prob = c(pop_snapshot))
+  sexes <- rep(1, sum(popcounts[1:nrow(pop_snapshot)]))
+  sexes <- c(sexes, rep(0, N - length(sexes)))
+  initPop <- data.table(
+    male = as.integer(sexes),
+    age = as.integer(0),
+    death = as.integer(rep(-1, N)),
+    cvd_count = as.integer(rep(0, N))
+  )
+  ## do ages
+  ageref <- rep(0:(nrow(pop_snapshot) - 1), 2)
+  k <- 1
+  for (i in 1:length(popcounts)) {
+    if (popcounts[i] > 0) {
+      initPop[k:(popcounts[i] + k - 1), age := ageref[i]]
+      k <- k + popcounts[i]
+    }
+  }
+  initPop
+}
+
+## sample the initial population
+initPop <- make_cohort(N)
+```
+
+We need to do a bit of extra work to facilitate merging with other data. We add age categories to merge in BMI fit data, and then sample a distribution of BMIs. Then we add the globorisk age categories and merge in central values of SBP and TC:
+```{r}
+## age categories used in the BMI fits data
+initPop[, acat := fcase(
+  age >= 25 & age < 30, "25-29",
+  age >= 30 & age < 35, "30-34",
+  age >= 35 & age < 40, "35-39",
+  age >= 40 & age < 45, "40-44",
+  age >= 45 & age < 50, "45-49",
+  age >= 50 & age < 55, "50-54",
+  age >= 55 & age < 60, "55-59",
+  age >= 60 & age < 65, "60-64",
+  age >= 65 & age < 70, "65-69",
+  age >= 70 & age < 75, "70-74",
+  age >= 75 & age < 80, "75-79",
+  age >= 80 & age < 85, "80-84",
+  age >= 85, "85plus",
+  default = "20-24"
+)]
+
+## add male convention to BMI fits data
+bmi_fits$male <- ifelse(bmi_fits$sex == "Men", 1, 0)
+
+## merge in BMI fits data
+initPop <- merge(
+  initPop,
+  bmi_fits[, .(male, acat, k, theta)],
+  by = c("male", "acat"),
+  all.x = TRUE, all.y = FALSE
+)
+
+## sample some BMIs
+initPop[, bmi := rgamma(nrow(initPop), shape = k, scale = theta)]
+
+## add globorisk age categories 
+initPop[, agec := as.integer(ifelse(age < 85, trunc(age / 5) - 7, 10))]
+initPop[agec < 1, agec := 1]
+initPop[agec > 9, agec := 9]
+
+## merge in central SBP and TC for US from globorisk
+initPop <- merge(
+  initPop,
+  globorisk_rf[, .(agec, male = sex, sbp = 10 * mean_sbp, tc = mean_tc)],
+  by = c("agec", "male")
+)
+```
+
+We can check this is looking plausible:
+```{r, fig.dim = c(5, 3), fig.cap = "Initial population demography"}
+## initial pop
+ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
+  geom_histogram() +
+  theme(legend.position = "top")
+```
+
+## Hazards
+
+We create a mortality hazard function that looks up death rates in a given year, age, and sex from WPP2024 data:
+```{r}
+## data prep
+n_ages <- 101
+n_years <- nrow(lifetable_data) / n_ages
+qx_array <- array(0, dim = c(2, n_ages, n_years))
+qx_array[1, , ] <- lifetable_data$mxM
+qx_array[2, , ] <- lifetable_data$mxF
+
+## mortality hazard function
+mort_fn <- function(sex, age, year) {
+  ## Convert to 1-indexed and clamp in bounds
+  d <- dim(qx_array)
+  n_rows <- d[2]
+  n_cols <- d[3]
+  row_index <- pmin(pmax(age + 1, 1), n_rows)
+  col_index <- pmin(pmax(year + 1, 1), n_cols)
+  qx_array[cbind(sex + 1, row_index, col_index)] # zero index female
+}
+
+## test
+mort_fn(rep(1, 10), rep(50, 10), rep(70, 10))
+```
+
+The we write a hazard for CVD events that depends on updated age, sex, BMI, SBP and TC based on the [globorisk](https://github.com/boyercb/globorisk) R package.
+
+
+```{r}
+globohaz <- function(death, sex, age, bmi, sbp = 140, tc = 4.5) {
+  n <- length(sex)
+  if (length(sex) != length(age) || length(sex) != length(bmi)) {
+    stop("Arguments must be equal length!\n")
+  }
+  ## checks/additions
+  age <- pmin(pmax(age, 41), 75)
+  dm <- rep(0, n)
+  smk <- rep(0, n)
+  ## globorisk transforms
+  agec <- as.integer(ifelse(age < 85, trunc(age / 5) - 7, 10))
+  sbp <- sbp / 10
+  dm <- as.integer(dm)
+  smk <- as.integer(smk)
+  bmi <- bmi / 5
+  ## center
+  agc_sex <- paste(agec, sex, sep = "_")
+  sbp_c <- sbp - globorisk_rf[agc_sex][, mean_sbp]
+  tc_c <- tc - globorisk_rf[agc_sex][, mean_tc]
+  dm_c <- dm - globorisk_rf[agc_sex][, mean_dm]
+  smk_c <- smk - globorisk_rf[agc_sex][, mean_smk]
+  bmi_c <- bmi - globorisk_rf[agc_sex][, mean_bmi]
+  ## compute hazard ratios
+  HR <- sbp_c * globorisk_coefs[["main_sbpc"]] +
+    bmi_c * globorisk_coefs[["main_bmi5c"]] +
+    smk_c * globorisk_coefs[["main_smokc"]] +
+    sex * smk_c * globorisk_coefs[["main_sexsmokc"]] +
+    age * sbp_c * globorisk_coefs[["tvc_sbpc"]] +
+    age * smk_c * globorisk_coefs[["tvc_smokc"]] +
+    age * bmi_c * globorisk_coefs[["tvc_bmi5c"]]
+  HR <- exp(HR) # un-log
+  ## baseline hazard
+  h <- globorisk_cvdr[agc_sex][, cvd_0]
+  ## return
+  ans <- h * HR
+  ans[death > 0] <- 0 # no effect on dead
+  ans[!is.finite(ans)] <- 0 # safety
+  ans
+}
+
+## test: note returns vector
+globohaz(
+  c(-1, -1, 1), #alive
+  c(0, 1, 1),   #sex
+  c(00, 50, 90), #age
+  rep(25, 3),    #BMI
+  rep(145, 3),   #SBP
+  rep(5, 3)      #TC
+)
+```
+
+We combine these to create a list of hazards. CVD events will just increment the `cvd_count` variable, but in more realistic applications would trigger costs and complications.
+```{r}
+## hazards
+hazlist <- list(
+  ## CVD event
+  new_hazard(
+    globohaz,
+    c("death", "male", "age", "bmi", "sbp", "tc"), # input args for hazard
+    list(new_transition(
+      generic_update,  # transition function for event
+      "cvd_count",     # input args for transition
+      "cvd_count"      # vars affected by transition
+    ))
+  ),
+  ## deaths
+  new_hazard(
+    mort_fn,
+    c("male", "age", "~STEP"),
+    list(new_transition(transition_fn, c("death", "~STEP"), "death"))
+  )
+)
+
+```
+
+## Trajectories & history
+
+We already have trajectories for age, and (SBP and TC) from above, but would like to consider BMI as something that changes with age.
+We will make the simplistic assumption that we can use the cross-sectional pattern seen in our baselin population as a way to evolve BMI, and based this on a regression. 
+_Note_ there is no problem with using `predict` methods from regressions to define hazards or trajectories:
+```{r}
+## linear model of BMI vs age in our data
+mm <- lm(bmi ~ 1 + age + I(age^2),
+  data = initPop
+) # regression
+
+## pretend that cross-sectional BMIs are a reasonable way to inform trajectories
+bmi_update <- function(age) {
+  predict(mm, newdata = data.table(age = age))
+}
+
+bmi_update(25) # test
+```
+
+We group these into a list of trajectories, creating one for BMI based on the update function as we go:
+```{r}
+## trajectories
+trajlist <- list(
+  ## age
+  age_traj,
+  ## BMI
+  new_trajectory(bmi_update, "age", "bmi"),
+  ## SBP & TC handled in bivariate fashion
+  bptc_traj                    #trajectory fn
+)
+```
+
+Finally, we will monitor the living population size, average age (as a check), and the average number of CVD events:
+```{r}
+history <- new_history(
+  columns = list(
+    new_column("no. alive", length, c("age"), filter_alive, c("death")),
+    new_column("av. age alive", mean, c("age"), filter_alive, c("death")),
+    new_column("av. cvd events", mean, c("cvd_count"), filter_alive, c("death"))
+  ),
+  frequency = 1
+)
+```
+
+## Running & plotting
+
+Having defined our *hazards*, *trajectories*, and *history*, we can now create our parameter object and run the model:
+```{r}
+parms <- new_parameters(
+  hazards = hazlist,
+  trajectories = trajlist,
+  steps = n_years,
+  debug = FALSE,
+  history = history
+)
+
+## run the simulation
+ret <- run_simulation(initPop, parms)
+```
+_Note_ for the first time in these examples, the timing information is potentially useful: it shows that `globohaz` is where much of the time is going for this simulation, and if run time were an issue suggests where efforts to improve efficiency should be directed.
+
+Let's have a look at a few of the outputs. 
+
+Have we run the model long enough that most people have died?
+```{r, fig.dim = c(5, 3), fig.cap = "Living cohort size over time"}
+## history: number alive
+ggplot(ret$history, aes(`~STEP`, `no. alive`)) +
+  geom_line()
+```
+
+What age did people die at?
+```{r, fig.dim = c(5, 3), fig.cap = "Age at death"}
+## now dead
+ggplot(
+  ret$pop[death > 0],
+  aes(x = age, fill = factor(male), group = male)
+) +
+  geom_histogram() +
+  theme(legend.position = "top")
+```
+
+How many CVD events have those alive typically experienced?
+```{r, fig.dim = c(5, 3), fig.cap = "Average CVD event count in survivors"}
+## history: mean CVD count
+ggplot(ret$history, aes(`~STEP`, `av. cvd events`)) +
+  geom_line()
+
+```

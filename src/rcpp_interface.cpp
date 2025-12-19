@@ -89,6 +89,7 @@ List run_simulation(List initPop, List parameters) {
         {        
             Environment golden = Environment::namespace_env("golden");
             Function check_parameters = golden["check_parameters"];
+
             check_parameters(parameters, initPop);
         }
         // Init and run simulation
