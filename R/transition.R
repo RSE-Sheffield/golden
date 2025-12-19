@@ -66,13 +66,13 @@ new_transition <- function(fn, args, state, name = NULL) {
   return(transition)
 }
 
-str.eldoradosim_transition <- function(x, ...) {
-  cat("<eldoradosim_transition>\n")
+str.golden_transition <- function(x, ...) {
+  cat("<golden_transition>\n")
   cat("  fn (name):", x$name, "\n")
-  cat("  args:", x$args, "\n")
+  cat("  args: [", paste(x$args, collapse = ", "), "]\n", sep = "")
   cat("  state:", x$state, "\n")
 }
-print.eldoradosim_transition <- function(x, ...) {
+print.golden_transition <- function(x, ...) {
   str(x)
   invisible(x)
 }

@@ -56,12 +56,12 @@ new_history <- function(columns, frequency = 1) {
   return(history)
 }
 
-str.eldoradosim_history <- function(x, ...) {
-  cat("<eldoradosim_history>\n")
+str.golden_history <- function(x, ...) {
+  cat("<golden_history>\n")
   cat("  columns:", x$columns, "\n")
   cat("  frequency:", x$frequency, "\n")
 }
-print.eldoradosim_history <- function(x, ...) {
+print.golden_history <- function(x, ...) {
   str(x)
   invisible(x)
 }

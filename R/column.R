@@ -79,13 +79,13 @@ new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
   return(column)
 }
 
-str.eldoradosim_history_column <- function(x, ...) {
-  cat("<eldoradosim_history_column>\n")
+str.golden_history_column <- function(x, ...) {
+  cat("<golden_history_column>\n")
   cat("  name:", x$name, "\n")
-  cat("  args:", x$args, "\n")
-  cat("  filter_args:", x$filter_args, "\n")
+  cat("  args: [", paste(x$args, collapse = ", "), "]\n", sep = "")
+  cat("  filter_args: [", paste(x$filter_args, collapse = ", "), "]\n", sep = "")
 }
-print.eldoradosim_history_column <- function(x, ...) {
+print.golden_history_column <- function(x, ...) {
   str(x)
   invisible(x)
 }

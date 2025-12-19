@@ -103,8 +103,8 @@ new_parameters <- function(hazards = list(), trajectories = list(), steps, rando
   return(parameters)
 }
 
-str.eldoradosim_parameters <- function(x, ...) {
-  cat("<eldoradosim_parameters>\n")
+str.golden_parameters <- function(x, ...) {
+  cat("<golden_parameters>\n")
   cat("  hazards:", x$hazards, "\n")
   cat("  trajectories:", x$trajectories, "\n")
   cat("  history:", x$history, "\n")
@@ -113,7 +113,7 @@ str.eldoradosim_parameters <- function(x, ...) {
   cat("  print_timing:", x$print_timing, "\n")
   cat("  debug:", x$debug, "\n")
 }
-print.eldoradosim_parameters <- function(x, ...) {
+print.golden_parameters <- function(x, ...) {
   str(x)
   invisible(x)
 }
