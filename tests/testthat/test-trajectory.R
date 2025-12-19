@@ -177,9 +177,12 @@ test_that("Multivariate trajectory function is reflected in results", {
     expect_equal(step4$pop$c, rep(3, N))
 })
 
-test_that("No arg trajectory works correctly", {
+test_that("Scalar upgrade trajectory works correctly", {
     no_arg_trajectory <- function() {
         return (12.0)
+    }
+    scalar_trajectory <- function(a, b) {
+        return (13.0)
     }
     N <- 100
     initPop <- sample_pop2(N)
@@ -194,6 +197,16 @@ test_that("No arg trajectory works correctly", {
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
     expect_equal(step4$pop$b, rep(12.0, N))
+    parms$trajectories[[1]] <- new_trajectory(scalar_trajectory, c("a", "b"), "b")
+    ## First: b->b
+    # 1 step
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$b, rep(13.0, N))
+    # 4 steps
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$b, rep(13.0, N))
 })
 
 test_that("Trajectory function cannot return wrong length", {
