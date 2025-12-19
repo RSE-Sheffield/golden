@@ -170,7 +170,6 @@ set.seed(1234)        # PRNG seed
 
 One of the arguments for `run_simulation` is the initial population. **golden** does not provide utilities to create populations. Users are expected to create there own by resampling data, using packages such as X and Y, or writing their own methods. For these simple examples, we will create an artificual population as a `data.table` with one row per patient and columns containing their data. Here, we are considering ages, systolic blood pressure (SBP), and total cholesterol (TC).
 
-TODO CHECK: check & list what objects are allowed for populations (data.frames, matrices?)
 
 ```{r}
 ## initial population
@@ -193,8 +192,6 @@ deathrate0 <- function() {
 ```
 This is actually a special case: usually functions need to return vectors, and should be programmed to return vectors of the same length as their input arguments. 
 This special constant function has no arguments and its scalar return value will be recycled to create a vector of identical element values, with length equal to the population size.
-
-TODO CHECK: what happens with a function depending only on `~STEP`? Case for allowing version that return scalar and handling in the same way
 
 Hazards control how likely events are to happen at each time step. We define what events look like by specifying (a list of) transition functions that will be called to enact changes on the data if a hazard triggers an event. In our initial population we have chosen to include a variable `death` for time of death, which is -1 when people are alive. We can therefore use a generic transition to enact mortality by recording the time of death:
 ```{r}
@@ -260,8 +257,7 @@ Given an initial population and a parameters object, we can run the model:
 ## run the simulation
 result0 <- run_simulation(pop0, parms0)
 ```
-TODO CHECK: is there a way to handle the ETA gracefully in outputs like this?
-
+T
 This outputs a list of 3 things:
 
 - the final population
@@ -272,8 +268,6 @@ This outputs a list of 3 things:
 ## output list
 str(result0)
 ```
-TODO CHECK: is history `NULL` or empty with no history specified?
-
 Final population data can be used to understand final status and to record cumulative data at an individual level. Conversely, history data captures specified summaries, but does so over time.
 
 Here, we can plot the fraction of the population surviving at each time step and compare it to the deterministic expectation: 
@@ -356,8 +350,6 @@ This time, one can see that people are no longer 40 year old at the end of the s
 ```{r}
 result1$pop
 ```
-TODO CHECK: probably need a section somewhere on implementation that includes user-relevant things like ordering of updates/hazards etc
-
 
 ## Example 2: a stochastic multivariate trajectory 
 
@@ -395,8 +387,6 @@ bptc_update(rep(140, 5), rep(4.5, 5), rep(-1, 5))
 The two colmns are returned as a list of vectors. _Note_ that even if a group of variables are not evolving in a correlated way, it may be more logical, convenient, or economical of code to group them together rather than writing separate update functions for each of them.
 
 _Note_ also that this example illustrates use of a random function. There is no restriction that the functions provided for use in trajectory updates, or transitions cannot include stochasticity. This is also true of hazard functions, although this would be less common.
-
-TODO CHECK: check can use random hazards.
 
 Having defined our update, we can create a trajectory as before, but now with vectors to specify which columns are affected. Now we have multiple trajectories, we will need to pass a list of them to parameter the constructor.
 ```{r}
@@ -459,8 +449,6 @@ ggplot(plot_data, aes(t, value, col = variable)) +
   facet_wrap(~variable, scales = "free_y") +
   theme(legend.position = "none")
 ```
-
-TODO CHECK: must be super consistent in use of language around event/hazard etc.
 
 ## Example 3: timed events & multiple transitions
 
