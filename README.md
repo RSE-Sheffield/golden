@@ -2,7 +2,6 @@
 
 An R package for patient-level microsimulation of risk factor trajectories & hazard-based events
 
-
 ## Development ##
 
 If making changes to the package locally, you will need both rebuild and reinstall it.
