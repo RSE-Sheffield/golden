@@ -331,22 +331,14 @@ List Simulation::buildOutput() {
         // (This must be done after we're finished adding columns)
         historyLog.attr("class") = CharacterVector::create("data.table", "data.frame");
         historyLog.attr("row.names") = IntegerVector::create(NA_INTEGER, -HISTORY_ROWS);
-        // Package it into a structure for return
-        List ret = List::create(
-            _["pop"]   = population,
-            _["history"] = historyLog,
-            _["timing"] = buildTimingReport()
-        );
-        return ret;
-    } else {
-        // Package it into a structure for return
-        List ret = List::create(
-            _["pop"]   = population,
-            _["history"] = historyLog,
-            _["timing"] = buildTimingReport()
-        );
-        return ret;
     }
+    // Package it into a structure for return
+    List ret = List::create(
+        _["pop"]   = population,
+        _["history"] = historyLog,
+        _["timing"] = buildTimingReport()
+    );
+    return ret;
 }
 
 List Simulation::buildTimingReport() {
