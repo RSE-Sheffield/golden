@@ -1,17 +1,17 @@
 #' Validate an history object
 #'
-#' @param history An S3 object of class "eldoradosim_history"
+#' @param history An S3 object of class "golden_history"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_history <- function(history, initPop = NULL) {
-  validate_S3(history, "Object", "eldoradosim_history")
+  validate_S3(history, "Object", "golden_history")
 
   # Are the expected fields present
   required_fields <- c("columns", "frequency")
-  validate_fields_present(history, "eldoradosim_history", required_fields)
+  validate_fields_present(history, "golden_history", required_fields)
   
   # ---- columns & nested transitions ----
   # Check every element is a 'columns' S3 object
-  validate_S3_list(history$columns, "history$columns", "eldoradosim_history_column")
+  validate_S3_list(history$columns, "history$columns", "golden_history_column")
   # Check that every column has a unique name
   names_vec <- vapply(history$columns, `[[`, character(1), "name")
   if(length(unique(names_vec)) != length(names_vec)) {
@@ -33,14 +33,14 @@ check_history <- function(history, initPop = NULL) {
   }
 }
 
-#' Create a new eldoradosim_history
+#' Create a new golden_history
 #'
-#' @param columns eldoradosim_history_column S3 object(s)
+#' @param columns golden_history_column S3 object(s)
 #' @param frequency The number of simulation steps per history collection.
-#' @return An object of class "eldoradosim_history"
+#' @return An object of class "golden_history"
 new_history <- function(columns, frequency = 1) {
   # If columns is not already a list, upgrade it
-  if (inherits(columns, "eldoradosim_history_column")) {
+  if (inherits(columns, "golden_history_column")) {
     columns <- list(columns)
   }
   # Initialise new parameters (S3 class)
@@ -49,7 +49,7 @@ new_history <- function(columns, frequency = 1) {
     frequency = frequency
   )
   # Assign S3 class
-  class(history) <- "eldoradosim_history"
+  class(history) <- "golden_history"
   # Check history has correct members of correct types
   check_history(history)
   # Return history

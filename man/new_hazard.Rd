@@ -30,7 +30,7 @@ new_hazard(
 \item{name}{(Optional) Name used in error messages and similar. Defaults to an automatic name}
 }
 \value{
-An object of class "eldoradosim_hazard"
+An object of class "golden_hazard"
 }
 \description{
 Create a new hazard object

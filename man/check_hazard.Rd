@@ -7,7 +7,7 @@
 check_hazard(hazard, initPop = NULL)
 }
 \arguments{
-\item{hazard}{An S3 object of class "eldoradosim_hazard"}
+\item{hazard}{An S3 object of class "golden_hazard"}
 
 \item{initPop}{(Optional) data.table to check columns required by functions exist}
 }

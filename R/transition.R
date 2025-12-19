@@ -1,13 +1,13 @@
 #' Validate an transition object
 #'
-#' @param transition An S3 object of class "eldoradosim_transition"
+#' @param transition An S3 object of class "golden_transition"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_transition <- function(transition, initPop = NULL) {
-  validate_S3(transition, "Object", "eldoradosim_transition")
+  validate_S3(transition, "Object", "golden_transition")
 
   # Are the expected fields present
   required_fields <- c("fn", "args", "state")
-  validate_fields_present(transition, "eldoradosim_transition", required_fields)
+  validate_fields_present(transition, "golden_transition", required_fields)
 
   # ---- fn ----
   if (!is.function(transition$fn)) {
@@ -49,7 +49,7 @@ check_transition <- function(transition, initPop = NULL) {
 #' @param args Character vector of parameter names expected by fn
 #' @param state Name(s) of the column(s) where the result of the transition function is to be stored
 #' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
-#' @return An object of class "eldoradosim_transition"
+#' @return An object of class "golden_transition"
 new_transition <- function(fn, args, state, name = NULL) {
   # Initialise new transition (S3 class)
   transition <- list(
@@ -59,7 +59,7 @@ new_transition <- function(fn, args, state, name = NULL) {
     name = get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
   )
   # Assign S3 class
-  class(transition) <- "eldoradosim_transition"
+  class(transition) <- "golden_transition"
   # Check transition has correct members of correct types
   check_transition(transition)
   # Return transition

@@ -85,10 +85,10 @@ List create_cohort(List demog, unsigned int N) {
 // [[Rcpp::export]]
 List run_simulation(List initPop, List parameters) {
     try {
-        // Call eldoradosim::check_parameters()
+        // Call golden::check_parameters()
         {        
-            Environment eldoradosim = Environment::namespace_env("eldoradosim");
-            Function check_parameters = eldoradosim["check_parameters"];
+            Environment golden = Environment::namespace_env("golden");
+            Function check_parameters = golden["check_parameters"];
             check_parameters(parameters, initPop);
         }
         // Init and run simulation

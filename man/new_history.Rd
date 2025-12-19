@@ -2,18 +2,18 @@
 % Please edit documentation in R/history.R
 \name{new_history}
 \alias{new_history}
-\title{Create a new eldoradosim_history}
+\title{Create a new golden_history}
 \usage{
 new_history(columns, frequency = 1)
 }
 \arguments{
-\item{columns}{eldoradosim_history_column S3 object(s)}
+\item{columns}{golden_history_column S3 object(s)}
 
 \item{frequency}{The number of simulation steps per history collection.}
 }
 \value{
-An object of class "eldoradosim_history"
+An object of class "golden_history"
 }
 \description{
-Create a new eldoradosim_history
+Create a new golden_history
 }

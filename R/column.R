@@ -1,13 +1,13 @@
 #' Validate an history column object
 #'
-#' @param column An S3 object of class "eldoradosim_history_column"
+#' @param column An S3 object of class "golden_history_column"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_column <- function(column, initPop = NULL) {
-  validate_S3(column, "Object", "eldoradosim_history_column")
+  validate_S3(column, "Object", "golden_history_column")
 
   # Are the expected fields present
   required_fields <- c("name", "fn", "args")
-  validate_fields_present(column, "eldoradosim_history_column", required_fields)
+  validate_fields_present(column, "golden_history_column", required_fields)
 
   # ---- name ----
   if (!(is.character(column$name) && length(column$name) == 1)) {
@@ -54,14 +54,14 @@ check_column <- function(column, initPop = NULL) {
   }
 }
 
-#' Create a new eldoradosim_history_column
+#' Create a new golden_history_column
 #'
 #' @param name Name of the column in the output data-table
 #' @param fn Reduction function, which converts the input columns to a single value
 #' @param args Names of columns and special variables to be passed to fn
 #' @param filter_fn (Optional) Filter function, which returns a bool vector denoting which rows should be reduced
 #' @param filter_args (Optional) Names of columns and special variables to be passed to filter_fn. Required if filter_fn is 
-#' @return An object of class "eldoradosim_history_column"
+#' @return An object of class "golden_history_column"
 new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
   # Initialise new parameters (S3 class)
   column <- list(
@@ -72,7 +72,7 @@ new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
     filter_args = filter_args
   )
   # Assign S3 class
-  class(column) <- "eldoradosim_history_column"
+  class(column) <- "golden_history_column"
   # Check column has correct members of correct types
   check_column(column)
   # Return column

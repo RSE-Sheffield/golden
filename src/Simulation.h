@@ -77,7 +77,7 @@ class Simulation {
   public:
     /**
      * Initialise a simulation model
-     * @parameters Instance of R S3 class eldoradosim_parameters, which defines the simulation structure
+     * @parameters Instance of R S3 class golden_parameters, which defines the simulation structure
      */
     Simulation(List parameters);
     /**

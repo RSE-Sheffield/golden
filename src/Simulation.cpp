@@ -43,7 +43,7 @@ Simulation::Simulation(List parameters)
         set_seed(this->RANDOM_SEED );
     }
     if (DEBUG) {
-        warning("eldoradosim's model debug checks are enabled, these may impact performance.");
+        warning("golden's model debug checks are enabled, these may impact performance.");
     }
     // Create function timers
     for (const List h : hazards) {

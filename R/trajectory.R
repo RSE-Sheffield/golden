@@ -1,13 +1,13 @@
 #' Validate an trajectory object
 #'
-#' @param trajectory An S3 object of class "eldoradosim_trajectory"
+#' @param trajectory An S3 object of class "golden_trajectory"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_trajectory <- function(trajectory, initPop = NULL) {
-  validate_S3(trajectory, "Object", "eldoradosim_trajectory")
+  validate_S3(trajectory, "Object", "golden_trajectory")
 
   # Are the expected fields present
   required_fields <- c("fn", "args", "property")
-  validate_fields_present(trajectory, "eldoradosim_trajectory", required_fields)
+  validate_fields_present(trajectory, "golden_trajectory", required_fields)
 
   # ---- fn ----
   if (!is.function(trajectory$fn)) {
@@ -49,7 +49,7 @@ check_trajectory <- function(trajectory, initPop = NULL) {
 #' @param args Character vector of parameter names expected by fn
 #' @param property Name(s) of the column(s) where the result(s) of the trajectory function is to be stored
 #' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
-#' @return An object of class "eldoradosim_trajectory"
+#' @return An object of class "golden_trajectory"
 #' @note If a list if passed to property, fn must return a list of equal length
 new_trajectory <- function(fn, args, property, name = NULL) {
   # Initialise new trajectory (S3 class)
@@ -60,7 +60,7 @@ new_trajectory <- function(fn, args, property, name = NULL) {
     name = get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
   )
   # Assign S3 class
-  class(trajectory) <- "eldoradosim_trajectory"
+  class(trajectory) <- "golden_trajectory"
   # Check Trajectory has correct members of correct types
   check_trajectory(trajectory)
   # Return trajectory

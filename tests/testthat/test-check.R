@@ -1,5 +1,5 @@
 library(testthat)
-library(eldoradosim)
+library(golden)
 
 #
 # Tests in this file cover
@@ -165,7 +165,7 @@ test_that("Hazard with missing attribute triggers stop()", {
         haz <- new_hazard(empty_hazard_fn, c("age"), trn)
         haz[[field]] <- NULL
         expect_error(check_hazard(haz),
-            paste("eldoradosim_hazard missing required fields:", field),
+            paste("golden_hazard missing required fields:", field),
             info = paste("Missing", field, "should cause an error"))
     }
 })
@@ -201,7 +201,7 @@ test_that("Hazard attribute of incorrect type triggers stop()", {
     haz <- new_hazard(empty_hazard_fn, c("age"), trn)
     haz$transitions <- list(new_transition(empty_transition_fn, c("age"), "age"), 12)
     expect_error(check_hazard(haz),
-            "'hazard\\$transitions' must be S3 objects of class 'eldoradosim_transition'",
+            "'hazard\\$transitions' must be S3 objects of class 'golden_transition'",
             info = paste("hazard$transitions elements must be transition objects"))
 })
 test_that("Hazard arg not found in initial pop table triggers stop()", {
@@ -483,7 +483,7 @@ test_that("History attribute of incorrect type triggers stop()", {
     hist <- new_history(list(new_column("test", empty_reduction_fn, c("a"))), 1)
     hist$columns <- list(new_column("test", empty_reduction_fn, c("a")), 12)
     expect_error(check_history(hist),
-            "'history\\$columns' must be S3 objects of class 'eldoradosim_history_column'",
+            "'history\\$columns' must be S3 objects of class 'golden_history_column'",
             info = paste("history$columns elements must be history_column objects"))
     # Special case, frequency must be positive whole number
     hist <- new_history(list(new_column("test", empty_reduction_fn, c("a"))), 1)
@@ -532,7 +532,7 @@ test_that("Column with missing attribute triggers stop()", {
         clm <- new_column("test", empty_reduction_fn, c("a"))
         clm[[field]] <- NULL
         expect_error(check_column(clm),
-            paste("eldoradosim_history_column missing required fields:", field),
+            paste("golden_history_column missing required fields:", field),
             info = paste("Missing", field, "should cause an error"))
     }
 })

@@ -1,6 +1,6 @@
-\name{eldoradosim-package}
-\alias{eldoradosim-package}
-\alias{eldoradosim}
+\name{golden-package}
+\alias{golden-package}
+\alias{golden}
 \docType{package}
 \title{
   A short title line describing what the package does

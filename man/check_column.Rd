@@ -7,7 +7,7 @@
 check_column(column, initPop = NULL)
 }
 \arguments{
-\item{column}{An S3 object of class "eldoradosim_history_column"}
+\item{column}{An S3 object of class "golden_history_column"}
 
 \item{initPop}{(Optional) data.table to check columns required by functions exist}
 }

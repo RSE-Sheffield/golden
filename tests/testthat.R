@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(eldoradosim)
+library(golden)
 
-test_check("eldoradosim")
+test_check("golden")
