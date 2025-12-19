@@ -33,7 +33,7 @@ In general user-functions should take vector arguments and return (lists of) vec
 
 Let's load it & see how it works:
 
-```{r}
+```r
 library(golden)
 ```
 
@@ -41,7 +41,7 @@ library(golden)
 
 This is not handled by the package. Here's a simple example population - one row per individual:
 
-```{r}
+```r
 N <- 1e4L # population size
 pop0 <- data.frame(
   id = 1:N, # patient ids
@@ -55,7 +55,7 @@ pop0 <- data.frame(
 ### Define trajectories
 
 Ageing can serve as a simple example of a trajectory. We define an update rule and create a trajectory object that knows how to apply the update:
-```{r}
+```r
 ## update function
 age_update <- function(age, death_time) {
   ifelse(death_time == -1, age + 1, age)
@@ -74,7 +74,7 @@ age_traj <- new_trajectory(
 [Hazards](https://en.wikipedia.org/wiki/Survival_analysis#Hazard_function_and_cumulative_hazard_function) are the per-unit-time generalization of probabilities and are used to define event rates.
 
 Here's a hazard function for death:
-```{r}
+```r
 ## hazard function
 deathrate <- function(death, sbp, tc) {
   ifelse(death < 0, 0.1 + sbp / 1000 + tc / 100, 0)
@@ -82,7 +82,7 @@ deathrate <- function(death, sbp, tc) {
 ```
 
 Events are enacted by application of (multiple) transition functions to the population. Here's a generic transition function:
-```{r}
+```r
 ## generic transition: returns state as input value
 transition_fn <- function(state, i) {
   # If  result is true, and state is -1, update state to current time
@@ -92,7 +92,7 @@ transition_fn <- function(state, i) {
 By applying `transition_fn(death, time)` to our population we will record their time of death.
 
 As with trajectories, we create a hazard object by providing context for how to calculate the hazard on the population and what transitions are associated:
-```{r}
+```r
 ## new_hazard creates a hazard
 morthaz <- new_hazard(
   deathrate, # hazard function
@@ -108,10 +108,10 @@ morthaz <- new_hazard(
 
 ### Define a history
 
-Running the model will return the final population. However, we might want to capture time series summaries at each time step along the way. 
+Running the model will return the final population. However, we might want to capture time series summaries at each time step along the way.
 Further, we may only want to calculate summaries on subsets of rows (the population) - we do this using a filter function to pick out rows of interest.
 Here's an example of specifying a history that counts who's alive at each step:
-```{r}
+```r
 ## filter to restrict to alive
 filter_alive <- function(x) {
   x == -1 # tests alive applied to 'death'
@@ -136,7 +136,7 @@ noalive <- new_history(
 
 We can now group our trajectories, hazards, and history to create a parameter object, and run the model:
 
-```{r}
+```r
 ## full parameters
 parms <- new_parameters(
   hazards = morthaz,
@@ -152,7 +152,7 @@ result <- run_simulation(pop0, parms)
 ```
 
 We could inspect the output like this:
-```{r}
+```r
 ## look at final state
 head(result$pop)
 
