@@ -78,3 +78,18 @@ new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
   # Return column
   return(column)
 }
+
+str.golden_history_column <- function(x, ..., indent = 0L) {
+  ind0 <- paste0(rep.int(" ", indent), collapse = "")
+  ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
+  cat(ind0, "<golden_history_column>\n", sep = "")
+  cat(ind2, "name: ", x$name, "\n", sep = "")
+  cat(ind2, "args: [", paste(x$args, collapse = ", "), "]\n", sep = "")
+  if (!is.null(x$filter_fn)) {
+    cat(ind2, "filter_args: [", paste(x$filter_args, collapse = ", "), "]\n", sep = "")
+  }
+}
+print.golden_history_column <- function(x, ...) {
+  str(x)
+  invisible(x)
+}
