@@ -66,3 +66,20 @@ new_trajectory <- function(fn, args, property, name = NULL) {
   # Return trajectory
   return(trajectory)
 }
+
+str.golden_trajectory <- function(x, ..., indent = 0L) {
+  ind0 <- paste0(rep.int(" ", indent), collapse = "")
+  ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
+  cat(ind0, "<golden_trajectory>\n", sep = "")
+  cat(ind2, "fn (name): ", x$name, "\n", sep = "")
+  cat(ind2, "args: [", paste(x$args, collapse = ", "), "]\n", sep = "")
+  if (length(x$property) == 1) {
+    cat(ind2, "property: ", x$property, "\n", sep = "")
+  } else {
+    cat(ind2, "property: [", paste(x$property, collapse = ", "), "]\n", sep = "")
+  }
+}
+print.golden_trajectory <- function(x, ...) {
+  str(x)
+  invisible(x)
+}

@@ -55,3 +55,21 @@ new_history <- function(columns, frequency = 1) {
   # Return history
   return(history)
 }
+
+str.golden_history <- function(x, ..., indent = 0L) {
+  ind0 <- paste0(rep.int(" ", indent), collapse = "")
+  ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
+  cat(ind0, "<golden_history>\n", sep = "")
+  if (!is.null(x$columns)) {
+    cat(ind2, "columns: [\n", sep = "")
+    for (t in x$columns) {
+        cat(str(t, indent = indent + 4)) 
+    }
+    cat(ind2, "]\n", sep = "")
+  }
+  cat(ind2, "frequency: ", x$frequency, "\n", sep = "")
+}
+print.golden_history <- function(x, ...) {
+  str(x)
+  invisible(x)
+}

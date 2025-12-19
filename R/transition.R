@@ -65,3 +65,16 @@ new_transition <- function(fn, args, state, name = NULL) {
   # Return transition
   return(transition)
 }
+
+str.golden_transition <- function(x, ..., indent = 0L) {
+  ind0 <- paste0(rep.int(" ", indent), collapse = "")
+  ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
+  cat(ind0, "<golden_transition>\n", sep = "")
+  cat(ind2, "fn (name): ", x$name, "\n", sep = "")
+  cat(ind2, "args: [", paste(x$args, collapse = ", "), "]\n", sep = "")
+  cat(ind2, "state: ", x$state, "\n", sep = "")
+}
+print.golden_transition <- function(x, ...) {
+  str(x)
+  invisible(x)
+}
