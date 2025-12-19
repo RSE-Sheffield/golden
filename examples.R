@@ -69,7 +69,7 @@ ggplot(result0$history, aes(`~STEP`, `no. alive`)) +
 
 ## Define a function to increment by 1
 ## If dead, age is not changed
-age_traj <- function(age, death_time) {
+age_update <- function(age, death_time) {
   ifelse(death_time == -1, age + 1, age)
 }
 
@@ -86,7 +86,7 @@ morthaz1 <- new_hazard(
 
 
 ## a trajectory
-age_traj <- new_trajectory(age_traj, c("age", "death"), "age")
+age_traj <- new_trajectory(age_update, c("age", "death"), "age")
 
 
 ## full parameters
@@ -130,8 +130,6 @@ bptc_update <- function(sbp, tc, death_time) {
 }
 
 bptc_update(rep(140, 5), rep(4.5, 5), rep(-1, 5))
-bptc_update(rep(140, 5), rep(4.5, 5), rep(1, 5))
-
 
 bptc_traj <- new_trajectory(
   bptc_update, # trajectory fn
@@ -395,8 +393,6 @@ cvd_update <- function(cvd_count) {
 
 ########################
 ## mortality hazard
-lifetable_data
-
 
 n_ages <- 101
 n_years <- nrow(lifetable_data) / n_ages
@@ -420,12 +416,11 @@ mort_fn(rep(1, 10), rep(50, 10), rep(70, 10))
 ######################
 ## initial population
 ## bmi fit data
-bmi_fits
-bmi_fits[, male := ifelse(sex == "Men", 1, 0)]
+bmi_fits$male <- ifelse(bmi_fits$sex == "Men", 1, 0)
 
 
 
-pop_snapshot
+head(pop_snapshot)
 
 make_cohort <- function(N) {
   popcounts <- rmultinom(1, size = N, prob = c(pop_snapshot))
@@ -441,8 +436,10 @@ make_cohort <- function(N) {
   ageref <- rep(0:(nrow(pop_snapshot) - 1), 2)
   k <- 1
   for (i in 1:length(popcounts)) {
-    initPop[k:(popcounts[i] + k - 1), age := ageref[i]]
-    k <- k + popcounts[i]
+    if (popcounts[i] > 0) {
+      initPop[k:(popcounts[i] + k - 1), age := ageref[i]]
+      k <- k + popcounts[i]
+    }
   }
   initPop
 }
@@ -481,11 +478,11 @@ mm <- lm(bmi ~ 1 + age + I(age^2),
   data = initPop
 ) # regression
 
-bmi_traj <- function(age) {
+bmi_update <- function(age) {
   predict(mm, newdata = data.table(age = age))
 }
 
-bmi_traj(25) # test
+bmi_update(25) # test
 
 ## initial pop
 ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
@@ -528,15 +525,11 @@ hazlist <- list(
 ## trajectories
 trajlist <- list(
   ## age
-  new_trajectory(age_traj, c("age", "death"), "age"),
+  age_traj,
   ## BMI
-  new_trajectory(bmi_traj, c("age"), "bmi"),
+  new_trajectory(bmi_update, c("age"), "bmi"),
   ## SBP & TC handled in bivariate fashion
-  new_trajectory(
-    bptc_traj,                    #trajectory fn
-    c("sbp", "tc", "death"), # trajectory args
-    c("sbp", "tc") # outputs (list of vectors from fn)
-  )
+  bptc_traj
 )
 
 ## history
