@@ -56,9 +56,10 @@ class Simulation {
      * Hence this method instead acts as a wrapper, whereby a vector of arguments can be passed to the function
      * @param f The R function to be called
      * @param args A List of arguments to be passed.
-     * @note If args is empty, the return value will be upgraded to a vector of the appropriate length
+     * @param is_history_column Prevents scalar result being upgraded
+     * @note If the return value is scalar, it will be upgraded to a vector of the appropriate length
      */
-    SEXP dynamic_call(Function f, List args);
+    SEXP dynamic_call(Function f, List args, bool is_history_column = false);
     
     /**
      * Construct the structure to be returned by run()

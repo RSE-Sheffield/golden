@@ -133,6 +133,65 @@ test_that("Filtered history function collects expected data", {
     }
 })
 
+test_that("Scalar upgrade column filter works correctly", {
+    normal_filter <- function(a) {
+        return (rep(TRUE, length(a)))
+    }
+    scalar_filter <- function(a) {
+        return (TRUE)
+    }
+    N <- 100
+    initPop <- sample_pop2(N)
+    parms <- new_parameters(
+      hazards = list(),
+      trajectories = list(),
+      steps = 1,
+      history = new_history(new_column("sum_a", sum, c("a")))
+    )
+    parms$debug = TRUE
+    
+    # Default runs safely
+    expect_no_error(run_simulation(initPop, parms))
+    
+    # Update with a bad column fn
+    parms$history$columns[[1]]$fn <- scalar_filter
+    # Running will not produce an error, as scalar result is not upgraded to vector
+    expect_no_error(run_simulation(initPop, parms))
+        
+    # Reset parms, check it works again
+    parms <- new_parameters(
+      hazards = list(),
+      # Trajectory merely increases all a variables by 1
+      trajectories = list(new_trajectory(plus_1_fn, c("a"), "a")),
+      steps = 5,
+      history = new_history(new_column("sum_a", sum, c("a"), normal_filter, c("a")))
+    )
+    ret = run_simulation(initPop, parms)
+    # Validate results match what we calculate
+    test_a = 0
+    # Test each step's result matches what we calculate
+    for (i in ret$history$sum_a) {
+      # Calculate the impact of this step's trajectory fn and filter
+      test_a = test_a + N
+      # Test the history contains the expected value
+      expect_equal(i, test_a)
+    }
+    
+    # Update with a bad filter
+    parms$history$columns[[1]]$filter_fn <- scalar_filter
+    # Running will now produce the same output
+    ret = run_simulation(initPop, parms)
+    # Validate results match what we calculate
+    test_a = 0
+    # Test each step's result matches what we calculate
+    for (i in ret$history$sum_a) {
+      # Calculate the impact of this step's trajectory fn and filter
+      test_a = test_a + N
+      # Test the history contains the expected value
+      expect_equal(i, test_a)
+    }
+})
+
 test_that("Column & column filter functions cannot return wrong length", {
     N <- 100
     initPop <- sample_pop2(N)
@@ -168,12 +227,12 @@ test_that("Column & column filter functions cannot return wrong length", {
     parms$debug = TRUE
     expect_no_error(run_simulation(initPop, parms))
     
-    # Update with a bad transition
+    # Update with a bad filter
     parms$history$columns[[1]]$filter_fn <- bad_len_fn1
     # Running will now produce an error
     expect_error(run_simulation(initPop, parms), "return had wrong length")
     
-    # Update with a bad hazard
+    # Update with a bad filter
     parms$history$columns[[1]]$filter_fn <- bad_len_fn2
     # Running will now produce an error
     expect_error(run_simulation(initPop, parms), "return had wrong length")

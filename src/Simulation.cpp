@@ -271,8 +271,8 @@ void Simulation::stepHistory() {
                 List call_args = col["filter_fn"] != R_NilValue
                     ? build_args_filtered(col["args"], population, step, filter_v)
                     : build_args(col["args"], population, step);
-                // Call the dynamic function
-                SEXP result = dynamic_call(col["fn"], call_args);
+                // Call the reduction function
+                SEXP result = dynamic_call(col["fn"], call_args, true);
                 columnTimers[col["name"]].stop();
                 if (DEBUG)
                     check_result(step, col["name"], result, 1);
@@ -308,7 +308,7 @@ void Simulation::stepHistory() {
     }
 }
 
-SEXP Simulation::dynamic_call(Function f, List args) {
+SEXP Simulation::dynamic_call(Function f, List args, bool is_history_column) {
     // Create a call object
     Language call(f);
 
@@ -321,8 +321,8 @@ SEXP Simulation::dynamic_call(Function f, List args) {
     // Evaluate the call
     // @todo what happens if the call is stored and eval'd twice?
     SEXP ret = call.eval();
-    if (args.size() == 0 && Rf_length(ret) == 1) {
-        // Argless function, it's return value must be upgraded
+    if (Rf_length(ret) == 1 && !is_history_column) {
+        // Function returning scalar, it's return value must be upgraded
         return promote_scalar(ret, POP_SIZE);
     }
     return ret;

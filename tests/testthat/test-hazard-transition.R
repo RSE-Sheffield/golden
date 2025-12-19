@@ -276,12 +276,18 @@ test_that("Hazard that returns Inf is treated as 100% chance", {
     expect_equal(step4$pop$b, ret_test2 * 4)
 })
 
-test_that("No arg hazard works correctly", {
+test_that("Scalar upgrade hazard works correctly", {
     no_arg_hazard <- function() {
         return (1000.0) # Close to 100%, without being Inf
     }
     no_arg_hazard2 <- function() {
         return (0.0) # Hazard never passes
+    }
+    scalar_hazard <- function(a) {
+        return (1000.0)
+    }
+    scalar_hazard2 <- function(a) {
+        return (0.0)
     }
     # Can't test the difference between 99.999% and 100% with RNG
     # Mostly looking that it still produces correct output
@@ -324,10 +330,38 @@ test_that("No arg hazard works correctly", {
     step4 = run_simulation(initPop, parms)
     expect_equal(step4$pop$a, initPop$a)
     expect_equal(step4$pop$b, initPop$b)
+    
+    # All hazards return true
+    parms$hazards[[1]]$fn <- scalar_hazard
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, ret_test1)
+    expect_equal(step1$pop$b, ret_test2)
+    
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test1 * 4)
+    expect_equal(step4$pop$b, ret_test2 * 4)
+    
+    # All hazards return false
+    parms$hazards[[1]]$fn <- scalar_hazard2
+    
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, initPop$a)
+    expect_equal(step1$pop$b, initPop$b)
+    
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, initPop$a)
+    expect_equal(step4$pop$b, initPop$b)
 })
-test_that("No arg transition works correctly", {
+test_that("Scalar upgrade transition works correctly", {
     no_arg_transition <- function() {
         return (12.0)
+    }
+    scalar_transition <- function(a) {
+        return (13.0)
     }
     #
     N = 10000
@@ -341,6 +375,19 @@ test_that("No arg transition works correctly", {
     ## All odd indices "b" parameter transitions from 0 to 12, even remain 0
     ret_test2 <- rep(0.0, N)
     ret_test2[seq(2, N, by = 2)] <- 12.0
+    
+    parms$steps = 1
+    step1 = run_simulation(initPop, parms)
+    expect_equal(step1$pop$a, ret_test1)
+    expect_equal(step1$pop$b, ret_test2)
+    
+    parms$steps = 4
+    step4 = run_simulation(initPop, parms)
+    expect_equal(step4$pop$a, ret_test1 * 4)
+    expect_equal(step4$pop$b, ret_test2)
+        
+    parms$hazards[[1]]$transitions[[2]] <- new_transition(scalar_transition, c("b"), "b")
+    ret_test2[seq(2, N, by = 2)] <- 13.0
     
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
