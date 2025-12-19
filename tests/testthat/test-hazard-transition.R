@@ -1,5 +1,5 @@
 library(testthat)
-library(eldoradosim)
+library(golden)
 
 #
 # Tests in this file cover the functionality of hazards and transitions

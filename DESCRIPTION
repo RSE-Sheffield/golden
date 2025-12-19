@@ -1,4 +1,4 @@
-Package: eldoradosim
+Package: golden
 Type: Package
 Title: Healthcare trajectory simulation framework.
 Version: 0.0.1

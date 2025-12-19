@@ -7,7 +7,7 @@
 check_parameters(parameters, initPop = NULL)
 }
 \arguments{
-\item{parameters}{An eldoradosim_parameters S3 object to be validated}
+\item{parameters}{An golden_parameters S3 object to be validated}
 
 \item{initPop}{data.frame which contains the columns required by parameters}
 }

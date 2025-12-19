@@ -1,13 +1,13 @@
 #' Validate an hazard object
 #'
-#' @param hazard An S3 object of class "eldoradosim_hazard"
+#' @param hazard An S3 object of class "golden_hazard"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 check_hazard <- function(hazard, initPop = NULL) {
-  validate_S3(hazard, "Object", "eldoradosim_hazard")
+  validate_S3(hazard, "Object", "golden_hazard")
 
   # Are the expected fields present
   required_fields <- c("fn", "args", "transitions", "freq", "first", "last")
-  validate_fields_present(hazard, "eldoradosim_hazard", required_fields)
+  validate_fields_present(hazard, "golden_hazard", required_fields)
 
   # ---- fn ----
   if (!is.function(hazard$fn)) {
@@ -25,8 +25,8 @@ check_hazard <- function(hazard, initPop = NULL) {
   validate_function_args(hazard$args, "hazard$args", hazard$fn)
 
   # ---- transitions ----
-  # Check every element is a 'eldoradosim_transition' S3 object
-  validate_S3_list(hazard$transitions, "hazard$transitions", "eldoradosim_transition")
+  # Check every element is a 'golden_transition' S3 object
+  validate_S3_list(hazard$transitions, "hazard$transitions", "golden_transition")
   # Nested column check
   if (!is.null(initPop)) {
     for (trn in hazard$transitions) {
@@ -60,10 +60,10 @@ check_hazard <- function(hazard, initPop = NULL) {
 #' @param first (Optional) First step the hazard should be enabled (initial step is index 1)
 #' @param last (Optional) Last step the hazard should be enabled (initial step is index 1)
 #' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
-#' @return An object of class "eldoradosim_hazard"
+#' @return An object of class "golden_hazard"
 new_hazard <- function(fn, args, transitions, freq = 1, first = 1, last = 2147483647, name = NULL) {
   # If transitions is not already a list, upgrade it
-  if (inherits(transitions, "eldoradosim_transition")) {
+  if (inherits(transitions, "golden_transition")) {
     transitions <- list(transitions)
   }
   # Initialise new hazard (S3 class)
@@ -77,7 +77,7 @@ new_hazard <- function(fn, args, transitions, freq = 1, first = 1, last = 214748
     name = get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
   )  
   # Assign S3 class
-  class(hazard) <- "eldoradosim_hazard"
+  class(hazard) <- "golden_hazard"
   # Check Hazard has correct members of correct types
   check_hazard(hazard)
   # Return hazard  

@@ -16,7 +16,7 @@ new_trajectory(fn, args, property, name = NULL)
 \item{name}{(Optional) Name used in error messages and similar. Defaults to an automatic name}
 }
 \value{
-An object of class "eldoradosim_trajectory"
+An object of class "golden_trajectory"
 }
 \description{
 Create a new trajectory object

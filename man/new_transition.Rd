@@ -16,7 +16,7 @@ new_transition(fn, args, state, name = NULL)
 \item{name}{(Optional) Name used in error messages and similar. Defaults to an automatic name}
 }
 \value{
-An object of class "eldoradosim_transition"
+An object of class "golden_transition"
 }
 \description{
 Create a new transition object

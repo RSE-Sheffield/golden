@@ -7,7 +7,7 @@
 check_trajectory(trajectory, initPop = NULL)
 }
 \arguments{
-\item{trajectory}{An S3 object of class "eldoradosim_trajectory"}
+\item{trajectory}{An S3 object of class "golden_trajectory"}
 
 \item{initPop}{(Optional) data.table to check columns required by functions exist}
 }

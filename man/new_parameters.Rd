@@ -2,7 +2,7 @@
 % Please edit documentation in R/parameters.R
 \name{new_parameters}
 \alias{new_parameters}
-\title{Create a new eldoradosim_parameters}
+\title{Create a new golden_parameters}
 \usage{
 new_parameters(
   hazards = list(),
@@ -14,9 +14,9 @@ new_parameters(
 )
 }
 \arguments{
-\item{hazards}{eldoradosim_hazard S3 object(s)}
+\item{hazards}{golden_hazard S3 object(s)}
 
-\item{trajectories}{eldoradosim_trajectory S3 object(s)}
+\item{trajectories}{golden_trajectory S3 object(s)}
 
 \item{steps}{Number of steps to run}
 
@@ -24,11 +24,11 @@ new_parameters(
 
 \item{debug}{(TRUE/FALSE) flag indicating whether validation checks are enabled. These catch NaN, but reduce performance}
 
-\item{history}{eldoradosim_history S3 object representing the columns of data to be aggregated during simulation}
+\item{history}{golden_history S3 object representing the columns of data to be aggregated during simulation}
 }
 \value{
-An object of class "eldoradosim_parameters"
+An object of class "golden_parameters"
 }
 \description{
-Create a new eldoradosim_parameters
+Create a new golden_parameters
 }

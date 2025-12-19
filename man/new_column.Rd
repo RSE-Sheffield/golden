@@ -2,7 +2,7 @@
 % Please edit documentation in R/column.R
 \name{new_column}
 \alias{new_column}
-\title{Create a new eldoradosim_history_column}
+\title{Create a new golden_history_column}
 \usage{
 new_column(name, fn, args, filter_fn = NULL, filter_args = NULL)
 }
@@ -18,8 +18,8 @@ new_column(name, fn, args, filter_fn = NULL, filter_args = NULL)
 \item{filter_args}{(Optional) Names of columns and special variables to be passed to filter_fn. Required if filter_fn is}
 }
 \value{
-An object of class "eldoradosim_history_column"
+An object of class "golden_history_column"
 }
 \description{
-Create a new eldoradosim_history_column
+Create a new golden_history_column
 }

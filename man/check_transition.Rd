@@ -7,7 +7,7 @@
 check_transition(transition, initPop = NULL)
 }
 \arguments{
-\item{transition}{An S3 object of class "eldoradosim_transition"}
+\item{transition}{An S3 object of class "golden_transition"}
 
 \item{initPop}{(Optional) data.table to check columns required by functions exist}
 }

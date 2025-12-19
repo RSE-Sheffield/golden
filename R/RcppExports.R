@@ -9,7 +9,7 @@
 #' @param N 
 #' @return A sample population data.table
 create_cohort <- function(demog, N) {
-    .Call(`_eldoradosim_create_cohort`, demog, N)
+    .Call(`_golden_create_cohort`, demog, N)
 }
 
 #' Execute a patient trajectory simulation
@@ -18,6 +18,6 @@ create_cohort <- function(demog, N) {
 #' @param parameters Simulation configuration
 #' @return An list containing final population, history and timing data.tables
 run_simulation <- function(initPop, parameters) {
-    .Call(`_eldoradosim_run_simulation`, initPop, parameters)
+    .Call(`_golden_run_simulation`, initPop, parameters)
 }
 

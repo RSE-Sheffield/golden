@@ -7,7 +7,7 @@
 check_history(history, initPop = NULL)
 }
 \arguments{
-\item{history}{An S3 object of class "eldoradosim_history"}
+\item{history}{An S3 object of class "golden_history"}
 
 \item{initPop}{(Optional) data.table to check columns required by functions exist}
 }
