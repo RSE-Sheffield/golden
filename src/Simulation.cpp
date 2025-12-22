@@ -350,97 +350,111 @@ List Simulation::buildOutput() {
 }
 
 List Simulation::buildTimingReport() {
-    List hazardTimes;
-    List transitionTimes;
+    // Hazards
+    CharacterVector hazard_name;
+    NumericVector hazard_total, hazard_avg, hazard_pct;
+    // Transitions
+    CharacterVector transition_name;
+    NumericVector transition_total, transition_avg, transition_pct;
+
     for (const List h : hazards) {
-        Timer &htimer = hazardTimers[h["name"]];
-        hazardTimes.push_back(List::create(
-            _["total"] = htimer.getDurationSeconds(),
-            _["average"] = htimer.getDurationSeconds() / htimer.getDurationCount(),
-            _["percent"] = htimer.getDurationSeconds() / simTimer.getDurationSeconds()
-        ), h["name"]);
+        std::string hname = as<std::string>(h["name"]);
+        Timer& htimer = hazardTimers[hname];
+
+        hazard_name.push_back(hname);
+        hazard_total.push_back(htimer.getDurationSeconds());
+        hazard_avg.push_back(htimer.getDurationSeconds() / htimer.getDurationCount());
+        hazard_pct.push_back(htimer.getDurationSeconds() / simTimer.getDurationSeconds());
+        
         List transitions = h["transitions"];
         for (const List t : transitions) {
-            Timer &ttimer = transitionTimers[t["name"]];
-            transitionTimes.push_back(List::create(
-                _["total"] = ttimer.getDurationSeconds(),
-                _["average"] = ttimer.getDurationSeconds() / ttimer.getDurationCount(),
-                _["percent"] = ttimer.getDurationSeconds() / simTimer.getDurationSeconds()
-            ), t["name"]);
+            std::string tname = as<std::string>(t["name"]);
+            Timer& ttimer = transitionTimers[tname];
+
+            transition_name.push_back(tname);
+            transition_total.push_back(ttimer.getDurationSeconds());
+            transition_avg.push_back(ttimer.getDurationSeconds() / ttimer.getDurationCount());
+            transition_pct.push_back(ttimer.getDurationSeconds() / simTimer.getDurationSeconds());
         }
     }
-    List trajectoryTimes;
+    DataFrame hazards_df = DataFrame::create(
+        _["Hazard"] = hazard_name,
+        _["Total Time (s)"] = hazard_total,
+        _["Avg Time (s)"] = hazard_avg,
+        _["% Runtime"] = hazard_pct
+    );
+    hazards_df.attr("class") = CharacterVector::create("data.table", "data.frame");
+    hazards_df.attr("row.names") = IntegerVector::create(NA_INTEGER, -Rf_length(hazard_pct));
+    DataFrame transitions_df = DataFrame::create(
+        _["Transition"] = transition_name,
+        _["Total Time (s)"] = transition_total,
+        _["Avg Time (s)"] = transition_avg,
+        _["% Runtime"] = transition_pct
+    );
+    transitions_df.attr("class") = CharacterVector::create("data.table", "data.frame");
+    transitions_df.attr("row.names") = IntegerVector::create(NA_INTEGER, -Rf_length(transition_pct));
+
+    // Trajectories
+    CharacterVector trajectory_name;
+    NumericVector trajectory_total, trajectory_avg, trajectory_pct;
+    
     for (const List t : trajectories) {
-        Timer &ttimer = trajectoryTimers[t["name"]];
-        trajectoryTimes.push_back(List::create(
-            _["total"] = ttimer.getDurationSeconds(),
-            _["average"] = ttimer.getDurationSeconds() / ttimer.getDurationCount(),
-            _["percent"] = ttimer.getDurationSeconds() / simTimer.getDurationSeconds()
-        ), t["name"]);
+        std::string tname = as<std::string>(t["name"]);
+        Timer& ttimer = trajectoryTimers[tname];
+
+        trajectory_name.push_back(tname);
+        trajectory_total.push_back(ttimer.getDurationSeconds());
+        trajectory_avg.push_back(ttimer.getDurationSeconds() / ttimer.getDurationCount());
+        trajectory_pct.push_back(ttimer.getDurationSeconds() / simTimer.getDurationSeconds());
     }
+    
+    DataFrame trajectories_df = DataFrame::create(
+        _["Trajectory"] = trajectory_name,
+        _["Total Time (s)"] = trajectory_total,
+        _["Avg Time (s)"] = trajectory_avg,
+        _["% Runtime"] = trajectory_pct
+    );
+    trajectories_df.attr("class") = CharacterVector::create("data.table", "data.frame");
+    trajectories_df.attr("row.names") = IntegerVector::create(NA_INTEGER, -Rf_length(trajectory_pct));
+    
     List ret = List::create(
-        _["hazard"]   = hazardTimes,
-        _["transition"] = transitionTimes,
-        _["trajectory"] = trajectoryTimes
+        _["hazards"] = hazards_df,
+        _["transitions"] = transitions_df,
+        _["trajectories"] = trajectories_df
     );
     if (history.size()) {
-        List columnTimes;
-        columns = history["columns"];
+        // Columns
+        CharacterVector column_name;
+        NumericVector column_total, column_avg, column_pct;
+        
+        List columns = history["columns"];
+
         for (const List c : columns) {
-            Timer &ctimer = columnTimers[c["name"]];
-            columnTimes.push_back(List::create(
-                _["total"] = ctimer.getDurationSeconds(),
-                _["average"] = ctimer.getDurationSeconds() / ctimer.getDurationCount(),
-                _["percent"] = ctimer.getDurationSeconds() / simTimer.getDurationSeconds()
-            ), c["name"]);
+            std::string cname = as<std::string>(c["name"]);
+            Timer& ctimer = columnTimers[cname];
+
+            column_name.push_back(cname);
+            column_total.push_back(ctimer.getDurationSeconds());
+            column_avg.push_back(ctimer.getDurationSeconds() / ctimer.getDurationCount());
+            column_pct.push_back(ctimer.getDurationSeconds() / simTimer.getDurationSeconds());
         }
-        ret.push_back(columnTimes, "columns");
+        
+        DataFrame columns_df = DataFrame::create(
+            _["Column"] = column_name,
+            _["Total Time (s)"] = column_total,
+            _["Avg Time (s)"] = column_avg,
+            _["% Runtime"] = column_pct
+        );
+        columns_df.attr("class") = CharacterVector::create("data.table", "data.frame");
+        columns_df.attr("row.names") = IntegerVector::create(NA_INTEGER, -Rf_length(column_pct));
+        
+        ret.push_back(columns_df, "columns");
     }
+    // Setup as S3 class for the print method
+    ret.attr("class") = CharacterVector::create("golden_timing");
     // Don't print a full timing report for quick runs
     if (simTimer.getDurationSeconds() > 1 && PRINT_TIMING) {
-       printTimingReport(ret);
+       print(ret);
     }
     return ret;
-}
-
-// Helper to print a named timing list
-void printTimingSection(const std::string &title, List section) {
-    if (section.size()) {
-        Rprintf("\n>>>>>> %s <<<<<<\n", title.c_str());
-        Rprintf("%10s | %10s | %5s | %s\n", "Total s", "Average s", "%", "Name");
-        Rprintf("-----------|------------|-------|----------------\n");
-
-        CharacterVector nms = section.names();
-        for (int i = 0; i < section.size(); ++i) {
-            const std::string name = as<std::string>(nms[i]);
-            List t = section[i];
-            const double total = t["total"];
-            const double avg   = t["average"];
-            const double percent = t["percent"];
-            // Fixed width: 10 chars for numbers, 6 decimals
-            Rprintf("%10.6f | %10.6f | %5.2f |%s\n", total, avg, percent*100, name.c_str());
-        }
-    }
-}
-
-void Simulation::printTimingReport(List timing) {
-    Rprintf("====== Timing Summary ======\n");
-
-    if (timing.containsElementNamed("hazard")) {
-        printTimingSection("Hazard Times", timing["hazard"]);
-    }
-
-    if (timing.containsElementNamed("transition")) {
-        printTimingSection("Transition Times", timing["transition"]);
-    }
-
-    if (timing.containsElementNamed("trajectory")) {
-        printTimingSection("Trajectory Times", timing["trajectory"]);
-    }
-
-    if (timing.containsElementNamed("column")) {
-        printTimingSection("Column (& Filter) Times", timing["column"]);
-    }
-
-    Rprintf("\n");
 }

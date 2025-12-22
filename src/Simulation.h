@@ -69,11 +69,6 @@ class Simulation {
      * Construct a nested list of each function's runtime
      */
     List buildTimingReport();
-    /**
-     * Crude method for printing the result of buildTimingReport() to console
-     * @param timing List returned by buildTimingReport()
-     */
-    void printTimingReport(List timing);
     
   public:
     /**
