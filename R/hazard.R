@@ -84,7 +84,7 @@ new_hazard <- function(fn, args, transitions, freq = 1, first = 1, last = 214748
   return(hazard)
 }
 
-str.golden_hazard <- function(x, ..., indent = 0L) {
+print.golden_hazard <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
   cat(ind0, "<golden_hazard>\n", sep = "")
@@ -93,15 +93,12 @@ str.golden_hazard <- function(x, ..., indent = 0L) {
   if (!is.null(x$transitions)) {
     cat(ind2, "transitions: [\n", sep = "")
     for (t in x$transitions) {
-        cat(str(t, indent = indent + 4)) 
+        print(t, indent = indent + 4)
     }
     cat(ind2, "]\n", sep = "")
   }
   cat(ind2, "freq: ", x$freq, "\n", sep = "")
   cat(ind2, "first: ", x$first, "\n", sep = "")
   cat(ind2, "last: ", x$last, "\n", sep = "")
-}
-print.golden_hazard <- function(x, ...) {
-  str(x)
   invisible(x)
 }

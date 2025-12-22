@@ -67,7 +67,7 @@ new_trajectory <- function(fn, args, property, name = NULL) {
   return(trajectory)
 }
 
-str.golden_trajectory <- function(x, ..., indent = 0L) {
+print.golden_trajectory <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
   cat(ind0, "<golden_trajectory>\n", sep = "")
@@ -78,8 +78,5 @@ str.golden_trajectory <- function(x, ..., indent = 0L) {
   } else {
     cat(ind2, "property: [", paste(x$property, collapse = ", "), "]\n", sep = "")
   }
-}
-print.golden_trajectory <- function(x, ...) {
-  str(x)
   invisible(x)
 }
