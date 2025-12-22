@@ -103,34 +103,31 @@ new_parameters <- function(hazards = list(), trajectories = list(), steps, rando
   return(parameters)
 }
 
-str.golden_parameters <- function(x, ..., indent = 0) {
+print.golden_parameters <- function(x, ..., indent = 0) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
   cat(ind0, "<golden_parameters>\n", sep = "")
   if (!is.null(x$hazards)) {  
     cat(ind2, "hazards: [\n", sep = "")
     for (t in x$hazards) {
-        cat(str(t, indent = indent + 4)) 
+        print(t, indent = indent + 4)
     }
     cat(ind2, "]\n", sep = "")
   }
   if (!is.null(x$trajectories)) {
     cat(ind2, "trajectories: [\n", sep = "")
     for (t in x$trajectories) {
-        cat(str(t, indent = indent + 4)) 
+        print(t, indent = indent + 4)
     }
     cat(ind2, "]\n", sep = "")
   }
   if (!is.null(x$history)) {
     cat(ind2, "history:\n", sep = "")
-    cat(str(x$history, indent=indent + 4))
+    print(x$history, indent=indent + 4)
   }
   cat(ind2, "steps: ", x$steps, "\n", sep = "")
   cat(ind2, "random_seed: ", x$random_seed, "\n", sep = "")
   cat(ind2, "print_timing: ", x$print_timing, "\n", sep = "")
   cat(ind2, "debug: ", x$debug, "\n", sep = "")
-}
-print.golden_parameters <- function(x, ...) {
-  str(x)
   invisible(x)
 }
