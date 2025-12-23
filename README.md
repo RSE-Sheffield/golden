@@ -7,19 +7,19 @@
 
 **golden** can be installed from GitHub using `devtools` via:
 
-```{r install, eval=FALSE}
+```r
 devtools::install_github("RSE-Sheffield/golden")
 ```
 
 or by manually downloading a `.zip` from the [golden GitHub repository](https://github.com/RSE-Sheffield/golden) to be installed via:
 
-```{r eval=FALSE}
+```r
 install.packages("<path to .zip>", repos = NULL, type="source")
 ```
 
 Following either of the actions, you should now be able to load golden like any other package.
 
-```{r setup}
+```r
 library(golden)
 ```
 
