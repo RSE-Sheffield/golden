@@ -383,6 +383,8 @@ List Simulation::buildTimingReport() {
         _["Avg Time (s)"] = hazard_avg,
         _["% Runtime"] = hazard_pct
     );
+    hazards_df.names() = CharacterVector::create(
+        "Hazard", "Total Time (s)", "Avg Time (s)", "% Runtime");
     hazards_df.attr("class") = CharacterVector::create("data.table", "data.frame");
     hazards_df.attr("row.names") = IntegerVector::create(NA_INTEGER, -Rf_length(hazard_pct));
     DataFrame transitions_df = DataFrame::create(
@@ -391,7 +393,10 @@ List Simulation::buildTimingReport() {
         _["Avg Time (s)"] = transition_avg,
         _["% Runtime"] = transition_pct
     );
-    transitions_df.attr("class") = CharacterVector::create("data.table", "data.frame");
+    transitions_df.names() = CharacterVector::create(
+        "Transition", "Total Time (s)", "Avg Time (s)", "% Runtime");
+    transitions_df.attr("class") =
+        CharacterVector::create("data.table", "data.frame");
     transitions_df.attr("row.names") = IntegerVector::create(NA_INTEGER, -Rf_length(transition_pct));
 
     // Trajectories
@@ -414,6 +419,8 @@ List Simulation::buildTimingReport() {
         _["Avg Time (s)"] = trajectory_avg,
         _["% Runtime"] = trajectory_pct
     );
+    trajectories_df.names() = CharacterVector::create(
+        "Trajectory", "Total Time (s)", "Avg Time (s)", "% Runtime");
     trajectories_df.attr("class") = CharacterVector::create("data.table", "data.frame");
     trajectories_df.attr("row.names") = IntegerVector::create(NA_INTEGER, -Rf_length(trajectory_pct));
     
@@ -445,6 +452,8 @@ List Simulation::buildTimingReport() {
             _["Avg Time (s)"] = column_avg,
             _["% Runtime"] = column_pct
         );
+        columns_df.names() = CharacterVector::create(
+            "Column", "Total Time (s)", "Avg Time (s)", "% Runtime");
         columns_df.attr("class") = CharacterVector::create("data.table", "data.frame");
         columns_df.attr("row.names") = IntegerVector::create(NA_INTEGER, -Rf_length(column_pct));
         
