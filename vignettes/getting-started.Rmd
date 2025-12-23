@@ -25,14 +25,13 @@ knitr::opts_chunk$set(
 **golden** is not currently available via CRAN, so must be installed via either devtools:
 
 ```{r install, eval=FALSE}
-# Note, username may change in future if repository is transferred
-install_github("RSE-Sheffield/golden")
+devtools::install_github("RSE-Sheffield/golden")
 ```
 
 or by manually downloading a `.zip` from the [golden GitHub repository](https://github.com/RSE-Sheffield/golden) to be installed:
 
 ```{r eval=FALSE}
-install.packages("<path to .zip>", repos = NULL, type="source")
+devtools::install.packages("<path to .zip>", repos = NULL, type="source")
 ```
 
 Following either of the actions, you should now be able to load golden like any other package.
@@ -66,6 +65,7 @@ Whilst the exact usage of each case differs slightly, they all share a common co
 
 The arguments passed to a function will typically be the names of columns (within the population data.table) to be passed to the function. The name "~STEP" is a reserved name created to represent the simulation time step.
 
+Within this document, *Note* will preface some remark that explains how an example illustrates some important functionality that could be used in other ways. 
 
 ## Scalar Functions
 
@@ -158,7 +158,7 @@ To execute a simulation `run_simulation()` is called, passing the initial popula
 First, let's load some relevant libraries and set the random seed:
 
 ```{r}
-library(golden)  # this package
+library(golden)       # this package
 library(data.table)   # enhanced data handling
 library(ggplot2)      # plotting
 set.seed(1234)        # PRNG seed
@@ -175,9 +175,9 @@ One of the arguments for `run_simulation` is the initial population. **golden** 
 ## initial population
 N <- 1e4L # population size
 pop0 <- data.table(
-  id = 1:N,           # patient ids
-  death = rep(-1, N), # time of death
-  age = rep(40, N),   # age
+  id = 1:N,                       # patient ids
+  death = rep(-1, N),             # time of death
+  age = rep(40, N),               # age
   sbp = rlnorm(N, log(140), .05), # systolic BP
   tc = rlnorm(N, log(4.5), .01)   # total cholesterol
 )
@@ -251,13 +251,14 @@ parms0 <- new_parameters(
   history = noalive
 )
 ```
+Printing parameters, hazards, etc. will generate a summary of their ingredients.
 
 Given an initial population and a parameters object, we can run the model:
 ```{r}
 ## run the simulation
 result0 <- run_simulation(pop0, parms0)
 ```
-T
+
 This outputs a list of 3 things:
 
 - the final population
@@ -266,7 +267,7 @@ This outputs a list of 3 things:
 
 ```{r}
 ## output list
-str(result0)
+print(result0) # explicit print unnecessary
 ```
 Final population data can be used to understand final status and to record cumulative data at an individual level. Conversely, history data captures specified summaries, but does so over time.
 
@@ -322,8 +323,8 @@ morthaz1 <- new_hazard(
   ## (list of) transitions to apply
   new_transition(
     transition_fn,        # generic transition
-    c("death", "~STEP"),  #
-    "death"
+    c("death", "~STEP"),  # input col args
+    "death"               # col outputted
   )
 )
 ```
@@ -441,7 +442,7 @@ result2 <- run_simulation(pop0[1:50], parms2) #look at a limited population
 ```
 
 We can now transform and plot the SBP and TC trajectories for the first individual, which do indeed look like a correlated geometric random walk:
-```{r, fig.dim = c(5, 3), fig.cap = "Correlated geometric random walk trajectory for SBP & TC of a single patient"}
+```{r, fig.dim = c(5, 3), fig.cap = "*Correlated geometric random walk trajectory for SBP & TC of a single patient*"}
 plot_data <- melt(result2$history[, .(t = `~STEP`, sbp1, tc1)], id = "t")
 
 ggplot(plot_data, aes(t, value, col = variable)) +
@@ -591,7 +592,7 @@ You can see the number of times patients have started treatment in the final pop
 
 Let's inspect the numbers alive and on treatment:
 
-```{r, fig.dim = c(5, 3), fig.cap = "Numbers alive and on treatment"}
+```{r, fig.dim = c(5, 3), fig.cap = "*Numbers alive and on treatment*"}
 plot_data <- melt(result3$history[, .(
   t = `~STEP`,
   `no. alive`, `no. alive on tx`
@@ -694,7 +695,7 @@ initPop <- merge(
 ```
 
 We can check this is looking plausible:
-```{r, fig.dim = c(5, 3), fig.cap = "Initial population demography"}
+```{r, fig.dim = c(5, 3), fig.cap = "*Initial population demography*"}
 ## initial pop
 ggplot(initPop, aes(x = age, fill = factor(male), group = male)) +
   geom_histogram() +
@@ -870,14 +871,14 @@ _Note_ for the first time in these examples, the timing information is potential
 Let's have a look at a few of the outputs. 
 
 Have we run the model long enough that most people have died?
-```{r, fig.dim = c(5, 3), fig.cap = "Living cohort size over time"}
+```{r, fig.dim = c(5, 3), fig.cap = "*Living cohort size over time*"}
 ## history: number alive
 ggplot(ret$history, aes(`~STEP`, `no. alive`)) +
   geom_line()
 ```
 
 What age did people die at?
-```{r, fig.dim = c(5, 3), fig.cap = "Age at death"}
+```{r, fig.dim = c(5, 3), fig.cap = "*Age at death*"}
 ## now dead
 ggplot(
   ret$pop[death > 0],
@@ -888,9 +889,20 @@ ggplot(
 ```
 
 How many CVD events have those alive typically experienced?
-```{r, fig.dim = c(5, 3), fig.cap = "Average CVD event count in survivors"}
+```{r, fig.dim = c(5, 3), fig.cap = "*Average CVD event count in survivors*"}
 ## history: mean CVD count
 ggplot(ret$history, aes(`~STEP`, `av. cvd events`)) +
   geom_line()
 
 ```
+
+The third member of the output list provides `data.table` timing information, which will print like this:
+
+```{r}
+ret$timing
+```
+The intent here is to provide some information on where the simulation is spending most of its time to guide any optimizations. 
+This information can also be printed automatically at the end of a run by setting the flag `print_timing = TRUE` (which is on by default) when creating `new_parameters`. 
+Note though that this information is only printed in interactive mode, but not, e.g., when generating rmarkdown reports.
+
+TODO explanation of `debug` flag effects

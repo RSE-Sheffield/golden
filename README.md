@@ -1,30 +1,30 @@
 # golden <img src="man/figures/logo.png" align="right" height="138" alt="" /> #
 
-An R package for patient-level microsimulation of risk factor trajectories & hazard-based events
 
-## Development ##
+**golden** is a flexible patient-level microsimulation modelling framework focussed on trajectories of patient risk factors and hazards of events, authored by [Pete Dodd](https://sheffield.ac.uk/smph/people/academic/population-health/pete-dodd) and [Robert Chisholm](https://sheffield.ac.uk/cs/people/research-staff/robert-chisholm).
 
-If making changes to the package locally, you will need both rebuild and reinstall it.
+## Installation
 
-```r
-library(Rcpp)
-library(devtools)
-Rcpp::compileAttributes() # Only required if new exported functions have been added
-devtools::load_all()
+**golden** can be installed from GitHub using `devtools` via:
+
+```{r install, eval=FALSE}
+devtools::install_github("RSE-Sheffield/golden")
 ```
 
-*If this fails, it may be necessary to close all R sessions, they appear to share an installed package index.*
+or by manually downloading a `.zip` from the [golden GitHub repository](https://github.com/RSE-Sheffield/golden) to be installed via:
 
-Tests can then be executed.
+```{r eval=FALSE}
+install.packages("<path to .zip>", repos = NULL, type="source")
+```
 
-```R
-devtools::test()
+Following either of the actions, you should now be able to load golden like any other package.
+
+```{r setup}
+library(golden)
 ```
 
 
-## Creation From Scratch ##
-
-See the vignette: `vignette("getting-started", package="eldoradosim")`
+Please see the vignette: `vignette("getting-started", package="golden")` for more details. A quickstart introduction and example is provided below.
 
 ## Example use
 
@@ -42,13 +42,13 @@ library(golden)
 This is not handled by the package. Here's a simple example population - one row per individual:
 
 ```r
-N <- 1e4L # population size
+N <- 1e4L                         # population size
 pop0 <- data.frame(
-  id = 1:N, # patient ids
-  death = rep(-1, N), # time of death
-  age = rep(40, N), # age
+  id = 1:N,                       # patient ids
+  death = rep(-1, N),             # time of death
+  age = rep(40, N),               # age
   sbp = rlnorm(N, log(140), .05), # systolic BP
-  tc = rlnorm(N, log(4.5), .01) # total cholesterol
+  tc = rlnorm(N, log(4.5), .01)   # total cholesterol
 )
 ```
 
@@ -63,9 +63,9 @@ age_update <- function(age, death_time) {
 
 ## new_trajectory creates a trajectory
 age_traj <- new_trajectory(
-  age_update, # update function
+  age_update,        # update function
   c("age", "death"), # args for update function
-  "age" # column(s) to be updated
+  "age"              # column(s) to be updated
 )
 ```
 
@@ -99,9 +99,9 @@ morthaz <- new_hazard(
   c("death", "sbp", "tc"), # args for hazard fn
   ## (list of) transitions to apply
   new_transition(
-    transition_fn, # generic transition
-    c("death", "~STEP"), #
-    "death"
+    transition_fn,       # generic transition
+    c("death", "~STEP"), # input cols
+    "death"              # output cols
   )
 )
 ```
@@ -120,15 +120,15 @@ filter_alive <- function(x) {
 ## new_history creates a history
 noalive <- new_history(
   columns = list(
-    new_column( # creates a col in history
+    new_column(    # creates a col in history
       "no. alive", # column name
-      length, # summary function
-      "age", # input args for summary fn
-      filter_alive, # filter to row-restrict
-      "death" # input variables for filter
+      length,      # summary function
+      "age",       # input args for summary fn
+      filter_alive,# filter to row-restrict
+      "death"      # input variables for filter
     )
   ),
-  frequency = 1 # record history every 1 steps
+  frequency = 1    # record history every 1 steps
 )
 ```
 
@@ -158,9 +158,12 @@ head(result$pop)
 
 ## plot time series
 plot(result$history, `no. alive` ~ `~STEP`, type = "l")
+
+## timing information to guide optimization
+result$timing
 ```
 
 
 ## Acknowledgements
 
-todo which grant/project funded development?
+Development of this package was carried out as part of the ELDORADO project, funded under Horizon Europe via EDCTP3
