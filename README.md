@@ -24,7 +24,9 @@ library(golden)
 ```
 
 
-Please see the vignette: `vignette("getting-started", package="golden")` for more details. A quickstart introduction and example is provided below.
+Please see the vignette: `vignette("getting-started", package="golden")` for more details. (Note: you will need to set `build_vignettes = TRUE` in `devtools::install_github` to build the vignette.)
+
+A quickstart introduction and example is provided below.
 
 ## Example use
 
