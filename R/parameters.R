@@ -16,6 +16,10 @@ check_parameters <- function(parameters, initPop = NULL) {
   required_fields <- c("hazards", "trajectories", "steps", "random_seed", "debug", "print_timing")
   .validate_fields_present(parameters, "golden_parameters", required_fields)
   
+  # Are there any unexpected fields
+  required_fields <- append(required_fields, c("history"))
+  .validate_wrong_fields(parameters, "golden_parameters", required_fields)
+  
   # ---- hazards & nested transitions ----
   # Check every element is a 'hazard' S3 object
   .validate_S3_list(parameters$hazards, "parameters$hazards", "golden_hazard")

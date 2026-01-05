@@ -25,6 +25,20 @@
   }
 }
 
+#' Validate that test_object does not contain additional fields
+#' 
+#' @param test_object The object to validate
+#' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
+#' @param required_fields (Character Vector) >=1 field names which should be present in test_object
+#' @keywords internal
+#' @noRd
+.validate_wrong_fields <-function(test_object, name, required_fields) {
+  missing_fields <- setdiff(names(test_object), required_fields)
+  if (length(missing_fields)) {
+    stop(name, " unexpected fields: ", paste(missing_fields, collapse = ", "))
+  }
+}
+
 #' Validate that test_object is a list containing >=0 S3 objects of type s3type
 #' 
 #' @param test_object The object to validate
