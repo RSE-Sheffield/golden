@@ -10,6 +10,10 @@ empty_hazard_fn <- function(property) {
 fifty_fifty_hazard <- function(a) {
     return (rep(0.7, length(a)))
 }
+#' All hazards pass
+always_hazard_fn <- function(property) {
+    return (rep(Inf, length(property)))
+}
 #' Empty hazard transition function example
 #'
 #' @param a This value is directly returned
@@ -23,6 +27,12 @@ empty_reduction_fn <- empty_transition_fn
 #' @return A vector of 1's
 transition_to_1_fn <- function(a) {
     return (rep(1, length(a)))
+}
+#' 50% chance of transitioning
+transition_to_1_rng_fn <- function(a) {
+  to_one <- runif(length(a)) < 0.5
+  a[to_one] <- 1
+  return (a)
 }
 #' Empty trajectory function example
 #'
