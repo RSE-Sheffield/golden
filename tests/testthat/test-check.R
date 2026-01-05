@@ -36,6 +36,16 @@ test_that("Trajectory with missing attribute triggers stop()", {
             info = paste("Missing", field, "should cause an error"))
     }
 })
+test_that("Trajectory with unexpected attribute triggers stop()", {
+    # No error by default
+    trj <- new_trajectory(empty_trajectory_fn, c("age"), "age")
+    expect_no_error(check_trajectory(trj))
+    # Add a junk attribute
+    trj$foo <- 12
+    expect_error(check_trajectory(trj),
+        paste("unexpected fields: foo"),
+        info = paste("Unexpected field 'foo' should cause an error"))
+})
 test_that("Trajectory attribute of incorrect type triggers stop()", {
     # Trajectory subfields
     required_fields <- c(
@@ -169,6 +179,17 @@ test_that("Hazard with missing attribute triggers stop()", {
             info = paste("Missing", field, "should cause an error"))
     }
 })
+test_that("Hazard with unexpected attribute triggers stop()", {
+    # No error by default
+    trn <- list(new_transition(empty_transition_fn, c("age"), "age"))
+    haz <- new_hazard(empty_hazard_fn, c("age"), trn)
+    expect_no_error(check_hazard(haz))
+    # Add a junk attribute
+    haz$foo <- 12
+    expect_error(check_hazard(haz),
+        paste("unexpected fields: foo"),
+        info = paste("Unexpected field 'foo' should cause an error"))
+})
 test_that("Hazard attribute of incorrect type triggers stop()", {
    # Hazard subfields
     required_fields <- c(
@@ -270,6 +291,16 @@ test_that("Transition with missing attribute triggers stop()", {
             info = paste("Missing", field, "should cause an error"))
     }
 })
+test_that("Transition with unexpected attribute triggers stop()", {
+    # No error by default
+    trn <- new_transition(empty_transition_fn, c("age"), "age")
+    expect_no_error(check_transition(trn))
+    # Add a junk attribute
+    trn$foo <- 12
+    expect_error(check_transition(trn),
+        paste("unexpected fields: foo"),
+        info = paste("Unexpected field 'foo' should cause an error"))
+})
 test_that("Transition attribute of incorrect type triggers stop()", {
     # Trajectory subfields
     required_fields <- c(
@@ -368,6 +399,16 @@ test_that("Parameters with missing attribute triggers stop()", {
             info = paste("Missing", field, "should cause an error"))
     }
 })
+test_that("Parameters with unexpected attribute triggers stop()", {
+    # No error by default
+    prm <- new_parameters(list(), list(), 12, 12, FALSE)
+    expect_no_error(check_parameters(prm))
+    # Add a junk attribute
+    prm$foo <- 12
+    expect_error(check_parameters(prm),
+        paste("unexpected fields: foo"),
+        info = paste("Unexpected field 'foo' should cause an error"))
+})
 test_that("Parameters attribute of incorrect type triggers stop()", {
     # Trajectory subfields
     required_fields <- c(
@@ -462,6 +503,16 @@ test_that("History with missing attribute triggers stop()", {
             info = paste("Missing", field, "should cause an error"))
     }
 })
+test_that("History with unexpected attribute triggers stop()", {
+    # No error by default
+    hist <- new_history(list(new_column("test", empty_reduction_fn, c("a"))), 1)
+    expect_no_error(check_history(hist))
+    # Add a junk attribute
+    hist$foo <- 12
+        expect_error(check_history(hist),
+            paste("unexpected fields: foo"),
+            info = paste("Unexpected field 'foo' should cause an error"))
+})
 test_that("History attribute of incorrect type triggers stop()", {
     # History subfields
     required_fields <- c(
@@ -535,6 +586,16 @@ test_that("Column with missing attribute triggers stop()", {
             paste("golden_history_column missing required fields:", field),
             info = paste("Missing", field, "should cause an error"))
     }
+})
+test_that("Column with unexpected attribute triggers stop()", {
+    # No error by default
+    clm <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("a"))
+    expect_no_error(check_column(clm))
+    # Add a junk attribute
+    clm$foo <- 12
+    expect_error(check_column(clm),
+        paste("unexpected fields: foo"),
+        info = paste("Unexpected field 'foo' should cause an error"))
 })
 test_that("Column filter_args passed without filter_fn triggers stop()", {
     # No error by default

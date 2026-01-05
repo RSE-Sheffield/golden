@@ -8,6 +8,10 @@ check_transition <- function(transition, initPop = NULL) {
   # Are the expected fields present
   required_fields <- c("fn", "args", "state")
   .validate_fields_present(transition, "golden_transition", required_fields)
+  
+  # Are there any unexpected fields
+  required_fields <- append(required_fields, c("name"))
+  .validate_wrong_fields(transition, "golden_transition", required_fields)
 
   # ---- fn ----
   if (!is.function(transition$fn)) {

@@ -8,6 +8,10 @@ check_hazard <- function(hazard, initPop = NULL) {
   # Are the expected fields present
   required_fields <- c("fn", "args", "transitions", "freq", "first", "last")
   .validate_fields_present(hazard, "golden_hazard", required_fields)
+  
+  # Are there any unexpected fields
+  required_fields <- append(required_fields, c("name"))
+  .validate_wrong_fields(hazard, "golden_hazard", required_fields)
 
   # ---- fn ----
   if (!is.function(hazard$fn)) {

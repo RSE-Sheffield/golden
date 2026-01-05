@@ -8,6 +8,10 @@ check_column <- function(column, initPop = NULL) {
   # Are the expected fields present
   required_fields <- c("name", "fn", "args")
   .validate_fields_present(column, "golden_history_column", required_fields)
+  
+  # Are there any unexpected fields
+  required_fields <- append(required_fields, c("filter_fn", "filter_args"))
+  .validate_wrong_fields(column, "golden_history_column", required_fields)
 
   # ---- name ----
   if (!(is.character(column$name) && length(column$name) == 1)) {

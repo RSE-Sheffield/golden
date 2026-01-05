@@ -9,6 +9,9 @@ check_history <- function(history, initPop = NULL) {
   required_fields <- c("columns", "frequency")
   .validate_fields_present(history, "golden_history", required_fields)
   
+  # Are there any unexpected fields
+  .validate_wrong_fields(history, "golden_history", required_fields)
+  
   # ---- columns & nested transitions ----
   # Check every element is a 'columns' S3 object
   .validate_S3_list(history$columns, "history$columns", "golden_history_column")
