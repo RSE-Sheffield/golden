@@ -905,4 +905,7 @@ The intent here is to provide some information on where the simulation is spendi
 This information can also be printed automatically at the end of a run by setting the flag `print_timing = TRUE` (which is on by default) when creating `new_parameters`. 
 Note though that this information is only printed in interactive mode, but not, e.g., when generating rmarkdown reports.
 
-TODO explanation of `debug` flag effects
+**Debug**
+
+The `debug` flag passed to `run_simulation()`, which defaults `True`, enables potentially expensive runtime validation. For example if maths within your model returns `NaN`, it will likely propagate and cause dependent values to also equal `NaN`. This behaviour can be difficult to track back to the source. When `debug=True` `NaN` and similar erroneous return values will be detected at return and raise a corresponding exception. Once a model is deemed stable, `debug=False` can be enabled to remove any performance overhead of expensive runtime validation. *No benchmarking has been carried out to estimate the impact of the `debug` flag.*
+
