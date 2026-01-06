@@ -3,6 +3,13 @@
 #' @param parameters An golden_parameters S3 object to be validated
 #' @param initPop data.frame which contains the columns required by parameters
 check_parameters <- function(parameters, initPop = NULL) {
+  # initpop must be derived from data.frame (e.g. data.table)
+  if (!is.null(initPop)) {
+    if (!inherits(initPop, "data.frame")) {
+      stop("initPop type must inherit from class data.frame (e.g. data.table)")
+    }
+  }
+
   validate_S3(parameters, "Object", "golden_parameters")
 
   # Are the expected fields present
