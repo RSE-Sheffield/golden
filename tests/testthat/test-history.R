@@ -11,7 +11,7 @@ test_that("History function collects expected data", {
     STEPS = 10
     # Population size to test
     N = 100
-    initPop <- list(
+    initPop <- data.frame(
         "a" = 1:N
         )
     parms <- new_parameters(
@@ -52,7 +52,7 @@ test_that("History function collects expected data with non-1 frequency", {
     N = 100
     # Frequency of history collection
     FREQ = 3
-    initPop <- list(
+    initPop <- data.frame(
         "a" = 1:N
         )
     parms <- new_parameters(
@@ -104,7 +104,7 @@ test_that("Filtered history function collects expected data", {
     STEPS = 10
     # Population size to test
     N = 100
-    initPop <- list(
+    initPop <- data.frame(
         "a" = 1:N
         )
     parms <- new_parameters(

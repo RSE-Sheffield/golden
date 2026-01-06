@@ -681,3 +681,33 @@ test_that("No args fn is valid/invalid", {
         "'column\\$args' must not be empty")
 })
 
+
+
+test_that("initPop must inherit from data.frame", {
+  # Basic empty parameters, as we're testing first error
+  prm <- new_parameters(list(), list(), 12, 12, FALSE)
+  # Generic data set
+  N <- 100
+  a <- rep(0, N)
+  b <- rep(0, N)
+  c <- rep(0, N)
+  df <- data.frame(a = a, b = b, c = c)
+  dt <- data.table(a = a, b = b, c = c)
+  lst <- list(a = a, b = b, c = c)
+  mat <- cbind(a, b, c)
+  # data.frame, data.table are fine
+  expect_no_error(check_parameters(prm, df))
+  expect_no_error(check_parameters(prm, dt))
+  # list and matrix are bad
+  expect_error(check_parameters(prm, lst),
+      "must inherit from class data.frame",
+      info = paste("Matrix passed to check_parameters (via run_simulation()) should error."))
+  expect_error(check_parameters(prm, mat),
+      "must inherit from class data.frame",
+      info = paste("Matrix passed to check_parameters (via run_simulation()) should error."))
+  # Adding column names doesn't change that
+  colnames(mat) <- c("a", "b", "c")
+  expect_error(check_parameters(prm, mat),
+      "must inherit from class data.frame",
+      info = paste("Matrix passed to check_parameters (via run_simulation()) should error."))
+})
