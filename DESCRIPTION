@@ -1,6 +1,6 @@
 Package: golden
 Type: Package
-Title: Healthcare trajectory simulation framework.
+Title: Framework for patient-level microsimulation of risk factor trajectories & hazard-based events
 Version: 0.0.1
 Date: 2025-10-24
 Author: Pete Dodd, Robert Chisholm
