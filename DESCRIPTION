@@ -15,7 +15,7 @@ Authors@R:
            email = "robert.chisholm@sheffield.ac.uk",
            comment = c(ORCID = "0000-0002-6983-2759")))
 Description: Fast, flexible, patient-level microsimulation. Time-stepped simulation with a C++ back-end from user-supplied initial population, trajectories, hazards, and corresponding event transitions. User-defined aggregate time series histories are returned together with the final population. Designed for simulation of chronic diseases with continuous and evolving risk factors, but could easily be applied more generally.
-License: GPL (>= 2)
+License: MIT
 Imports:
     Rcpp (>= 1.1.0),
     data.table
