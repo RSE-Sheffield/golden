@@ -3,6 +3,14 @@ name: CRAN-style R CMD check
 
 on:
   # Branch pushes that do not only modify other workflow files
+  push:
+    branches:
+      - main
+    paths:
+      - "**"
+      - "!.github/**"
+      - ".github/scripts/**"
+      - ".github/workflows/cran.yml"
   pull_request:
     branches:
       - main
