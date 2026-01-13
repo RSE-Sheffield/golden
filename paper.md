@@ -1,4 +1,3 @@
-<!-- DELETE ME: Based on https://joss.readthedocs.io/en/latest/example_paper.html -->
 ---
 title: 'Golden: An R package for patient-level microsimulation'
 tags:
@@ -22,7 +21,8 @@ affiliations:
    index: 2
 date: 30 January 2026
 bibliography: paper.bib
-
+---
+<!-- DELETE ME: Based on https://joss.readthedocs.io/en/latest/example_paper.html -->
 # Summary
 
 Fast, flexible, patient-level microsimulation. Time-stepped simulation with a C++ back-end from user-supplied initial population, trajectories, hazards, and corresponding event transitions. User-defined aggregate time series histories are returned together with the final population. Designed for simulation of chronic diseases with continuous and evolving risk factors, but could easily be applied more generally.
