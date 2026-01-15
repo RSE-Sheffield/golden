@@ -108,8 +108,28 @@ test_that("Trajectory args length does not match fn args triggers stop()", {
     # Error when args is wrong length
     trj$args <- c("a", "~STEP")
     expect_error(check_trajectory(trj),
-        "does not match number of arguments required",
+        "exceeds number of arguments required by function",
         info = "args cant be used if they don't match fn")
+    # Error when args is too short
+    trj$args <- c("a")
+    trj$fn <- two_arg_fn
+    expect_error(check_trajectory(trj),
+        "is less than the number of arguments required by function",
+        info = "args cant be used if they don't match fn")
+    # (No) error when args is right for defaults
+    trj$fn <- two_arg_default_fn # has 2 args, 1 is defaulted
+    trj$args <- c("a")
+    expect_no_error(check_trajectory(trj))
+    trj$args <- c("a", "b")
+    expect_no_error(check_trajectory(trj))
+    trj$args <- c("a", "b", "c")
+    expect_error(check_trajectory(trj),
+        "exceeds number of arguments required by function",
+        info = "args cant be used if they don't match fn")
+    # Elipsis works
+    trj$fn <- mean # 1 arg + elipsis (aka unlimited extra)
+    trj$args <- c("a")
+    expect_no_error(check_trajectory(trj))
 })
 test_that("Trajectory property not found in initial pop table triggers stop()", {
     dt <- data.table(a = integer(),
@@ -141,9 +161,10 @@ test_that("Multivariate trajectory property not found in initial pop table trigg
         "initial population columns do not contain trajectory\\$property",
         info = "property d does not exist in dt")
 })
-test_that("Args can be empty string", {
+-test_that("Args can be empty string", {
+    zero_arg_fn <- function() { return (5) }
     # No error by default
-    trj <- new_trajectory(empty_trajectory_fn, c(), "age")
+    trj <- new_trajectory(zero_arg_fn, c(), "age")
     expect_no_error(check_trajectory(trj))
 })
 test_that("Multivariate trajectory check does not crash", {
@@ -259,8 +280,28 @@ test_that("Hazard args length does not match fn args triggers stop()", {
     # Error when args is wrong length
     haz$args <- c("a", "~STEP")
     expect_error(check_hazard(haz),
-        "does not match number of arguments required",
+        "exceeds number of arguments required by function",
         info = "args cant be used if they don't match fn")
+    # Error when args is too short
+    haz$args <- c("a")
+    haz$fn <- two_arg_fn
+    expect_error(check_hazard(haz),
+        "is less than the number of arguments required by function",
+        info = "args cant be used if they don't match fn")
+    # (No) error when args is right for defaults
+    haz$fn <- two_arg_default_fn # has 2 args, 1 is defaulted
+    haz$args <- c("a")
+    expect_no_error(check_hazard(haz))
+    haz$args <- c("a", "b")
+    expect_no_error(check_hazard(haz))
+    haz$args <- c("a", "b", "c")
+    expect_error(check_hazard(haz),
+        "exceeds number of arguments required by function",
+        info = "args cant be used if they don't match fn")
+    # Elipsis works
+    haz$fn <- mean # 1 arg + elipsis (aka unlimited extra)
+    haz$args <- c("a")
+    expect_no_error(check_hazard(haz))
 })
 test_that("Hazard passed transition, as opposed to list of,is valid", {
     trn <- new_transition(empty_transition_fn, c("age"), "age")
@@ -360,8 +401,28 @@ test_that("Transition args length does not match fn args triggers stop()", {
     # Error when args is wrong length
     trn$args <- c("a", "~STEP")
     expect_error(check_transition(trn),
-        "does not match number of arguments required",
+        "exceeds number of arguments required by function",
         info = "args cant be used if they don't match fn")
+    # Error when args is too short
+    trn$args <- c("a")
+    trn$fn <- two_arg_fn
+    expect_error(check_transition(trn),
+        "is less than the number of arguments required by function",
+        info = "args cant be used if they don't match fn")
+    # (No) error when args is right for defaults
+    trn$fn <- two_arg_default_fn # has 2 args, 1 is defaulted
+    trn$args <- c("a")
+    expect_no_error(check_transition(trn))
+    trn$args <- c("a", "b")
+    expect_no_error(check_transition(trn))
+    trn$args <- c("a", "b", "c")
+    expect_error(check_transition(trn),
+        "exceeds number of arguments required by function",
+        info = "args cant be used if they don't match fn")
+    # Elipsis works
+    trn$fn <- mean # 1 arg + elipsis (aka unlimited extra)
+    trn$args <- c("a")
+    expect_no_error(check_transition(trn))
 })
 test_that("Transition state not found in initial pop table triggers stop()", {
     dt <- data.table(a = integer(),
@@ -694,21 +755,61 @@ test_that("Column args length does not match fn args triggers stop()", {
     clm <- new_column("test", empty_reduction_fn, c("a"))
     # No error by default when table contains column "a"
     expect_no_error(check_column(clm))
-    # Error when args is wrong length
+    # Error when args is too long
     clm$args <- c("a", "~STEP")
     expect_error(check_column(clm),
-        "does not match number of arguments required",
+        "exceeds number of arguments required by function",
         info = "args cant be used if they don't match fn")
+    # Error when args is too short
+    clm$args <- c("a")
+    clm$fn <- two_arg_fn
+    expect_error(check_column(clm),
+        "is less than the number of arguments required by function",
+        info = "args cant be used if they don't match fn")
+    # (No) error when args is right for defaults
+    clm$fn <- two_arg_default_fn # has 2 args, 1 is defaulted
+    clm$args <- c("a")
+    expect_no_error(check_column(clm))
+    clm$args <- c("a", "b")
+    expect_no_error(check_column(clm))
+    clm$args <- c("a", "b", "c")
+    expect_error(check_column(clm),
+        "exceeds number of arguments required by function",
+        info = "args cant be used if they don't match fn")
+    # Elipsis works
+    clm$fn <- mean # 1 arg + elipsis (aka unlimited extra)
+    clm$args <- c("a")
+    expect_no_error(check_column(clm))
 })
 test_that("Column filter args length does not match fn args triggers stop()", {
     clm <- new_column("test", empty_reduction_fn, c("a"), empty_trajectory_fn, c("a"))
     # No error by default when table contains column "a"
     expect_no_error(check_column(clm))
-    # Error when filter args is wrong length
+    # Error when args is too long
     clm$filter_args <- c("a", "~STEP")
     expect_error(check_column(clm),
-        "does not match number of arguments required",
+        "exceeds number of arguments required by function",
         info = "filter args cant be used if they don't match fn")
+    # Error when args is too short
+    clm$filter_args <- c("a")
+    clm$filter_fn <- two_arg_fn
+    expect_error(check_column(clm),
+        "is less than the number of arguments required by function",
+        info = "filter args cant be used if they don't match fn")
+    # (No) error when args is right for defaults
+    clm$filter_fn <- two_arg_default_fn # has 2 args, 1 is defaulted
+    clm$filter_args <- c("a")
+    expect_no_error(check_column(clm))
+    clm$filter_args <- c("a", "b")
+    expect_no_error(check_column(clm))
+    clm$filter_args <- c("a", "b", "c")
+    expect_error(check_column(clm),
+        "exceeds number of arguments required by function",
+        info = "filter args cant be used if they don't match fn")
+    # Elipsis works
+    clm$filter_fn <- mean # 1 arg + elipsis (aka unlimited extra)
+    clm$filter_args <- c("a")
+    expect_no_error(check_column(clm))
 })
 test_that("Column cannot be named '~STEP'", {
     # No error by default

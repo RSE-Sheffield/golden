@@ -28,6 +28,12 @@ empty_reduction_fn <- empty_transition_fn
 transition_to_1_fn <- function(a) {
     return (rep(1, length(a)))
 }
+two_arg_fn <- function(a, b) {
+    return (a)
+}
+two_arg_default_fn <- function(a=1, b) {
+    return (a)
+}
 #' 50% chance of transitioning
 transition_to_1_rng_fn <- function(a) {
   to_one <- runif(length(a)) < 0.5

@@ -333,6 +333,7 @@ test_that("Scalar upgrade hazard works correctly", {
     
     # All hazards return true
     parms$hazards[[1]]$fn <- scalar_hazard
+    parms$hazards[[1]]$args <- c("a")
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
     expect_equal(step1$pop$a, ret_test1)
