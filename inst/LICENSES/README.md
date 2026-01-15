@@ -1,6 +1,6 @@
-# Data
+# Data Licences
 
-Datasets are included in this repository under their respective licences.
+Datasets located within `data/` are included in this package under their respective licences.
 
 ## globorisk_coefs, globorisk_cvdr, globorisk_rf
 
