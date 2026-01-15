@@ -113,9 +113,9 @@
   return (test_object)
 }
 
-#' Validate that the column names found in test_object exist within initPop
+#' Validate that the column names found in test_object (function args) exist within initPop
 #' 
-#' @param test_object The object to validate
+#' @param test_object The function args object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
 #' @param initPop (data.table) A data.table to be tested whether test_object columns are present
 #' @keywords internal
@@ -130,18 +130,30 @@
     }
 }
 
-#' (Experimental) Validate whether test_object (function args) look suitable for fn
+#' Validate whether test_object (function args) look suitable for fn
 #'
-#' @param test_object The object to validate
+#' @param test_object The function args object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
 #' @param fn (Function) A function to check arg count etc of
+#' @note Accounts for min/max args, supporting default args and ...
 #' @keywords internal
 #' @noRd
 .validate_function_args <- function(test_object, name, fn) {
-  # Greater than, because of default arg potential
-  if(length(test_object) > length(formals(args(fn)))) {
-    stop("length of ",name,", does not match number of arguments required by function: ",
-      paste(length(test_object), ">", length(formals(args(fn)))))
+  provided_args_count = length(test_object)
+  total_args_count = length(formals(args(fn)))
+  default_args_count = sum(!sapply(formals(args(fn)), is.symbol))
+  has_elipsis = "..." %in% names(formals(fn)) # Elipsis enables unlimited args
+  if (has_elipsis) {
+    total_args_count <- total_args_count - 1
+  }
+  if (!has_elipsis && provided_args_count > total_args_count) {
+    # Too many arguments
+    stop("length of ",name,", exceeds number of arguments required by function: ",
+      paste(provided_args_count, ">", total_args_count))
+  } else if (provided_args_count < total_args_count - default_args_count) {
+    # Too few arguments
+    stop("length of ",name,", is less than the number of arguments required by function: ",
+      paste(provided_args_count, "<", total_args_count - default_args_count))
   }
 }
 
