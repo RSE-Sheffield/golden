@@ -73,3 +73,159 @@
   year      =  2000,
   language  = "en"
 }
+
+@INPROCEEDINGS{Karlsson2016-jm,
+  title     = "A parallel microsimulation package for modelling cancer screening
+               policies",
+  author    = "Karlsson, Andreas and Olofsson, Niten and Laure, Erwin and
+               Clements, Mark",
+  booktitle = "2016 IEEE 12th International Conference on e-Science (e-Science)",
+  publisher = "IEEE",
+  pages     = "323--330",
+  abstract  = "Microsimulation with stochastic life histories is an important
+               tool in the development of public policies. In this article, we
+               use microsimulation to evaluate policies for prostate cancer
+               testing. We implemented the microsimulations as an R package,
+               with pre- and post-processing in R and with the simulations
+               written in C++. Calibrating a microsimulation model with a large
+               population can be computationally expensive. To address this
+               issue, we investigated four forms of parallelism: (i) shared
+               memory parallelism using R; (ii) shared memory parallelism using
+               OpenMP at the C++ level; (iii) distributed memory parallelism
+               using R; and (iv) a hybrid shared/distributed memory parallelism
+               using OpenMP at the C++ level and MPI at the R level. The close
+               coupling between R and C++ offered advantages for ease of
+               software dissemination and the use of high-level R
+               parallelisation methods. However, this combination brought
+               challenges when trying to use shared memory parallelism at the
+               C++ level: the performance gained by hybrid OpenMP/MPI came at
+               the cost of significant re-factoring of the existing code. As a
+               case study, we implemented a prostate cancer model in the
+               microsimulation package. We used this model to investigate
+               whether prostate cancer testing with specific re-testing
+               protocols would reduce harms and maintain any mortality benefit
+               from prostate-specific antigen testing. We showed that
+               four-yearly testing would have a comparable effectiveness and a
+               marked decrease in costs compared with two-yearly testing and
+               current testing. In summary, we developed a microsimulation
+               package in R and assessed the cost-effectiveness of prostate
+               cancer testing. We were able to scale up the microsimulations
+               using a combination of R and C++, however care was required when
+               using shared memory parallelism at the C++ level.",
+  month     =  oct,
+  year      =  2016,
+  language  = "en"
+}
+
+@MISC{ZinnUnknown-wl,
+  title        = "The {MicSim} package of {R}: An entry-level toolkit for
+                  continuous-time microsimulation",
+  author       = "Zinn, Sabine",
+  howpublished = "\url{https://microsimulation.pub/articles/00105}",
+  note         = "Accessed: 2026-2-4",
+  language     = "en"
+}
+
+@ARTICLE{Krijkamp2018-ac,
+  title    = "Microsimulation Modeling for Health Decision Sciences Using {R}: A
+              Tutorial",
+  author   = "Krijkamp, Eline M and Alarid-Escudero, Fernando and Enns, Eva A
+              and Jalal, Hawre J and Hunink, M G Myriam and Pechlivanoglou,
+              Petros",
+  journal  = "Med. Decis. Making",
+  volume   =  38,
+  number   =  3,
+  pages    = "400--422",
+  abstract = "Microsimulation models are becoming increasingly common in the
+              field of decision modeling for health. Because microsimulation
+              models are computationally more demanding than traditional Markov
+              cohort models, the use of computer programming languages in their
+              development has become more common. R is a programming language
+              that has gained recognition within the field of decision modeling.
+              It has the capacity to perform microsimulation models more
+              efficiently than software commonly used for decision modeling,
+              incorporate statistical analyses within decision models, and
+              produce more transparent models and reproducible results. However,
+              no clear guidance for the implementation of microsimulation models
+              in R exists. In this tutorial, we provide a step-by-step guide to
+              build microsimulation models in R and illustrate the use of this
+              guide on a simple, but transferable, hypothetical decision
+              problem. We guide the reader through the necessary steps and
+              provide generic R code that is flexible and can be adapted for
+              other models. We also show how this code can be extended to
+              address more complex model structures and provide an efficient
+              microsimulation approach that relies on vectorization solutions.",
+  month    =  apr,
+  year     =  2018,
+  keywords = "Markov model; R project; decision-analytic modeling;
+              microsimulation; open source software",
+  language = "en"
+}
+
+@ARTICLE{Alarid-Escudero2023-mh,
+  title     = "A tutorial on time-dependent cohort state-transition models in
+               {R} using a cost-effectiveness analysis example",
+  author    = "Alarid-Escudero, Fernando and Krijkamp, Eline and Enns, Eva A and
+               Yang, Alan and Hunink, M G Myriam and Pechlivanoglou, Petros and
+               Jalal, Hawre",
+  journal   = "Med. Decis. Making",
+  publisher = "SAGE Publications",
+  volume    =  43,
+  number    =  1,
+  pages     = "21--41",
+  abstract  = "In an introductory tutorial, we illustrated building cohort
+               state-transition models (cSTMs) in R, where the state transition
+               probabilities were constant over time. However, in practice, many
+               cSTMs require transitions, rewards, or both to vary over time
+               (time dependent). This tutorial illustrates adding 2 types of
+               time dependence using a previously published cost-effectiveness
+               analysis of multiple strategies as an example. The first is
+               simulation-time dependence, which allows for the transition
+               probabilities to vary as a function of time as measured since the
+               start of the simulation (e.g., varying probability of death as
+               the cohort ages). The second is state-residence time dependence,
+               allowing for history by tracking the time spent in any particular
+               health state using tunnel states. We use these time-dependent
+               cSTMs to conduct cost-effectiveness and probabilistic sensitivity
+               analyses. We also obtain various epidemiological outcomes of
+               interest from the outputs generated from the cSTM, such as
+               survival probability and disease prevalence, often used for model
+               calibration and validation. We present the mathematical notation
+               first, followed by the R code to execute the calculations. The
+               full R code is provided in a public code repository for broader
+               implementation.",
+  month     =  jan,
+  year      =  2023,
+  keywords  = "R software; cohort state-transition models; cost-effectiveness
+               analysis; markov models; time-dependent; tutorial",
+  language  = "en"
+}
+
+@ARTICLE{Putter2007-lo,
+  title    = "Tutorial in biostatistics: competing risks and multi-state models",
+  author   = "Putter, H and Fiocco, M and Geskus, R B",
+  journal  = "Stat. Med.",
+  volume   =  26,
+  number   =  11,
+  pages    = "2389--2430",
+  abstract = "Standard survival data measure the time span from some time origin
+              until the occurrence of one type of event. If several types of
+              events occur, a model describing progression to each of these
+              competing risks is needed. Multi-state models generalize competing
+              risks models by also describing transitions to intermediate
+              events. Methods to analyze such models have been developed over
+              the last two decades. Fortunately, most of the analyzes can be
+              performed within the standard statistical packages, but may
+              require some extra effort with respect to data preparation and
+              programming. This tutorial aims to review statistical methods for
+              the analysis of competing risks and multi-state models. Although
+              some conceptual issues are covered, the emphasis is on practical
+              issues like data preparation, estimation of the effect of
+              covariates, and estimation of cumulative incidence functions and
+              state and transition probabilities. Examples of analysis with
+              standard software are shown.",
+  month    =  may,
+  year     =  2007,
+  language = "en"
+}
+
