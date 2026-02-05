@@ -37,7 +37,10 @@ R is widely used for statistical analyses, including analyses of the sort of dat
 `MicSim` implements a continuous-time discrete-event simulation framework in pure R for continuous-time multi-state (semi-Markov) models, and was developed for demographic and life-course simulation. Model specification is therefore via transition matrices and therefore cannot accommodate continuous state variables. Microsimulation is closer in purpose and design to golden in being initially developed for a prostate cancer cost-effectiveness analysis, and using Rcpp to link to utilize a simulation engine written in C++ ([SSim](https://www.inf.usi.ch/carzaniga/ssim/index.html)). As with `MicSim`, `microsimulation` also uses discrete-event simulation, and includes several functions which are specific to cost-effectiveness analysis. However, it requires users to code in a lower-level C++ API to specify models [CHECK]. Both packages require user post-processing of outputs and need a user to work with a larger vocabulary of functions and concepts than golden to specify simulations.
 
 TODO get hold of paper for latter
+
 TODO check heemod hesim & include
+
+TODO comment on time-updating in DES formulations
 
 
 # Features and approach
