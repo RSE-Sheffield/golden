@@ -25,9 +25,11 @@ bibliography: paper.bib
 <!-- DELETE ME: Based on https://joss.readthedocs.io/en/latest/example_paper.html -->
 
 # Summary
+
 Fast, flexible, patient-level microsimulation. Time-stepped simulation with a C++ back-end from user-supplied initial population, trajectories, hazards, and corresponding event transitions. User-defined aggregate time series histories are returned together with the final population. Designed for simulation of chronic diseases with continuous and evolving risk factors, but could easily be applied more generally.
 
 # Statement of need
+
 Microsimulation is a popular approach to modelling outcomes in health economics and related fields, especially where individual heterogeneity is important or where there are variable series of events that drive health or cost consequences [@Krijkamp2018-ac]. Often such simulations may be based on statistical analyses of longitudinal data that inform trajectories of risk factors and their relationship with event risks [@Breeze2016-ia]. Increasingly-available modern statistical approaches such as joint modelling allow for multivariate modelling of multiple trajectories and events in a way that captures correlations between them, and can improve accuracy by linking event rates to concurrent trajectory values [@Henderson2000-lw]. 
 
 However, many simulations are developed with bespoke code on a case-by-case basis, which duplicates work, increases the probability of error, and makes it difficult to compare or reuse aspects of simulation logic. Moreover, implementations are often parametrized by extracting parameters from statistical models and using them as simulation inputs, which has several disadvantages compared to direct use of fitted model objects in defining the simulation.
@@ -53,6 +55,7 @@ The intent has been to use concepts that will be familiar and easy to work with 
 `Golden` was developed as part of the ELDORADO project in order to provide a basis on which to create a microsimulation model of long-term health outcomes for people living with HIV. However, it has been designed as a completely general tool. Although the focus is on modelling trajectories of continuous risk factors and associated events, `Golden` can equally well model discrete risk factors, e.g. as in Markov or multistate models, which are commonly-used in cost-effectiveness modelling [@Putter2007-lo, @Alarid-Escudero2023-mh].
 
 # Software design
+
 `Golden`'s design philosophy is based on three principles: (1) to provide an API friendly to statisticians, (2) to ensure thorough validation to catch user errors early and (3) to minimally impact performance through the use of Rcpp [@Rcpp]. While the implementation of `Golden`'s  simulation logic in Rcpp will allow highly-performant simulation, in practice the larger overhead is likely to come from a user's input functions defining trajectories and hazards.
 
 Users create `Golden` models in a linear fashion, defining individual function objects representing either  hazards and their corresponding state transitions or state trajectories. Additionally, users can also define aggregation functions, termed "columns" referring to a column within the output history data-table, to be collected at regular intervals during simulation.
@@ -61,8 +64,9 @@ Building on R's ability to pass functions as arguments which can be dynamically 
 
 `Golden` is a fully independent simulation framework, built on the author's experience of working with simulation packages designed by developers rather than users.
 
-TODO something on class system, validation, and unit tests
+The simulation configuration is composed of a set of S3 objects. This design represents a deliberate compromise, providing an idiomatic R interface while avoiding the additional complexity of more advanced object-oriented systems. To reduce the risk of incorrect configuration, dedicated constructor functions are provided that perform comprehensive input validation. This validation is repeated when the configuration is passed to the main simulation executor, allowing the system to detect errors related to the input data table, such as missing columns, as well as inconsistencies introduced by manual modification of the underlying S3 objects.
 
+Additional optional validation can be enabled within the simulation loop itself. When active, this raises informative errors if user-supplied functions return invalid values, such as NaN, which can otherwise be difficult to diagnose. The package, including all validation mechanisms, is supported by an extensive `testthat` test suite comprising more than 300 individual checks.
 
 # AI usage disclosure
 
