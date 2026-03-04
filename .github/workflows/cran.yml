@@ -97,11 +97,17 @@ jobs:
         with:
           name: check-output
           path: clean/**/*Rcheck
+          
+          
+      - name: Get tarball name
+        id: get_name
+        run: echo "TARBALL=$(basename golden_*.tar.gz)" >> $GITHUB_ENV
 
-      - name: Upload .tar.gz
+      - name: Upload tarball
         uses: actions/upload-artifact@v4
         with:
-          path: golden_**.tar.gz
+          name: ${{ env.TARBALL }}
+          path: ${{ env.TARBALL }}
           
       - name: Fail on warnings
         run: |
