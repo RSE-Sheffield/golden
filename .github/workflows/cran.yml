@@ -78,40 +78,27 @@ jobs:
           FILE=$(ls -1t *.tar.gz | head -n 1)
           echo "file=$FILE" >> $GITHUB_OUTPUT
 
-      - name: Extract tarball to clean environment
-        run: |
-          mkdir clean
-          tar -xf "${{ steps.find-tarball.outputs.file }}" -C clean
-          # Optional sanity check: show directory
-          ls clean
-
       - name: Run CRAN-style check on tarball contents
-        working-directory: clean
         run: |
           PKGDIR=$(ls -d */)
-          echo "Checking package directory: $PKGDIR"
-          R CMD check "$PKGDIR" --as-cran
+          echo "Checking package tarball: ${{ steps.find-tarball.outputs.file }}"
+          R CMD check "${{ steps.find-tarball.outputs.file }}" --as-cran
 
       - name: Upload check results
         uses: actions/upload-artifact@v4
         with:
           name: check-output
-          path: clean/**/*Rcheck
+          path: ./**/*Rcheck
           
-          
-      - name: Get tarball name
-        id: get_name
-        run: echo "TARBALL=$(basename golden_*.tar.gz)" >> $GITHUB_ENV
-
       - name: Upload tarball
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.TARBALL }}
-          path: ${{ env.TARBALL }}
+          name: ${{ steps.find-tarball.outputs.file }}.zip
+          path: ${{ steps.find-tarball.outputs.file }}
           
       - name: Fail on warnings
         run: |
-          LOG=$(find clean/*/ -name "00check.log" | head -n1)
+          LOG=$(find ./*/ -name "00check.log" | head -n1)
           if grep -q "WARNING" "$LOG"; then
             echo "R CMD check reported warnings!"
             exit 1
