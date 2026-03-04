@@ -7,12 +7,12 @@
 create_cohort(demog, N)
 }
 \arguments{
-\item{demog}{}
+\item{demog}{Demographic information containing columns AgeGrp/PopMale/PopFemale/PopTotal}
 
-\item{N}{}
+\item{N}{Size of the population to generate}
 }
 \value{
-A sample population data.table
+A sample population data.table, with columns male/age/bmi/death
 }
 \description{
 Temporary testing method, probably replaced in future with R's simdata package or similar

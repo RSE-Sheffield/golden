@@ -70,7 +70,7 @@ jobs:
         run: "R --version"
       
       # This step may be redundant, these dynamic files are normally commit
-      # In future run this in pull requests and modify the PR?        
+      # In future run this in pull requests and modify the PR?
       - name: "Rcpp compile"
         run: Rscript ".github/scripts/build.R"
         
