@@ -78,13 +78,6 @@ jobs:
           FILE=$(ls -1t *.tar.gz | head -n 1)
           echo "file=$FILE" >> $GITHUB_OUTPUT
 
-      - name: Extract tarball to clean environment
-        run: |
-          mkdir clean
-          tar -xf "${{ steps.find-tarball.outputs.file }}" -C clean
-          # Optional sanity check: show directory
-          ls clean
-
       - name: Run CRAN-style check on tarball contents
         working-directory: clean
         run: |
@@ -98,12 +91,11 @@ jobs:
           name: check-output
           path: clean/**/*Rcheck
           
-
       - name: Upload tarball
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.TARBALL }}.zip
-          path: ${{ env.TARBALL }}
+          name: ${{ steps.find-tarball.outputs.file }}.zip
+          path: ${{ steps.find-tarball.outputs.file }}
           
       - name: Fail on warnings
         run: |
