@@ -89,8 +89,8 @@ jobs:
         working-directory: clean
         run: |
           PKGDIR=$(ls -d */)
-          echo "Checking package directory: $PKGDIR"
-          R CMD check "$PKGDIR" --as-cran
+          echo "Checking package tarball: ${{ steps.find-tarball.outputs.file }}"
+          R CMD check "${{ steps.find-tarball.outputs.file }}" --as-cran
 
       - name: Upload check results
         uses: actions/upload-artifact@v4
@@ -98,9 +98,6 @@ jobs:
           name: check-output
           path: clean/**/*Rcheck
           
-      - name: Get tarball name
-        id: get_name
-        run: echo "TARBALL=$(basename golden_*.tar.gz)" >> $GITHUB_ENV
 
       - name: Upload tarball
         uses: actions/upload-artifact@v4

@@ -89,8 +89,14 @@ jobs:
       - name: "Test Package"
         run: Rscript ".github/scripts/test.R"
       
-      - name: "Check Package (R CMD)"
-        run: R CMD check .
+      - name: Find tarball
+        id: find-tarball
+        run: |
+          FILE=$(ls -1t *.tar.gz | head -n 1)
+          echo "file=$FILE" >> $GITHUB_OUTPUT
+      
+      - name: "Check Package Tarball (R CMD)"
+        run: R CMD check "${{ steps.find-tarball.outputs.file }}"
         
       # Could then have an upload artifact step
   
