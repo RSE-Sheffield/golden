@@ -1,14 +1,17 @@
 #include "Simulation.h"
-/**
- * defined in R/src/include/Rinterface.h
- * This bool denotes whether R is executing in interactive mode
- * CRAN requires that non-interactive runs do not output to console
- */
-extern Rboolean R_Interactive;
 
 #include "utils/dynamic_call.h"
 #include "utils/debug.h"
 
+/**
+ * Return if R is executing in interactive mode (e.g. not a vignette)
+ * This is used to suppress progress reporting
+ */
+bool is_interactive() {
+    Environment base = Environment::base_env();
+    Function interactive = base["interactive"];
+    return as<bool>(interactive());
+}
 
 const std::set<std::string> Simulation::SPECIAL_ARGS = {"~STEP"};
 
@@ -103,7 +106,7 @@ List Simulation::run(List initPop) {
         // Increment step count
         ++step;
         // Calculate eta if running in an interactive console
-        if (R_Interactive) {
+        if (is_interactive()) {
             const float currentRuntime = simTimer.getRunningSeconds();
             const float avgStepTime = currentRuntime / step;
             const float remainingTime = avgStepTime * (STEPS - step);
