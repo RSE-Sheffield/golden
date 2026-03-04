@@ -2,7 +2,7 @@ Package: golden
 Type: Package
 Title: Framework for patient-level microsimulation of risk factor trajectories & hazard-based events
 Version: 0.0.1
-Date: 2025-10-24
+Date: 2026-03-04
 Author: Pete Dodd, Robert Chisholm
 Maintainer: Pete Dodd <p.j.dodd@sheffield.ac.uk>
 Authors@R:
