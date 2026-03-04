@@ -3,17 +3,15 @@ Type: Package
 Title: Framework for Patient-Level Microsimulation of Risk Factor Trajectories & Hazard-Based Events
 Version: 0.0.1
 Date: 2026-03-04
-Authors@R: 
-    c(
-        person("Pete", "Dodd",
-            role = c("aut", "cre"),
-            email = "p.j.dodd@sheffield.ac.uk",
-            comment = c(ORCID = "0000-0001-5825-9347")),
-        person("Robert", "Chisholm",
-            role = c("aut"),
-            email = "robert.chisholm@sheffield.ac.uk",
-            comment = c(ORCID = "0000-0002-6983-2759"))
-    )
+Authors@R: c(
+    person("Pete", "Dodd",
+        role = c("aut", "cre"),
+        email = "p.j.dodd@sheffield.ac.uk",
+        comment = c(ORCID = "0000-0001-5825-9347")),
+    person("Robert", "Chisholm",
+        role = "aut",
+        email = "robert.chisholm@sheffield.ac.uk",
+        comment = c(ORCID = "0000-0002-6983-2759")))
 Description: Fast, flexible, patient-level microsimulation. Time-stepped simulation with a C++ back-end from user-supplied initial population, trajectories, hazards, and corresponding event transitions. User-defined aggregate time series histories are returned together with the final population. Designed for simulation of chronic diseases with continuous and evolving risk factors, but could easily be applied more generally.
 License: MIT | file LICENSE
 Imports:
