@@ -98,7 +98,7 @@ jobs:
           
       - name: Fail on warnings
         run: |
-          LOG=$(find clean/*/ -name "00check.log" | head -n1)
+          LOG=$(find ./*/ -name "00check.log" | head -n1)
           if grep -q "WARNING" "$LOG"; then
             echo "R CMD check reported warnings!"
             exit 1
