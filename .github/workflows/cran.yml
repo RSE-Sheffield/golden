@@ -40,7 +40,7 @@ jobs:
       - name: "Install R"
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: "release"
+          r-version: "devel"
           install-r: true
       
       # See: https://github.com/r-lib/actions/tree/v2-branch/setup-r-dependencies#usage
@@ -97,6 +97,17 @@ jobs:
         with:
           name: check-output
           path: clean/**/*Rcheck
+          
+          
+      - name: Get tarball name
+        id: get_name
+        run: echo "TARBALL=$(basename golden_*.tar.gz)" >> $GITHUB_ENV
+
+      - name: Upload tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TARBALL }}
+          path: ${{ env.TARBALL }}
           
       - name: Fail on warnings
         run: |
