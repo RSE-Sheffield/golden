@@ -11,9 +11,9 @@ using namespace Rcpp;
 //'
 //' Temporary testing method, probably replaced in future with R's simdata package or similar
 //'
-//' @param demog 
-//' @param N 
-//' @return A sample population data.table
+//' @param demog Demographic information containing columns AgeGrp/PopMale/PopFemale/PopTotal
+//' @param N Size of the population to generate
+//' @return A sample population data.table, with columns male/age/bmi/death
 // [[Rcpp::export]]
 List create_cohort(List demog, unsigned int N) {
     // Validate demog contains the required columns
