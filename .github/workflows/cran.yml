@@ -97,6 +97,11 @@ jobs:
         with:
           name: check-output
           path: clean/**/*Rcheck
+
+      - name: Upload .tar.gz
+        uses: actions/upload-artifact@v4
+        with:
+          path: golden_**.tar.gz
           
       - name: Fail on warnings
         run: |
