@@ -1,6 +1,6 @@
 Package: golden
 Type: Package
-Title: Framework for patient-level microsimulation of risk factor trajectories & hazard-based events
+Title: Framework for Patient-Level Microsimulation of Risk Factor Trajectories & Hazard-Based Events
 Version: 0.0.1
 Date: 2026-03-04
 Author: Pete Dodd, Robert Chisholm
@@ -23,7 +23,6 @@ LinkingTo: Rcpp
 SystemRequirements: C++11, OpenMP
 Suggests: 
     testthat (>= 3.0.0),
-    data.table,
     SciViews,
     knitr,
     rmarkdown,
