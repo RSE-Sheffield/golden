@@ -79,7 +79,6 @@ jobs:
           echo "file=$FILE" >> $GITHUB_OUTPUT
 
       - name: Run CRAN-style check on tarball contents
-        working-directory: clean
         run: |
           PKGDIR=$(ls -d */)
           echo "Checking package tarball: ${{ steps.find-tarball.outputs.file }}"
