@@ -1,7 +1,9 @@
 #' Validate an history column object
+#' If validation fails, an exception will be raised.
 #'
 #' @param column An S3 object of class "golden_history_column"
 #' @param initPop (Optional) data.table to check columns required by functions exist
+#' @return No return value, called for side effects.
 check_column <- function(column, initPop = NULL) {
   .validate_S3(column, "Object", "golden_history_column")
 
@@ -88,6 +90,7 @@ new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
 #' @param x The object to be printed
 #' @param ... Not used. Included for S3 method compatibility.
 #' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
+#' @return No return value, called for side effects.
 print.golden_history_column <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

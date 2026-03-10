@@ -2,6 +2,7 @@
 #'
 #' @param x The object to be printed
 #' @param ... Not used. Included for S3 method compatibility.
+#' @return No return value, called for side effects.
 print.golden_timing <- function(x, ...) {
   cat("<golden_timing>\n", sep = "")
   if (!is.null(x$hazard)) {

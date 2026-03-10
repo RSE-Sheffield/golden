@@ -1,7 +1,9 @@
 #' Validate an transition object
+#' If validation fails, an exception will be raised.
 #'
 #' @param transition An S3 object of class "golden_transition"
 #' @param initPop (Optional) data.table to check columns required by functions exist
+#' @return No return value, called for side effects.
 check_transition <- function(transition, initPop = NULL) {
   .validate_S3(transition, "Object", "golden_transition")
 
@@ -75,6 +77,7 @@ new_transition <- function(fn, args, state, name = NULL) {
 #' @param x The object to be printed
 #' @param ... Not used. Included for S3 method compatibility.
 #' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
+#' @return No return value, called for side effects.
 print.golden_transition <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
