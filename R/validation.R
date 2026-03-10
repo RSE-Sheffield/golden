@@ -1,8 +1,10 @@
 #' Validate that test_object is an S3 object of type s3type
+#' If validation fails, an exception will be raised.
 #' 
 #' @param test_object The object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
 #' @param s3type (String) The S3 class name to test for
+#' @return No return value, called for side effects.
 #' @keywords internal
 #' @noRd
 .validate_S3 <- function(test_object, name, s3type) {
@@ -12,10 +14,12 @@
 }
 
 #' Validate that test_object contains fields named by required_fields
+#' If validation fails, an exception will be raised.
 #' 
 #' @param test_object The object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
 #' @param required_fields (Character Vector) >=1 field names which should be present in test_object
+#' @return No return value, called for side effects.
 #' @keywords internal
 #' @noRd
 .validate_fields_present <-function(test_object, name, required_fields) {
@@ -26,10 +30,12 @@
 }
 
 #' Validate that test_object does not contain additional fields
+#' If validation fails, an exception will be raised.
 #' 
 #' @param test_object The object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
 #' @param required_fields (Character Vector) >=1 field names which should be present in test_object
+#' @return No return value, called for side effects.
 #' @keywords internal
 #' @noRd
 .validate_wrong_fields <-function(test_object, name, required_fields) {
@@ -40,10 +46,12 @@
 }
 
 #' Validate that test_object is a list containing >=0 S3 objects of type s3type
+#' If validation fails, an exception will be raised.
 #' 
 #' @param test_object The object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
 #' @param s3type (String) The S3 class name to test for
+#' @return No return value, called for side effects.
 #' @keywords internal
 #' @noRd
 .validate_S3_list <- function(test_object, name, s3type) {
@@ -63,9 +71,11 @@
 }
 
 #' Validate that test_object is a whole number (either as an integer or numeric)
+#' If validation fails, an exception will be raised.
 #' 
 #' @param test_object The object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
+#' @return No return value, called for side effects.
 #' @keywords internal
 #' @noRd
 .validate_whole_number <- function(test_object, name) {
@@ -77,9 +87,11 @@
 }
 
 #' Validate that test_object is type logical
+#' If validation fails, an exception will be raised.
 #' 
 #' @param test_object The object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
+#' @return No return value, called for side effects.
 #' @keywords internal
 #' @noRd
 .validate_logical <- function(test_object, name) {
@@ -89,6 +101,7 @@
 }
 
 #' Validate that test_object is a character vector, and if a list is passed return it as a character vector
+#' If validation fails, an exception will be raised.
 #' 
 #' @param test_object The object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
@@ -114,10 +127,12 @@
 }
 
 #' Validate that the column names found in test_object (function args) exist within initPop
+#' If validation fails, an exception will be raised.
 #' 
 #' @param test_object The function args object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
 #' @param initPop (data.table) A data.table to be tested whether test_object columns are present
+#' @return No return value, called for side effects.
 #' @keywords internal
 #' @noRd
 .validate_columns_exist <- function(test_object, name, initPop) {
@@ -131,10 +146,12 @@
 }
 
 #' Validate whether test_object (function args) look suitable for fn
+#' If validation fails, an exception will be raised.
 #'
 #' @param test_object The function args object to validate
 #' @param name (String) A name which refers to the object to be included in error messages (it may be what you are passing to test_object as a string)
 #' @param fn (Function) A function to check arg count etc of
+#' @return No return value, called for side effects.
 #' @note Accounts for min/max args, supporting default args and ...
 #' @keywords internal
 #' @noRd

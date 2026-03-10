@@ -1,7 +1,9 @@
 #' Validate an hazard object
+#' If validation fails, an exception will be raised.
 #'
 #' @param hazard An S3 object of class "golden_hazard"
 #' @param initPop (Optional) data.table to check columns required by functions exist
+#' @return No return value, called for side effects.
 check_hazard <- function(hazard, initPop = NULL) {
   .validate_S3(hazard, "Object", "golden_hazard")
 
@@ -93,6 +95,7 @@ new_hazard <- function(fn, args, transitions, freq = 1, first = 1, last = 214748
 #' @param x The object to be printed
 #' @param ... Not used. Included for S3 method compatibility.
 #' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
+#' @return No return value, called for side effects.
 print.golden_hazard <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

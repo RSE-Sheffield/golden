@@ -1,7 +1,9 @@
 #' Validate the configuration passed to run_simulation()
+#' If validation fails, an exception will be raised.
 #'
 #' @param parameters An golden_parameters S3 object to be validated
 #' @param initPop data.frame which contains the columns required by parameters
+#' @return No return value, called for side effects.
 check_parameters <- function(parameters, initPop = NULL) {
   # initpop must be derived from data.frame (e.g. data.table)
   if (!is.null(initPop)) {
@@ -119,6 +121,7 @@ new_parameters <- function(hazards = list(), trajectories = list(), steps, rando
 #' @param x The object to be printed
 #' @param ... Not used. Included for S3 method compatibility.
 #' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
+#' @return No return value, called for side effects.
 print.golden_parameters <- function(x, ..., indent = 0) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
