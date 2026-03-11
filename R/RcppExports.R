@@ -8,6 +8,16 @@
 #' @param demog Demographic information containing columns AgeGrp/PopMale/PopFemale/PopTotal
 #' @param N Size of the population to generate
 #' @return A sample population data.table, with columns male/age/bmi/death
+#' 
+#' @examples
+#' library(data.table)
+#' demog <- data.table(
+#'   AgeGrp = c(0, 1, 2, 3),
+#'   PopMale = c(1000, 1100, 1050, 980),
+#'   PopFemale = c(950, 1020, 1005, 970)
+#' )
+#' demog[, PopTotal := PopMale + PopFemale]
+#' cohort <- create_cohort(demog, 100)
 create_cohort <- function(demog, N) {
     .Call(`_golden_create_cohort`, demog, N)
 }
@@ -17,6 +27,43 @@ create_cohort <- function(demog, N) {
 #' @param initPop data.table containing initial population for simulation
 #' @param parameters Simulation configuration
 #' @return An list containing final population, history and timing data.tables
+#'
+#' @examples
+#' library(data.table)
+#' N <- 100
+#' dt <- data.table(a = runif(N, 0, 1), b = rep(0, N))
+#' # Define a hazard function, which returns a vector of equal length uncertainties
+#' test_hazard <- function(a) {
+#'     ret <- (a < 0.5)
+#' }
+#' # Define a transition function, which sets all "b" columns affected by the hazard to 100
+#' test_transition <- function() {
+#'     return (100)
+#' }
+#' # Create an S3 golden_hazard
+#' haz <- new_hazard(
+#'               test_hazard,
+#'               c("a"),
+#'               new_transition(test_transition, c(), "b")
+#'             )
+#' # Define a trajectory function, which adds 2 to all members of the input vector
+#' test_trajectory <- function(a) {
+#'     return (a + 2)
+#' }
+#' # Define an S3 golden_trajectory
+#' trj <- new_trajectory(test_trajectory, c("b"), "b")
+#' # Create an S3 golden_history, containing 1 golden_history_column
+#' hist <- new_history(new_column("sum_a", sum, c("a")))
+#' # Define an S3 golden_parameters
+#' params <- new_parameters(
+#'   hazards = haz,
+#'   trajectories = trj,
+#'   steps = 10,
+#'   debug = FALSE,
+#'   history = hist
+#' )
+#' # Run the simulation to collect results
+#' results <- run_simulation(dt, params)
 run_simulation <- function(initPop, parameters) {
     .Call(`_golden_run_simulation`, initPop, parameters)
 }

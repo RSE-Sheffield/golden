@@ -4,6 +4,20 @@
 #' @param transition An S3 object of class "golden_transition"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' library(data.table)
+#' dt <- data.table(b = rep(0, 100))
+#' # Define a transition function, which sets all columns affected by the hazard to 100
+#' test_transition <- function() {
+#'     return (100)
+#' }
+#' # Define an S3 golden_transition
+#' trn <- new_transition(test_transition, c(), "b")
+#' # check_transition() will not throw an exception
+#' # as trn is a valid S3 golden_transition
+#' # and dt contains column "b"
+#' check_transition(trn, dt)
 check_transition <- function(transition, initPop = NULL) {
   .validate_S3(transition, "Object", "golden_transition")
 
@@ -56,6 +70,14 @@ check_transition <- function(transition, initPop = NULL) {
 #' @param state Name(s) of the column(s) where the result of the transition function is to be stored
 #' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
 #' @return An object of class "golden_transition"
+#'
+#' @examples
+#' # Define a transition function, which sets all columns affected by the hazard to 100
+#' test_transition <- function() {
+#'     return (100)
+#' }
+#' # Define an S3 golden_transition
+#' trn <- new_transition(test_transition, c(), "b")
 new_transition <- function(fn, args, state, name = NULL) {
   # Initialise new transition (S3 class)
   transition <- list(
@@ -78,6 +100,15 @@ new_transition <- function(fn, args, state, name = NULL) {
 #' @param ... Not used. Included for S3 method compatibility.
 #' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' # Define a transition function, which sets all columns affected by the hazard to 100
+#' test_transition <- function() {
+#'     return (100)
+#' }
+#' # Define an S3 golden_transition
+#' trn <- new_transition(test_transition, c(), "b")
+#' print(trn)
 print.golden_transition <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

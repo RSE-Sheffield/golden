@@ -2,7 +2,8 @@
 % Please edit documentation in R/history.R
 \name{check_history}
 \alias{check_history}
-\title{Validate an history object}
+\title{Validate an history object
+If validation fails, an exception will be raised.}
 \usage{
 check_history(history, initPop = NULL)
 }
@@ -11,6 +12,20 @@ check_history(history, initPop = NULL)
 
 \item{initPop}{(Optional) data.table to check columns required by functions exist}
 }
+\value{
+No return value, called for side effects.
+}
 \description{
 Validate an history object
+If validation fails, an exception will be raised.
+}
+\examples{
+library(data.table)
+dt <- data.table(a = rep(0, 100))
+# Create an S3 golden_history, containing 1 golden_history_column
+hist <- new_history(new_column("sum_a", sum, c("a")))
+# check_history() will not throw an exception
+# as hist is a valid S3 golden_history
+# and dt contains column "a" used by the column
+check_history(hist, dt)
 }

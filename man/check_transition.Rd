@@ -2,7 +2,8 @@
 % Please edit documentation in R/transition.R
 \name{check_transition}
 \alias{check_transition}
-\title{Validate an transition object}
+\title{Validate an transition object
+If validation fails, an exception will be raised.}
 \usage{
 check_transition(transition, initPop = NULL)
 }
@@ -11,6 +12,24 @@ check_transition(transition, initPop = NULL)
 
 \item{initPop}{(Optional) data.table to check columns required by functions exist}
 }
+\value{
+No return value, called for side effects.
+}
 \description{
 Validate an transition object
+If validation fails, an exception will be raised.
+}
+\examples{
+library(data.table)
+dt <- data.table(b = rep(0, 100))
+# Define a transition function, which sets all columns affected by the hazard to 100
+test_transition <- function() {
+    return (100)
+}
+# Define an S3 golden_transition
+trn <- new_transition(test_transition, c(), "b")
+# check_transition() will not throw an exception
+# as trn is a valid S3 golden_transition
+# and dt contains column "b"
+check_transition(trn, dt)
 }

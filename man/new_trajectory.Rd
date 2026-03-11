@@ -24,3 +24,11 @@ Create a new trajectory object
 \note{
 If a list if passed to property, fn must return a list of equal length
 }
+\examples{
+# Define a trajectory function, which adds 2 to all members of the input vector
+test_trajectory <- function(a) {
+    return (a + 2)
+}
+# Create an S3 golden_trajectory
+trj <- new_trajectory(test_trajectory, c("b"), "b")
+}

@@ -4,6 +4,16 @@
 #' @param column An S3 object of class "golden_history_column"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' library(data.table)
+#' dt <- data.table(a = rep(0, 100))
+#' # Create an S3 golden_history_column
+#' col <- new_column("sum_a", sum, c("a"))
+#' # check_column() will not throw an exception
+#' # as col is a valid S3 golden_history_column
+#' # and dt contains column "a"
+#' check_column(col, dt)
 check_column <- function(column, initPop = NULL) {
   .validate_S3(column, "Object", "golden_history_column")
 
@@ -68,6 +78,10 @@ check_column <- function(column, initPop = NULL) {
 #' @param filter_fn (Optional) Filter function, which returns a bool vector denoting which rows should be reduced
 #' @param filter_args (Optional) Names of columns and special variables to be passed to filter_fn. Required if filter_fn is 
 #' @return An object of class "golden_history_column"
+#'
+#' @examples
+#' # Create an S3 golden_history_column named "sum_a", using sum(). with column "a"
+#' col <- new_column("sum_a", sum, c("a"))
 new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
   # Initialise new parameters (S3 class)
   column <- list(
@@ -91,6 +105,11 @@ new_column <- function(name, fn, args, filter_fn = NULL, filter_args = NULL) {
 #' @param ... Not used. Included for S3 method compatibility.
 #' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' # Create an S3 golden_history_column
+#' col <- new_column("sum_a", sum, c("a"))
+#' print(col)
 print.golden_history_column <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

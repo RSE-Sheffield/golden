@@ -4,6 +4,16 @@
 #' @param history An S3 object of class "golden_history"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' library(data.table)
+#' dt <- data.table(a = rep(0, 100))
+#' # Create an S3 golden_history, containing 1 golden_history_column
+#' hist <- new_history(new_column("sum_a", sum, c("a")))
+#' # check_history() will not throw an exception
+#' # as hist is a valid S3 golden_history
+#' # and dt contains column "a" used by the column
+#' check_history(hist, dt)
 check_history <- function(history, initPop = NULL) {
   .validate_S3(history, "Object", "golden_history")
 
@@ -43,6 +53,10 @@ check_history <- function(history, initPop = NULL) {
 #' @param columns golden_history_column S3 object(s)
 #' @param frequency The number of simulation steps per history collection.
 #' @return An object of class "golden_history"
+#'
+#' @examples
+#' # Create an S3 golden_history, containing 1 golden_history_column
+#' hist <- new_history(new_column("sum_a", sum, c("a")))
 new_history <- function(columns, frequency = 1) {
   # If columns is not already a list, upgrade it
   if (inherits(columns, "golden_history_column")) {
@@ -67,6 +81,11 @@ new_history <- function(columns, frequency = 1) {
 #' @param ... Not used. Included for S3 method compatibility.
 #' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' # Create an S3 golden_history
+#' hist <- new_history(new_column("sum_a", sum, c("a")))
+#' print(hist)
 print.golden_history <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

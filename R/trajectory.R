@@ -4,6 +4,20 @@
 #' @param trajectory An S3 object of class "golden_trajectory"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' library(data.table)
+#' dt <- data.table(b = rep(0, 100))
+#' # Define a trajectory function, which adds 2 to all members of the input vector
+#' test_trajectory <- function(a) {
+#'     return (a + 2)
+#' }
+#' # Create an S3 golden_trajectory
+#' trj <- new_trajectory(test_trajectory, c("b"), "b")
+#' # check_trajectory() will not throw an exception
+#' # as trj is a valid S3 golden_trajectory
+#' # and dt contains column "b"
+#' check_trajectory(trj, dt)
 check_trajectory <- function(trajectory, initPop = NULL) {
   .validate_S3(trajectory, "Object", "golden_trajectory")
 
@@ -57,6 +71,14 @@ check_trajectory <- function(trajectory, initPop = NULL) {
 #' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
 #' @return An object of class "golden_trajectory"
 #' @note If a list if passed to property, fn must return a list of equal length
+#'
+#' @examples
+#' # Define a trajectory function, which adds 2 to all members of the input vector
+#' test_trajectory <- function(a) {
+#'     return (a + 2)
+#' }
+#' # Create an S3 golden_trajectory
+#' trj <- new_trajectory(test_trajectory, c("b"), "b")
 new_trajectory <- function(fn, args, property, name = NULL) {
   # Initialise new trajectory (S3 class)
   trajectory <- list(
@@ -79,6 +101,15 @@ new_trajectory <- function(fn, args, property, name = NULL) {
 #' @param ... Not used. Included for S3 method compatibility.
 #' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' # Define a trajectory function, which adds 2 to all members of the input vector
+#' test_trajectory <- function(a) {
+#'     return (a + 2)
+#' }
+#' # Create an S3 golden_trajectory
+#' trj <- new_trajectory(test_trajectory, c("b"), "b")
+#' print(trj)
 print.golden_trajectory <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

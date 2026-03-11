@@ -13,6 +13,18 @@
 
 \item{indent}{(Optional) The level the printing is indented, useful if nested within another S3 object}
 }
+\value{
+No return value, called for side effects.
+}
 \description{
 Print the contents of a golden_transition type S3 object
+}
+\examples{
+# Define a transition function, which sets all columns affected by the hazard to 100
+test_transition <- function() {
+    return (100)
+}
+# Define an S3 golden_transition
+trn <- new_transition(test_transition, c(), "b")
+print(trn)
 }

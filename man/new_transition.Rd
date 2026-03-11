@@ -21,3 +21,11 @@ An object of class "golden_transition"
 \description{
 Create a new transition object
 }
+\examples{
+# Define a transition function, which sets all columns affected by the hazard to 100
+test_transition <- function() {
+    return (100)
+}
+# Define an S3 golden_transition
+trn <- new_transition(test_transition, c(), "b")
+}
