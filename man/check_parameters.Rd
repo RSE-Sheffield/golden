@@ -2,7 +2,8 @@
 % Please edit documentation in R/parameters.R
 \name{check_parameters}
 \alias{check_parameters}
-\title{Validate the configuration passed to run_simulation()}
+\title{Validate the configuration passed to run_simulation()
+If validation fails, an exception will be raised.}
 \usage{
 check_parameters(parameters, initPop = NULL)
 }
@@ -11,6 +12,49 @@ check_parameters(parameters, initPop = NULL)
 
 \item{initPop}{data.frame which contains the columns required by parameters}
 }
+\value{
+No return value, called for side effects.
+}
 \description{
 Validate the configuration passed to run_simulation()
+If validation fails, an exception will be raised.
+}
+\examples{
+library(data.table)
+N <- 100
+dt <- data.table(a = runif(N, 0, 1), b = rep(0, N))
+# Define a hazard function, which returns a vector of equal length uncertainties
+test_hazard <- function(a) {
+    ret <- (a < 0.5)
+}
+# Define a transition function, which sets all "b" columns affected by the hazard to 100
+test_transition <- function() {
+    return (100)
+}
+# Create an S3 golden_hazard
+haz <- new_hazard(
+              test_hazard,
+              c("a"),
+              new_transition(test_transition, c(), "b")
+            )
+# Define a trajectory function, which adds 2 to all members of the input vector
+test_trajectory <- function(a) {
+    return (a + 2)
+}
+# Create an S3 golden_trajectory
+trj <- new_trajectory(test_trajectory, c("b"), "b")
+# Create an S3 golden_history, containing 1 golden_history_column
+hist <- new_history(new_column("sum_a", sum, c("a")))
+# Create an S3 golden_parameters
+params <- new_parameters(
+  hazards = haz,
+  trajectories = trj,
+  steps = 10,
+  debug = FALSE,
+  history = hist
+)
+# check_parameters() will not throw an exception
+# as params is a valid S3 golden_parameters
+# and dt contains columns "a" and "b"
+check_parameters(params, dt)
 }

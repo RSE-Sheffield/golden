@@ -94,6 +94,10 @@
 #' @return No return value, called for side effects.
 #' @keywords internal
 #' @noRd
+#'
+#' @examples
+#' # This will not throw an exception, as passed TRUE which is logical
+#' .validate_logical(TRUE)
 .validate_logical <- function(test_object, name) {
   if (!(is.logical(test_object))) {
     stop("'",name,"' must be either TRUE or FALSE")
@@ -108,6 +112,10 @@
 #' @return Either test_object, or test_object converted to a character vector
 #' @keywords internal
 #' @noRd
+#'
+#' @examples
+#' # This will not throw an exception, as passed "foobar" which is a string
+#' char_vec <- .validate_convert_char_vector("foobar")
 .validate_convert_char_vector <- function(test_object, name) {
   if (is.list(test_object)) {
     all_strings <- all(vapply(test_object, function(e) is.character(e) && length(e) == 1, logical(1)))
@@ -135,6 +143,15 @@
 #' @return No return value, called for side effects.
 #' @keywords internal
 #' @noRd
+#'
+#' @examples
+#' cols <- c("a", "b", "c")
+#' dt <- list(a=rep(0, 10), b=(1, 10), c=(2, 10))
+#' test_fn <- function(a, b, c) {
+#'   return (12)
+#' }
+#' # This will not throw an exception, as passed a valid input
+#' .validate_columns_exist(cols, "my_columns", dt)
 .validate_columns_exist <- function(test_object, name, initPop) {
     # Ignore special args (they begin "~")
     clean_args <- test_object[!grepl("^~", test_object)]
@@ -155,6 +172,14 @@
 #' @note Accounts for min/max args, supporting default args and ...
 #' @keywords internal
 #' @noRd
+#'
+#' @examples
+#' cols <- c("a", "b", "c")
+#' test_fn <- function(e, f, g) {
+#'   return (12)
+#' }
+#' # This will not throw an exception, as passed a valid input
+#' .validate_function_args(cols, "test_obj", test_fn)
 .validate_function_args <- function(test_object, name, fn) {
   provided_args_count = length(test_object)
   total_args_count = length(formals(args(fn)))
@@ -181,6 +206,14 @@
 #' @return Name for a function if it can be deduced, else empty string
 #' @keywords internal
 #' @noRd
+#'
+#' @examples
+#' test_fn <- function() {
+#'   return (12)
+#' }
+#' # This will either return "test_fn" or "default_name"
+#' # Depending on where test_fn() is declared
+#' extracted_name <- .get_name(test_fn, "default_name")
 .get_name <- function(fn, name) {
   if (is.null(name)) {
     # Only use t as name if it's a name (e.g. it could be a full function body)

@@ -6,7 +6,7 @@
 \alias{golden}
 \title{Golden: Framework for Patient-Level Microsimulation of Risk Factor Trajectories & Hazard-Based Events}
 \description{
-Fast, flexible, patient-level microsimulation. Time-stepped simulation with a C++ back-end from user-supplied initial population, trajectories, hazards, and corresponding event transitions.
+Fast, flexible, patient-level microsimulation. Time-stepped simulation with a 'C++' back-end from user-supplied initial population, trajectories, hazards, and corresponding event transitions.
 User-defined aggregate time series histories are returned together with the final population. Designed for simulation of chronic diseases with continuous and evolving risk factors, but could easily be applied more generally.
 }
 \examples{
@@ -20,6 +20,12 @@ User-defined aggregate time series histories are returned together with the fina
 Authors:
 \itemize{
   \item Robert Chisholm \email{robert.chisholm@sheffield.ac.uk} (\href{https://orcid.org/0000-0002-6983-2759}{ORCID})
+}
+
+Other contributors:
+\itemize{
+  \item University of Sheffield [copyright holder]
+  \item Horizon Europe [funder]
 }
 
 }

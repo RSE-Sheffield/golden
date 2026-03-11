@@ -17,3 +17,13 @@ A sample population data.table, with columns male/age/bmi/death
 \description{
 Temporary testing method, probably replaced in future with R's simdata package or similar
 }
+\examples{
+library(data.table)
+demog <- data.table(
+  AgeGrp = c(0, 1, 2, 3),
+  PopMale = c(1000, 1100, 1050, 980),
+  PopFemale = c(950, 1020, 1005, 970)
+)
+demog[, PopTotal := PopMale + PopFemale]
+cohort <- create_cohort(demog, 100)
+}

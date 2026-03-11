@@ -17,3 +17,7 @@ An object of class "golden_history"
 \description{
 Create a new golden_history
 }
+\examples{
+# Create an S3 golden_history, containing 1 golden_history_column
+hist <- new_history(new_column("sum_a", sum, c("a")))
+}

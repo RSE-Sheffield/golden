@@ -23,3 +23,7 @@ An object of class "golden_history_column"
 \description{
 Create a new golden_history_column
 }
+\examples{
+# Create an S3 golden_history_column named "sum_a", using sum(). with column "a"
+col <- new_column("sum_a", sum, c("a"))
+}

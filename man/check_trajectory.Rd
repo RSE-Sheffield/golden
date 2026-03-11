@@ -2,7 +2,8 @@
 % Please edit documentation in R/trajectory.R
 \name{check_trajectory}
 \alias{check_trajectory}
-\title{Validate an trajectory object}
+\title{Validate an trajectory object
+If validation fails, an exception will be raised.}
 \usage{
 check_trajectory(trajectory, initPop = NULL)
 }
@@ -11,6 +12,24 @@ check_trajectory(trajectory, initPop = NULL)
 
 \item{initPop}{(Optional) data.table to check columns required by functions exist}
 }
+\value{
+No return value, called for side effects.
+}
 \description{
 Validate an trajectory object
+If validation fails, an exception will be raised.
+}
+\examples{
+library(data.table)
+dt <- data.table(b = rep(0, 100))
+# Define a trajectory function, which adds 2 to all members of the input vector
+test_trajectory <- function(a) {
+    return (a + 2)
+}
+# Create an S3 golden_trajectory
+trj <- new_trajectory(test_trajectory, c("b"), "b")
+# check_trajectory() will not throw an exception
+# as trj is a valid S3 golden_trajectory
+# and dt contains column "b"
+check_trajectory(trj, dt)
 }

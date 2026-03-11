@@ -2,7 +2,8 @@
 % Please edit documentation in R/column.R
 \name{check_column}
 \alias{check_column}
-\title{Validate an history column object}
+\title{Validate an history column object
+If validation fails, an exception will be raised.}
 \usage{
 check_column(column, initPop = NULL)
 }
@@ -11,6 +12,20 @@ check_column(column, initPop = NULL)
 
 \item{initPop}{(Optional) data.table to check columns required by functions exist}
 }
+\value{
+No return value, called for side effects.
+}
 \description{
 Validate an history column object
+If validation fails, an exception will be raised.
+}
+\examples{
+library(data.table)
+dt <- data.table(a = rep(0, 100))
+# Create an S3 golden_history_column
+col <- new_column("sum_a", sum, c("a"))
+# check_column() will not throw an exception
+# as col is a valid S3 golden_history_column
+# and dt contains column "a"
+check_column(col, dt)
 }

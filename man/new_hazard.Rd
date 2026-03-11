@@ -35,3 +35,19 @@ An object of class "golden_hazard"
 \description{
 Create a new hazard object
 }
+\examples{
+# Define a hazard function, which returns a vector of equal length uncertainties
+test_hazard <- function(a) {
+    ret <- (a < 0.5)
+}
+# Define a transition function, which sets all "b" columns affected by the hazard to 100
+test_transition <- function() {
+    return (100)
+}
+# Create an S3 golden_hazard
+haz <- new_hazard(
+              test_hazard,
+              c("a"),
+              new_transition(test_transition, c(), "b")
+            )
+}

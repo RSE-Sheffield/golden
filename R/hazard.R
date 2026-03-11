@@ -4,6 +4,29 @@
 #' @param hazard An S3 object of class "golden_hazard"
 #' @param initPop (Optional) data.table to check columns required by functions exist
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' library(data.table)
+#' N <- 100
+#' dt <- data.table(a = runif(N, 0, 1), b = rep(0, N))
+#' # Define a hazard function, which returns a vector of equal length uncertainties
+#' test_hazard <- function(a) {
+#'     ret <- (a < 0.5)
+#' }
+#' # Define a transition function, which sets all "b" columns affected by the hazard to 100
+#' test_transition <- function() {
+#'     return (100)
+#' }
+#' # Create an S3 golden_hazard
+#' haz <- new_hazard(
+#'               test_hazard,
+#'               c("a"),
+#'               new_transition(test_transition, c(), "b")
+#'             )
+#' # check_hazard() will not throw an exception
+#' # as haz is a valid S3 golden_hazard
+#' # and dt contains column "a"
+#' check_hazard(haz, dt)
 check_hazard <- function(hazard, initPop = NULL) {
   .validate_S3(hazard, "Object", "golden_hazard")
 
@@ -67,6 +90,22 @@ check_hazard <- function(hazard, initPop = NULL) {
 #' @param last (Optional) Last step the hazard should be enabled (initial step is index 1)
 #' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
 #' @return An object of class "golden_hazard"
+#'
+#' @examples
+#' # Define a hazard function, which returns a vector of equal length uncertainties
+#' test_hazard <- function(a) {
+#'     ret <- (a < 0.5)
+#' }
+#' # Define a transition function, which sets all "b" columns affected by the hazard to 100
+#' test_transition <- function() {
+#'     return (100)
+#' }
+#' # Create an S3 golden_hazard
+#' haz <- new_hazard(
+#'               test_hazard,
+#'               c("a"),
+#'               new_transition(test_transition, c(), "b")
+#'             )
 new_hazard <- function(fn, args, transitions, freq = 1, first = 1, last = 2147483647, name = NULL) {
   # If transitions is not already a list, upgrade it
   if (inherits(transitions, "golden_transition")) {
@@ -96,6 +135,23 @@ new_hazard <- function(fn, args, transitions, freq = 1, first = 1, last = 214748
 #' @param ... Not used. Included for S3 method compatibility.
 #' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' # Define a hazard function, which returns a vector of equal length uncertainties
+#' test_hazard <- function(a) {
+#'     ret <- (a < 0.5)
+#' }
+#' # Define a transition function, which sets all "b" columns affected by the hazard to 100
+#' test_transition <- function() {
+#'     return (100)
+#' }
+#' # Create an S3 golden_hazard
+#' haz <- new_hazard(
+#'               test_hazard,
+#'               c("a"),
+#'               new_transition(test_transition, c(), "b")
+#'             )
+#' print(haz)
 print.golden_hazard <- function(x, ..., indent = 0L) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")

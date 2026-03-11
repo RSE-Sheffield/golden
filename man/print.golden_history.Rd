@@ -13,6 +13,14 @@
 
 \item{indent}{(Optional) The level the printing is indented, useful if nested within another S3 object}
 }
+\value{
+No return value, called for side effects.
+}
 \description{
 Print the contents of a golden_history type S3 object
+}
+\examples{
+# Create an S3 golden_history
+hist <- new_history(new_column("sum_a", sum, c("a")))
+print(hist)
 }

@@ -4,6 +4,45 @@
 #' @param parameters An golden_parameters S3 object to be validated
 #' @param initPop data.frame which contains the columns required by parameters
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' library(data.table)
+#' N <- 100
+#' dt <- data.table(a = runif(N, 0, 1), b = rep(0, N))
+#' # Define a hazard function, which returns a vector of equal length uncertainties
+#' test_hazard <- function(a) {
+#'     ret <- (a < 0.5)
+#' }
+#' # Define a transition function, which sets all "b" columns affected by the hazard to 100
+#' test_transition <- function() {
+#'     return (100)
+#' }
+#' # Create an S3 golden_hazard
+#' haz <- new_hazard(
+#'               test_hazard,
+#'               c("a"),
+#'               new_transition(test_transition, c(), "b")
+#'             )
+#' # Define a trajectory function, which adds 2 to all members of the input vector
+#' test_trajectory <- function(a) {
+#'     return (a + 2)
+#' }
+#' # Create an S3 golden_trajectory
+#' trj <- new_trajectory(test_trajectory, c("b"), "b")
+#' # Create an S3 golden_history, containing 1 golden_history_column
+#' hist <- new_history(new_column("sum_a", sum, c("a")))
+#' # Create an S3 golden_parameters
+#' params <- new_parameters(
+#'   hazards = haz,
+#'   trajectories = trj,
+#'   steps = 10,
+#'   debug = FALSE,
+#'   history = hist
+#' )
+#' # check_parameters() will not throw an exception
+#' # as params is a valid S3 golden_parameters
+#' # and dt contains columns "a" and "b"
+#' check_parameters(params, dt)
 check_parameters <- function(parameters, initPop = NULL) {
   # initpop must be derived from data.frame (e.g. data.table)
   if (!is.null(initPop)) {
@@ -88,6 +127,38 @@ check_parameters <- function(parameters, initPop = NULL) {
 #' @param print_timing (TRUE/FALSE) flag indicating whether a per-function timing report should be printed after the simulation, this will always be suppressed for fast (<= 1 second) simulations.
 #' @param history golden_history S3 object representing the columns of data to be aggregated during simulation
 #' @return An object of class "golden_parameters"
+#'
+#' @examples
+#' # Define a hazard function, which returns a vector of equal length uncertainties
+#' test_hazard <- function(a) {
+#'     ret <- (a < 0.5)
+#' }
+#' # Define a transition function, which sets all "b" columns affected by the hazard to 100
+#' test_transition <- function() {
+#'     return (100)
+#' }
+#' # Create an S3 golden_hazard
+#' haz <- new_hazard(
+#'               test_hazard,
+#'               c("a"),
+#'               new_transition(test_transition, c(), "b")
+#'             )
+#' # Define a trajectory function, which adds 2 to all members of the input vector
+#' test_trajectory <- function(a) {
+#'     return (a + 2)
+#' }
+#' # Create an S3 golden_trajectory
+#' trj <- new_trajectory(test_trajectory, c("b"), "b")
+#' # Create an S3 golden_history, containing 1 golden_history_column
+#' hist <- new_history(new_column("sum_a", sum, c("a")))
+#' # Create an S3 golden_parameters
+#' params <- new_parameters(
+#'   hazards = haz,
+#'   trajectories = trj,
+#'   steps = 10,
+#'   debug = FALSE,
+#'   history = hist
+#' )
 new_parameters <- function(hazards = list(), trajectories = list(), steps, random_seed = 0, debug = TRUE, print_timing = TRUE, history = NULL) {
   # If hazards is not already a list, upgrade it
   if (inherits(hazards, "golden_hazard")) {
@@ -122,6 +193,39 @@ new_parameters <- function(hazards = list(), trajectories = list(), steps, rando
 #' @param ... Not used. Included for S3 method compatibility.
 #' @param indent (Optional) The level the printing is indented, useful if nested within another S3 object
 #' @return No return value, called for side effects.
+#'
+#' @examples
+#' # Define a hazard function, which returns a vector of equal length uncertainties
+#' test_hazard <- function(a) {
+#'     ret <- (a < 0.5)
+#' }
+#' # Define a transition function, which sets all "b" columns affected by the hazard to 100
+#' test_transition <- function() {
+#'     return (100)
+#' }
+#' # Create an S3 golden_hazard
+#' haz <- new_hazard(
+#'               test_hazard,
+#'               c("a"),
+#'               new_transition(test_transition, c(), "b")
+#'             )
+#' # Define a trajectory function, which adds 2 to all members of the input vector
+#' test_trajectory <- function(a) {
+#'     return (a + 2)
+#' }
+#' # Create an S3 golden_trajectory
+#' trj <- new_trajectory(test_trajectory, c("b"), "b")
+#' # Create an S3 golden_history, containing 1 golden_history_column
+#' hist <- new_history(new_column("sum_a", sum, c("a")))
+#' # Create an S3 golden_parameters
+#' params <- new_parameters(
+#'   hazards = haz,
+#'   trajectories = trj,
+#'   steps = 10,
+#'   debug = FALSE,
+#'   history = hist
+#' )
+#' print(params)
 print.golden_parameters <- function(x, ..., indent = 0) {
   ind0 <- paste0(rep.int(" ", indent), collapse = "")
   ind2 <- paste0(rep.int(" ", indent + 2L), collapse = "")
