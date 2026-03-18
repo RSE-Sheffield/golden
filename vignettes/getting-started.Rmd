@@ -1,10 +1,10 @@
 ---
 title: "Getting Started"
 output: 
-  bookdown::html_document2:
+  rmarkdown::html_vignette:
       toc: true
 vignette: >
-  %\VignetteIndexEntry{getting-started}
+  %\VignetteIndexEntry{Getting Started}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -75,10 +75,10 @@ Currently **golden** assumes that all functions are designed to process vectors,
 
 ### Hazards and Transitions
 
-Hazards represent an instantaneous chance of a patient transitioning between states. A hazard is passed the requested vector of population data and returns a hazard value which is converted to a probability via Equation \@ref(eq:hazard). A random number is then generated for each patient, which is tested to decide whether the hazard has occurred for that patient. Patients that are selected to be impacted by the hazard, then execute linked transition functions to update one or more of their states.
+Hazards represent an instantaneous chance of a patient transitioning between states. A hazard is passed the requested vector of population data and returns a hazard value which is converted to a probability via the equation below. A random number is then generated for each patient, which is tested to decide whether the hazard has occurred for that patient. Patients that are selected to be impacted by the hazard, then execute linked transition functions to update one or more of their states.
 
 \begin{equation}
-p = 1 - \exp(-h\, dt) (\#eq:hazard)
+p = 1 - \exp(-h\, dt)
 \end{equation}
 
 - $p$ is the probability of the hazard occurring
