@@ -1,8 +1,8 @@
 ---
 title: "Getting Started"
 output: 
-  rmarkdown::html_vignette:
-    toc: true
+  bookdown::html_document2:
+      toc: true
 vignette: >
   %\VignetteIndexEntry{getting-started}
   %\VignetteEngine{knitr::rmarkdown}
@@ -78,8 +78,7 @@ Currently **golden** assumes that all functions are designed to process vectors,
 Hazards represent an instantaneous chance of a patient transitioning between states. A hazard is passed the requested vector of population data and returns a hazard value which is converted to a probability via Equation \@ref(eq:hazard). A random number is then generated for each patient, which is tested to decide whether the hazard has occurred for that patient. Patients that are selected to be impacted by the hazard, then execute linked transition functions to update one or more of their states.
 
 \begin{equation}
-p = 1 - \exp(-h\, dt)
-\label{eq:hazard}
+p = 1 - \exp(-h\, dt) (\#eq:hazard)
 \end{equation}
 
 - $p$ is the probability of the hazard occurring
@@ -90,7 +89,7 @@ Each transition is created via `new_transition()` which requires the transition 
 
 ```{r, eval = FALSE}
 example_transition <- new_transition(
-  
+  ## arguments here
 )
 ```
 
@@ -98,7 +97,7 @@ Each hazard is created via `new_hazard()` which requires the hazard function, it
 
 ```{r, eval = FALSE}
 example_hazard <- new_hazard(
-  
+  ## arguments here
 )
 ```
 
@@ -110,7 +109,7 @@ Each trajectory is created via `new_trajectory()` which requires the trajectory 
 
 ```{r, eval = FALSE}
 example_trajectory <- new_trajectory(
-  
+  ## arguments here
 )
 ```
 
@@ -123,7 +122,7 @@ Each column is created via `new_column()` which requires a name for the column, 
 
 ```{r, eval = FALSE}
 example_column <- new_column(
-  
+  ## arguments here
 )
 ```
 
@@ -132,7 +131,7 @@ One of more columns are then passed to `new_history()`, alongside the frequency 
 
 ```{r, eval = FALSE}
 example_history <- new_history(
-  
+  ## arguments here
 )
 ```
 
@@ -147,7 +146,7 @@ The parameters are created by passing lists of hazards and trajectories, whilst 
 
 ```{r, eval = FALSE}
 example_parameters <- new_parameters(
-  
+  ## arguments here
 )
 ```
 
@@ -202,17 +201,17 @@ transition_fn <- function(state, i) {
 }
 
 ```
-t
+
 We will need to create a hazard that understands more context about how apply the hazard function and associated transitions to the data:
 ```{r}
 ## new_hazard creates a hazard
 morthaz0 <- new_hazard(
-  deathrate0,      # function returning hazard
-  c(),             # arguments for hazard function
-  new_transition(  # creates a transition
-    transition_fn, # 'kills' by death -1 -> time of death
-    c("death", "~STEP"), # args for transition fn
-    "death"              # col transition acts on
+  fn = deathrate0,               # function returning hazard
+  args = c(),                    # arguments for hazard function
+  transitions = new_transition(  # creates a transition
+    fn = transition_fn,          # 'kills' by death -1 -> time of death
+    args = c("death", "~STEP"),  # args for transition fn
+    state = "death"              # col transition acts on
   )
 )
 
@@ -229,15 +228,15 @@ filter_alive <- function(x) {
 ## new_history creates a history
 noalive <- new_history(
   columns = list(
-    new_column(     # creates a col in history
-      "no. alive",  # column name
-      length,       # summary function
-      "age",        # input args for summary fn
-      filter_alive, # filter to row-restrict 
-      "death"       # input variables for filter
+    new_column(                   # creates a col in history
+      name = "no. alive",         # column name
+      fn = length,                # summary function
+      args = "age",               # input args for summary fn
+      filter_fn = filter_alive,   # filter to row-restrict 
+      filter_args = "death"       # input variables for filter
     )
   ),
-  frequency = 1     # record history every 1 steps
+  frequency = 1                   # record history every 1 steps
 )
 ```
 
@@ -304,9 +303,9 @@ As with *hazards*, we will create a *trajectory* using our update function, but 
 ```{r}
 ## new_trajectory creates a trajectory
 age_traj <- new_trajectory(
-              age_update,        # update function 
-              c("age", "death"), # args for update function
-              "age"              # column(s) to be updated
+              fn = age_update,          # update function 
+              args = c("age", "death"), # args for update function
+              property = "age"          # column(s) to be updated
             )
 ```
 
@@ -318,13 +317,13 @@ deathrate1 <- function(death, sbp, tc) {
 }
 
 morthaz1 <- new_hazard(
-  deathrate1,             # hazard function     
-  c("death", "sbp", "tc"),# args for hazard fn
+  fn = deathrate1,                # hazard function     
+  args = c("death", "sbp", "tc"), # args for hazard fn
   ## (list of) transitions to apply
-  new_transition(
-    transition_fn,        # generic transition
-    c("death", "~STEP"),  # input col args
-    "death"               # col outputted
+  transitions = new_transition(
+    fn = transition_fn,           # generic transition
+    args = c("death", "~STEP"),   # input col args
+    state = "death"               # col outputted
   )
 )
 ```
@@ -392,9 +391,9 @@ _Note_ also that this example illustrates use of a random function. There is no 
 Having defined our update, we can create a trajectory as before, but now with vectors to specify which columns are affected. Now we have multiple trajectories, we will need to pass a list of them to parameter the constructor.
 ```{r}
 bptc_traj <- new_trajectory(
-  bptc_update, # trajectory fn
-  c("sbp", "tc", "death"), # trajectory args
-  c("sbp", "tc") # outputs (list of vectors from fn)
+  fn = bptc_update,               # trajectory fn
+  args = c("sbp", "tc", "death"), # trajectory args
+  property = c("sbp", "tc")       # outputs (list of vectors from fn)
 )
 
 ## make list of trajectories for use below
@@ -494,9 +493,9 @@ trajlist3 <- list(
   bptc_traj,
   ## new trajectory for treatment
   new_trajectory(
-    treatment_time_update,
-    c("death", "on_treatment"),
-    "on_treatment"
+    fn = treatment_time_update,
+    args = c("death", "on_treatment"),
+    property = "on_treatment"
   )
 )
 ```
@@ -521,31 +520,31 @@ hazlist3 <- list(
   morthaz0,
   ## starting treatment
   new_hazard(
-    treatment_start_haz,
-    c("death", "on_treatment", "sbp", "tc"),
+    fn = treatment_start_haz,
+    args = c("death", "on_treatment", "sbp", "tc"),
     ## (which triggers two transitions)
     list(
       new_transition(
-        treatment_start_transition,
-        "on_treatment",
-        "on_treatment"
+        fn = treatment_start_transition,
+        args = "on_treatment",
+        state = "on_treatment"
       ),
       new_transition(
-        generic_update,
-        "treatment_counter",
-        "treatment_counter"
+        fn = generic_update,
+        args = "treatment_counter",
+        state = "treatment_counter"
       )
     )
   ),
   ## finishing treatment
   new_hazard(
-    treatment_end_haz,
-    c("death", "on_treatment"),
+    fn = treatment_end_haz,
+    args = c("death", "on_treatment"),
     ## (triggering one transition)
     new_transition(
-      treatment_end_transition,
-      "on_treatment",
-      "on_treatment"
+      fn = treatment_end_transition,
+      args = "on_treatment",
+      state = "on_treatment"
     )
   )
 )
@@ -560,10 +559,11 @@ history3 <- new_history(
     new_column("no. alive", length, "age", filter_alive, "death"),
     ## alive and on treatment:
     new_column(
-      "no. alive on tx",
-      function(x) sum(x > 0),
-      "on_treatment",
-      filter_alive, "death"
+      name = "no. alive on tx",
+      fn = function(x) sum(x > 0),
+      args = "on_treatment",
+      filter_fn = filter_alive, 
+      filter_args = "death"
     ),
     ## an individual's value:
     new_column("sbp1", sum, "sbp", filter_1, "id"),
@@ -789,19 +789,20 @@ We combine these to create a list of hazards. CVD events will just increment the
 hazlist <- list(
   ## CVD event
   new_hazard(
-    globohaz,
-    c("death", "male", "age", "bmi", "sbp", "tc"), # input args for hazard
-    list(new_transition(
-      generic_update,  # transition function for event
-      "cvd_count",     # input args for transition
-      "cvd_count"      # vars affected by transition
-    ))
+    fn = globohaz,
+    ## input args for hazard
+    args = c("death", "male", "age", "bmi", "sbp", "tc"),
+    transitions = new_transition(
+      fn = generic_update,     # transition function for event
+      args = "cvd_count",      # input args for transition
+      state = "cvd_count"      # vars affected by transition
+    )
   ),
   ## deaths
   new_hazard(
-    mort_fn,
-    c("male", "age", "~STEP"),
-    list(new_transition(transition_fn, c("death", "~STEP"), "death"))
+    fn = mort_fn,
+    args = c("male", "age", "~STEP"),
+    transitions = new_transition(transition_fn, c("death", "~STEP"), "death")
   )
 )
 
