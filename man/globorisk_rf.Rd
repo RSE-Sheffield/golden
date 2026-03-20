@@ -5,18 +5,33 @@
 \alias{globorisk_rf}
 \title{Example globorisk reference values}
 \format{
-TODO
+A data.frame/data.table with 18 rows and 9 variables:
 \describe{
-  \item{foo}{bar}
+  \item{iso}{ISO country code (`char`): "USA".}
+  \item{agec}{Age category (`int`): 1,...,10.}
+  \item{sex}{Sex (`int`): 0, 1.}
+  \item{mean_sbp}{Systolic blood pressure mean value for centering (`num`).}
+  \item{mean_tc}{Total cholesterol mean value for centering (`num`).}
+  \item{mean_dm}{Diabetes mean value for centering (`num`).}
+  \item{mean_smk}{Smoking status mean value for centering (`num`).}
+  \item{mean_bmi}{Body mass index mean value for centering (`num`).}
+  \item{agesex}{Age and sex concatenated category (`char`): "1_0", "1_1", ..., "9_1".}
 }
 }
 \source{
-TODO
+https://github.com/boyercb/globorisk
 }
 \usage{
 globorisk_rf
 }
 \description{
-details TODO
+Example data on cardiovascular disease (CVD) risk from the Globorisk model, which is a model for estimating 10-year risk of fatal and non-fatal CVD events, see:
+
+https://doi.org/10.1016/S2213-8587(17)30015-3
+https://doi.org/10.1016/S2213-8587(15)00081-9
+
+These data are available in the `globorisk` R package, see the source link below. This subset is for the United States, and contains the reference values for centering.
+
+The exact extraction of these data from the `globorisk` package is in the `data-raw/dataprep.R` file in this package.
 }
 \keyword{datasets}
