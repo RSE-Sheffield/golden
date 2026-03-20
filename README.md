@@ -65,9 +65,9 @@ age_update <- function(age, death_time) {
 
 ## new_trajectory creates a trajectory
 age_traj <- new_trajectory(
-  age_update,        # update function
-  c("age", "death"), # args for update function
-  "age"              # column(s) to be updated
+  fn = age_update,          # update function
+  args = c("age", "death"), # args for update function
+  property = "age"          # column(s) to be updated
 )
 ```
 
@@ -97,13 +97,13 @@ As with trajectories, we create a hazard object by providing context for how to 
 ```r
 ## new_hazard creates a hazard
 morthaz <- new_hazard(
-  deathrate, # hazard function
-  c("death", "sbp", "tc"), # args for hazard fn
+  fn = deathrate,                 # hazard function
+  args = c("death", "sbp", "tc"), # args for hazard fn
   ## (list of) transitions to apply
-  new_transition(
-    transition_fn,       # generic transition
-    c("death", "~STEP"), # input cols
-    "death"              # output cols
+  transitions = new_transition(
+    fn = transition_fn,          # generic transition
+    args = c("death", "~STEP"),  # input cols
+    state = "death"              # output cols
   )
 )
 ```
@@ -123,11 +123,11 @@ filter_alive <- function(x) {
 noalive <- new_history(
   columns = list(
     new_column(    # creates a col in history
-      "no. alive", # column name
-      length,      # summary function
-      "age",       # input args for summary fn
-      filter_alive,# filter to row-restrict
-      "death"      # input variables for filter
+      name = "no. alive",        # column name
+      fn = length,               # summary function
+      args = "age",              # input args for summary fn
+      filter_fn = filter_alive,  # filter to row-restrict
+      filter_args = "death"      # input variables for filter
     )
   ),
   frequency = 1    # record history every 1 steps
