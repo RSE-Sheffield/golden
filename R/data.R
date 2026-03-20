@@ -2,44 +2,16 @@
 #'
 #'
 #'
-#' @description Description of the bmi_fits dataset goes here
+#' @description This dataset contains example fits of body mass index (BMI) to gamma distributions for the United States in 2022. The original data were taken from an analysis of the contribution of undernutrition to tuberculosis incidence, which was published in the Lancet Global Health in 2026. The data on which these fits are based is from the NCD Risk Factor Collaboration (NCD-RisC) estimates dataset.
 #'
-#' @format A data.frame with 28 rows and 4 variables:
+#' @format A data.frame/data.table with 28 rows and 4 variables:
 #' \describe{
-#'   \item{sex}{
-#'
-#' | *Type:*        | character       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for sex goes here              |
-#'
-#'   }
-#'   \item{acat}{
-#'
-#' | *Type:*        | character       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for acat goes here              |
-#'
-#'   }
-#'   \item{k}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for k goes here              |
-#'
-#'   }
-#'   \item{theta}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for theta goes here              |
-#'
-#'   }
+#'   \item{sex}{Biological sex (`char`): Men, Women}
+#'   \item{acat}{Age category in years (`char`): 0-4, 5-9, ..., 85plus}
+#'   \item{k}{Gamma distribution shape parameter (`num`): k > 0}
+#'   \item{theta}{Gamma distribution scale parameter (`num`): theta > 0}
 #' }
-#' @source Where the data came from
+#' @source https://github.com/petedodd/bmitb
 #' @name bmi_fits
 #' @docType data
 #' @export
@@ -48,156 +20,37 @@
 #' Example globorisk coefficients
 #'
 #'
-#' @description Description of the globorisk_coefs dataset goes here
+#' @description Example data on cardiovascular disease (CVD) risk from the Globorisk model, which is a model for estimating 10-year risk of fatal and non-fatal CVD events, see:
 #'
-#' @format A data.frame with 1 rows and 18 variables:
+#' https://doi.org/10.1016/S2213-8587(17)30015-3
+#' https://doi.org/10.1016/S2213-8587(15)00081-9
+#'
+#' These data are available in the `globorisk` R package, see the source link below. This subset is for the United States, and contains the coefficients for the risk prediction equations.
+#'
+#' The exact extraction of these data from the `globorisk` package is in the `data-raw/dataprep.R` file in this package.
+#'
+#' @format A data.frame/data.table with 1 rows and 18 variables:
 #' \describe{
-#'   \item{type}{
-#'
-#' | *Type:*        | character       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for type goes here              |
-#'
-#'   }
-#'   \item{main_sbpc}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for main_sbpc goes here              |
-#'
-#'   }
-#'   \item{main_tcc}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for main_tcc goes here              |
-#'
-#'   }
-#'   \item{main__Idm_1}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for main__Idm_1 goes here              |
-#'
-#'   }
-#'   \item{main_smok}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for main_smok goes here              |
-#'
-#'   }
-#'   \item{main_sexdm}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for main_sexdm goes here              |
-#'
-#'   }
-#'   \item{main_sexsmok}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for main_sexsmok goes here              |
-#'
-#'   }
-#'   \item{tvc_sbpc}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for tvc_sbpc goes here              |
-#'
-#'   }
-#'   \item{tvc_tcc}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for tvc_tcc goes here              |
-#'
-#'   }
-#'   \item{tvc_dm}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for tvc_dm goes here              |
-#'
-#'   }
-#'   \item{tvc_smok}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for tvc_smok goes here              |
-#'
-#'   }
-#'   \item{main_bmi5c}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for main_bmi5c goes here              |
-#'
-#'   }
-#'   \item{main_smokc}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for main_smokc goes here              |
-#'
-#'   }
-#'   \item{main_sexsmokc}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for main_sexsmokc goes here              |
-#'
-#'   }
-#'   \item{tvc_smokc}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for tvc_smokc goes here              |
-#'
-#'   }
-#'   \item{tvc_bmi5c}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for tvc_bmi5c goes here              |
-#'
-#'   }
-#'   \item{main_sbpsexc}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for main_sbpsexc goes here              |
-#'
-#'   }
-#'   \item{lac}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for lac goes here              |
-#'
-#'   }
+#'   \item{type}{Risk model type (`char`, set to "office").}
+#'   \item{main_sbpc}{Coefficient for centered and scaled systolic blood pressure (`num`).}
+#'   \item{main_tcc}{Coefficient for centered and scaled total cholesterol (`num`).}
+#'   \item{main__Idm_1}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+#'   \item{main_smok}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+#'   \item{main_sexdm}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+#'   \item{main_sexsmok}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+#'   \item{tvc_sbpc}{Coefficient for centered and scaled systolic blood pressure by age interaction term (`num`).}
+#'   \item{tvc_tcc}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+#'   \item{tvc_dm}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+#'   \item{tvc_smok}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+#'   \item{main_bmi5c}{Coefficient for centered and scaled body mass index (BMI) (`num`).}
+#'   \item{main_smokc}{Coefficient for centered and scaled smoking status (`num`).}
+#'   \item{main_sexsmokc}{Coefficient for centered and scaled smoking by sex interaction term (`num`).}
+#'   \item{tvc_smokc}{Coefficient for centered and scaled smoking status by age interaction term (`num`).}
+#'   \item{tvc_bmi5c}{Coefficient for centered and scaled BMI by age interaction term (`num`).}
+#'   \item{main_sbpsexc}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+#'   \item{lac}{Globorisk use Local Area Countries flag (`num`, set to 0).}
 #' }
-#' @source Where the data came from
+#' @source https://github.com/boyercb/globorisk
 #' @name globorisk_coefs
 #' @docType data
 #' @export
@@ -207,44 +60,23 @@
 #'
 #'
 #'
-#' @description Description of the globorisk_cvdr dataset goes here
+#' @description Example data on cardiovascular disease (CVD) risk from the Globorisk model, which is a model for estimating 10-year risk of fatal and non-fatal CVD events, see:
 #'
-#' @format A data.frame with 20 rows and 4 variables:
+#' https://doi.org/10.1016/S2213-8587(17)30015-3
+#' https://doi.org/10.1016/S2213-8587(15)00081-9
+#'
+#' These data are available in the `globorisk` R package, see the source link below. This subset is for the United States in 2000, and contains the baseline hazard.
+#'
+#' The exact extraction of these data from the `globorisk` package is in the `data-raw/dataprep.R` file in this package.
+#'
+#' @format A data.frame/data.table with 20 rows and 4 variables:
 #' \describe{
-#'   \item{agec}{
-#'
-#' | *Type:*        | integer       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for agec goes here              |
-#'
-#'   }
-#'   \item{sex}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for sex goes here              |
-#'
-#'   }
-#'   \item{cvd_0}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for cvd_0 goes here              |
-#'
-#'   }
-#'   \item{agesex}{
-#'
-#' | *Type:*        | character       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for agesex goes here              |
-#'
-#'   }
+#'   \item{agec}{Age category (`int`): 1,...,10.}
+#'   \item{sex}{Sex (`int`): 0, 1.}
+#'   \item{cvd_0}{Baseline hazard per year for CVD events (`num`).}
+#'   \item{agesex}{Age and sex concatenated category (`char`): "1_0", "1_1", ..., "10_1".}
 #' }
-#' @source Where the data came from
+#' @source https://github.com/boyercb/globorisk
 #' @name globorisk_cvdr
 #' @docType data
 #' @export
@@ -254,84 +86,28 @@
 #'
 #'
 #'
-#' @description Description of the globorisk_rf dataset goes here
+#' @description Example data on cardiovascular disease (CVD) risk from the Globorisk model, which is a model for estimating 10-year risk of fatal and non-fatal CVD events, see:
 #'
-#' @format A data.frame with 18 rows and 9 variables:
+#' https://doi.org/10.1016/S2213-8587(17)30015-3
+#' https://doi.org/10.1016/S2213-8587(15)00081-9
+#'
+#' These data are available in the `globorisk` R package, see the source link below. This subset is for the United States, and contains the reference values for centering.
+#'
+#' The exact extraction of these data from the `globorisk` package is in the `data-raw/dataprep.R` file in this package.
+#'
+#' @format A data.frame/data.table with 18 rows and 9 variables:
 #' \describe{
-#'   \item{iso}{
-#'
-#' | *Type:*        | character       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for iso goes here              |
-#'
-#'   }
-#'   \item{agec}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for agec goes here              |
-#'
-#'   }
-#'   \item{sex}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for sex goes here              |
-#'
-#'   }
-#'   \item{mean_sbp}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for mean_sbp goes here              |
-#'
-#'   }
-#'   \item{mean_tc}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for mean_tc goes here              |
-#'
-#'   }
-#'   \item{mean_dm}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for mean_dm goes here              |
-#'
-#'   }
-#'   \item{mean_smk}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for mean_smk goes here              |
-#'
-#'   }
-#'   \item{mean_bmi}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for mean_bmi goes here              |
-#'
-#'   }
-#'   \item{agesex}{
-#'
-#' | *Type:*        | character       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for agesex goes here              |
-#'
-#'   }
+#'   \item{iso}{ISO country code (`char`): "USA".}
+#'   \item{agec}{Age category (`int`): 1,...,10.}
+#'   \item{sex}{Sex (`int`): 0, 1.}
+#'   \item{mean_sbp}{Systolic blood pressure mean value for centering (`num`).}
+#'   \item{mean_tc}{Total cholesterol mean value for centering (`num`).}
+#'   \item{mean_dm}{Diabetes mean value for centering (`num`).}
+#'   \item{mean_smk}{Smoking status mean value for centering (`num`).}
+#'   \item{mean_bmi}{Body mass index mean value for centering (`num`).}
+#'   \item{agesex}{Age and sex concatenated category (`char`): "1_0", "1_1", ..., "9_1".}
 #' }
-#' @source Where the data came from
+#' @source https://github.com/boyercb/globorisk
 #' @name globorisk_rf
 #' @docType data
 #' @export
@@ -339,52 +115,21 @@
 
 #' Example life table data
 #'
-#' @description Description of the lifetable_data dataset goes here
+#' @description Example life table data for the United States from 2000 to 2100, with age-specific mortality rates for each sex and in total. The original data were taken from the World Population Prospects 2024 revision, which is published by the United Nations Department of Economic and Social Affairs, Population Division.
 #'
-#' @format A data.frame with 10,201 rows and 5 variables:
+#' https://population.un.org/wpp/
+#'
+#' The data on which these life tables are based is from the WPP 2024 revision, as made available through the `wpp2024` R package available from the source below. The exact extraction of these data from the WPP 2024 revision is in the `data-raw/dataprep.R` file in this package.
+#'
+#' @format A data.frame/data.table with 10,201 rows and 5 variables:
 #' \describe{
-#'   \item{year}{
-#'
-#' | *Type:*        | integer       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for year goes here              |
-#'
-#'   }
-#'   \item{age}{
-#'
-#' | *Type:*        | integer       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for age goes here              |
-#'
-#'   }
-#'   \item{mxM}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for mxM goes here              |
-#'
-#'   }
-#'   \item{mxF}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for mxF goes here              |
-#'
-#'   }
-#'   \item{mxB}{
-#'
-#' | *Type:*        | numeric       |
-#' | -------------- | ------------- |
-#' |                |               |
-#' | *Description:* | Description for mxB goes here              |
-#'
-#'   }
+#'   \item{year}{The year of the life table data (`integer`), ranging from 2000 to 2100.}
+#'   \item{age}{The age group for the life table data (`integer`), ranging from 0 to 100.}
+#'   \item{mxM}{Actual mortality for men; age-specific hazard of death (`num`).}
+#'   \item{mxF}{Actual mortality for women; age-specific hazard of death (`num`).}
+#'   \item{mxB}{Actual mortality for both sexes combined; age-specific hazard of death (`num`).}
 #' }
-#' @source Where the data came from
+#' @source https://github.com/PPgp/wpp2024
 #' @name lifetable_data
 #' @docType data
 #' @export
@@ -392,15 +137,18 @@
 
 #' Example population structure
 #'
-#' Notes 101 rows, 2 cols popM, popF; matrix
-#' 
-#' details TODO
-#' @format
-#' TODO
+#' @description Example population data for the United States for 2000, with age-specific populations in thousands. The original data were taken from the World Population Prospects 2024 revision, which is published by the United Nations Department of Economic and Social Affairs, Population Division.
+#'
+#' https://population.un.org/wpp/
+#'
+#' The data on which these population data are based is from the WPP 2024 revision, as made available through the `wpp2024` R package available from the source below. The exact extraction of these data from the WPP 2024 revision is in the `data-raw/dataprep.R` file in this package.
+#'
+#' @format A matrix with 101 rows and 2 columns:
 #' \describe{
-#'   \item{foo}{bar}
+#'   \item{popM}{Named first matrix colum: the male population in thousands for each age group, with rows for ages 0 to 100 years.}
+#'  \item{popF}{Named second matrix column: the female population in thousands for each age group, with rows for ages 0 to 100 years.}
 #' }
-#' @source TODO
+#' @source https://github.com/PPgp/wpp2024
 #' @name pop_snapshot
 #' @docType data
 #' @export

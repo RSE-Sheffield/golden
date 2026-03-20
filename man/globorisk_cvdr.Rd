@@ -5,18 +5,28 @@
 \alias{globorisk_cvdr}
 \title{Example globorisk baseline hazard}
 \format{
-TODO
+A data.frame/data.table with 20 rows and 4 variables:
 \describe{
-  \item{foo}{bar}
+  \item{agec}{Age category (`int`): 1,...,10.}
+  \item{sex}{Sex (`int`): 0, 1.}
+  \item{cvd_0}{Baseline hazard per year for CVD events (`num`).}
+  \item{agesex}{Age and sex concatenated category (`char`): "1_0", "1_1", ..., "10_1".}
 }
 }
 \source{
-TODO
+https://github.com/boyercb/globorisk
 }
 \usage{
 globorisk_cvdr
 }
 \description{
-details TODO
+Example data on cardiovascular disease (CVD) risk from the Globorisk model, which is a model for estimating 10-year risk of fatal and non-fatal CVD events, see:
+
+https://doi.org/10.1016/S2213-8587(17)30015-3
+https://doi.org/10.1016/S2213-8587(15)00081-9
+
+These data are available in the `globorisk` R package, see the source link below. This subset is for the United States in 2000, and contains the baseline hazard.
+
+The exact extraction of these data from the `globorisk` package is in the `data-raw/dataprep.R` file in this package.
 }
 \keyword{datasets}

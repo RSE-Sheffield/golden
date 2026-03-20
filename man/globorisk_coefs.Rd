@@ -5,18 +5,42 @@
 \alias{globorisk_coefs}
 \title{Example globorisk coefficients}
 \format{
-TODO
+A data.frame/data.table with 1 rows and 18 variables:
 \describe{
-  \item{foo}{bar}
+  \item{type}{Risk model type (`char`, set to "office").}
+  \item{main_sbpc}{Coefficient for centered and scaled systolic blood pressure (`num`).}
+  \item{main_tcc}{Coefficient for centered and scaled total cholesterol (`num`).}
+  \item{main__Idm_1}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+  \item{main_smok}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+  \item{main_sexdm}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+  \item{main_sexsmok}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+  \item{tvc_sbpc}{Coefficient for centered and scaled systolic blood pressure by age interaction term (`num`).}
+  \item{tvc_tcc}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+  \item{tvc_dm}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+  \item{tvc_smok}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+  \item{main_bmi5c}{Coefficient for centered and scaled body mass index (BMI) (`num`).}
+  \item{main_smokc}{Coefficient for centered and scaled smoking status (`num`).}
+  \item{main_sexsmokc}{Coefficient for centered and scaled smoking by sex interaction term (`num`).}
+  \item{tvc_smokc}{Coefficient for centered and scaled smoking status by age interaction term (`num`).}
+  \item{tvc_bmi5c}{Coefficient for centered and scaled BMI by age interaction term (`num`).}
+  \item{main_sbpsexc}{Variable not used in this model, but included as `NA` for completeness (`num`).}
+  \item{lac}{Globorisk use Local Area Countries flag (`num`, set to 0).}
 }
 }
 \source{
-TODO
+https://github.com/boyercb/globorisk
 }
 \usage{
 globorisk_coefs
 }
 \description{
-details TODO
+Example data on cardiovascular disease (CVD) risk from the Globorisk model, which is a model for estimating 10-year risk of fatal and non-fatal CVD events, see:
+
+https://doi.org/10.1016/S2213-8587(17)30015-3
+https://doi.org/10.1016/S2213-8587(15)00081-9
+
+These data are available in the `globorisk` R package, see the source link below. This subset is for the United States, and contains the coefficients for the risk prediction equations.
+
+The exact extraction of these data from the `globorisk` package is in the `data-raw/dataprep.R` file in this package.
 }
 \keyword{datasets}

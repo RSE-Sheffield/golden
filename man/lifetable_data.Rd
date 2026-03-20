@@ -5,18 +5,26 @@
 \alias{lifetable_data}
 \title{Example life table data}
 \format{
-TODO
+A data.frame/data.table with 10,201 rows and 5 variables:
 \describe{
-  \item{foo}{bar}
+  \item{year}{The year of the life table data (`integer`), ranging from 2000 to 2100.}
+  \item{age}{The age group for the life table data (`integer`), ranging from 0 to 100.}
+  \item{mxM}{Actual mortality for men; age-specific hazard of death (`num`).}
+  \item{mxF}{Actual mortality for women; age-specific hazard of death (`num`).}
+  \item{mxB}{Actual mortality for both sexes combined; age-specific hazard of death (`num`).}
 }
 }
 \source{
-TODO
+https://github.com/PPgp/wpp2024
 }
 \usage{
 lifetable_data
 }
 \description{
-details TODO
+Example life table data for the United States from 2000 to 2100, with age-specific mortality rates for each sex and in total. The original data were taken from the World Population Prospects 2024 revision, which is published by the United Nations Department of Economic and Social Affairs, Population Division.
+
+https://population.un.org/wpp/
+
+The data on which these life tables are based is from the WPP 2024 revision, as made available through the `wpp2024` R package available from the source below. The exact extraction of these data from the WPP 2024 revision is in the `data-raw/dataprep.R` file in this package.
 }
 \keyword{datasets}

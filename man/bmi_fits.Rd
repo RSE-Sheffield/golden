@@ -5,18 +5,21 @@
 \alias{bmi_fits}
 \title{Example BMI distribution}
 \format{
-TODO
+A data.frame/data.table with 28 rows and 4 variables:
 \describe{
-  \item{foo}{bar}
+  \item{sex}{Biological sex (`char`): Men, Women}
+  \item{acat}{Age category in years (`char`): 0-4, 5-9, ..., 85plus}
+  \item{k}{Gamma distribution shape parameter (`num`): k > 0}
+  \item{theta}{Gamma distribution scale parameter (`num`): theta > 0}
 }
 }
 \source{
-TODO
+https://github.com/petedodd/bmitb
 }
 \usage{
 bmi_fits
 }
 \description{
-details TODO
+This dataset contains example fits of body mass index (BMI) to gamma distributions for the United States in 2022. The original data were taken from an analysis of the contribution of undernutrition to tuberculosis incidence, which was published in the Lancet Global Health in 2026. The data on which these fits are based is from the NCD Risk Factor Collaboration (NCD-RisC) estimates dataset.
 }
 \keyword{datasets}

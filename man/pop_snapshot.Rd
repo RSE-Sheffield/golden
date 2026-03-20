@@ -5,18 +5,23 @@
 \alias{pop_snapshot}
 \title{Example population structure}
 \format{
-TODO
+A matrix with 101 rows and 2 columns:
 \describe{
-  \item{foo}{bar}
+  \item{popM}{Named first matrix colum: the male population in thousands for each age group, with rows for ages 0 to 100 years.}
+ \item{popF}{Named second matrix column: the female population in thousands for each age group, with rows for ages 0 to 100 years.}
 }
 }
 \source{
-TODO
+https://github.com/PPgp/wpp2024
 }
 \usage{
 pop_snapshot
 }
 \description{
-details TODO
+Example population data for the United States for 2000, with age-specific populations in thousands. The original data were taken from the World Population Prospects 2024 revision, which is published by the United Nations Department of Economic and Social Affairs, Population Division.
+
+https://population.un.org/wpp/
+
+The data on which these population data are based is from the WPP 2024 revision, as made available through the `wpp2024` R package available from the source below. The exact extraction of these data from the WPP 2024 revision is in the `data-raw/dataprep.R` file in this package.
 }
 \keyword{datasets}
