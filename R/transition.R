@@ -22,9 +22,9 @@ check_transition <- function(transition, initPop = NULL) {
   .validate_S3(transition, "Object", "golden_transition")
 
   # Are the expected fields present
-  required_fields <- c("fn", "args", "state")
+  required_fields <- c("fn", "args", "states")
   .validate_fields_present(transition, "golden_transition", required_fields)
-  
+
   # Are there any unexpected fields
   required_fields <- append(required_fields, c("name"))
   .validate_wrong_fields(transition, "golden_transition", required_fields)
@@ -36,7 +36,10 @@ check_transition <- function(transition, initPop = NULL) {
 
   # ---- args ----
   # Attempt to convert lists to character vectors
-  transition$args <- .validate_convert_char_vector(transition$args, "transition$args")
+  transition$args <- .validate_convert_char_vector(
+    transition$args,
+    "transition$args"
+  )
   # Check named columns exist
   if (!is.null(initPop)) {
     .validate_columns_exist(transition$args, "transition$args", initPop)
@@ -44,30 +47,36 @@ check_transition <- function(transition, initPop = NULL) {
   # Check number of params matches what function requires
   .validate_function_args(transition$args, "transition$args", transition$fn)
 
-  # ---- state ----
-  if (!is.character(transition$state) || length(transition$state) == 0L) {
-    stop("'transition$state' must be a character vector of 1 or more strings")
+  # ---- states ----
+  if (!is.character(transition$states) || length(transition$states) == 0L) {
+    stop("'transition$states' must be a character vector of 1 or more strings")
   }
   if (!is.null(initPop)) {
-      # state exists as a column
-      if (any(!(transition$state %in% names(initPop)))) {
-        stop("initial population columns do not contain transition$state: ", transition$state)
-      }
+    # states exist as columns
+    if (any(!(transition$states %in% names(initPop)))) {
+      stop(
+        "initial population columns do not contain transition$states: ",
+        transition$states
+      )
+    }
   }
-  
+
   # ---- name ----
-  if (!(is.null(transition$name) || (is.character(transition$name) && length(transition$name) == 1))) {
+  if (
+    !(is.null(transition$name) ||
+      (is.character(transition$name) && length(transition$name) == 1))
+  ) {
     stop("'transition$name' must be a string")
   }
 
-  return (NULL)
+  return(NULL)
 }
 
 #' Create a new transition object
 #'
 #' @param fn Function defining the transition functions
 #' @param args Character vector of parameter names expected by fn
-#' @param state Name(s) of the column(s) where the result of the transition function is to be stored
+#' @param states Name(s) of the column(s) where the result of the transition function is to be stored
 #' @param name (Optional) Name used in error messages and similar. Defaults to an automatic name
 #' @return An object of class "golden_transition"
 #'
@@ -78,12 +87,12 @@ check_transition <- function(transition, initPop = NULL) {
 #' }
 #' # Define an S3 golden_transition
 #' trn <- new_transition(test_transition, c(), "b")
-new_transition <- function(fn, args, state, name = NULL) {
+new_transition <- function(fn, args, states, name = NULL) {
   # Initialise new transition (S3 class)
   transition <- list(
     fn = fn,
     args = args,
-    state = state,
+    states = states,
     name = .get_name(deparse(substitute(fn)), name) # sub required otherwise "fn" is found
   )
   # Assign S3 class

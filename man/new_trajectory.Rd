@@ -4,14 +4,14 @@
 \alias{new_trajectory}
 \title{Create a new trajectory object}
 \usage{
-new_trajectory(fn, args, property, name = NULL)
+new_trajectory(fn, args, states, name = NULL)
 }
 \arguments{
 \item{fn}{Function defining the trajectory function}
 
 \item{args}{Character vector of parameter names expected by fn}
 
-\item{property}{Name(s) of the column(s) where the result(s) of the trajectory function is to be stored}
+\item{states}{Name(s) of the column(s) where the result(s) of the trajectory function is to be stored}
 
 \item{name}{(Optional) Name used in error messages and similar. Defaults to an automatic name}
 }
@@ -22,7 +22,7 @@ An object of class "golden_trajectory"
 Create a new trajectory object
 }
 \note{
-If a list if passed to property, fn must return a list of equal length
+If a list if passed to states, fn must return a list of equal length
 }
 \examples{
 # Define a trajectory function, which adds 2 to all members of the input vector
