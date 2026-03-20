@@ -3,41 +3,41 @@ library(golden)
 
 #
 # Tests in this file cover the functionality of trajectories
-# They mostly ensure that the below features are functional: 
-# - multiple parameters 
+# They mostly ensure that the below features are functional:
+# - multiple parameters
 # - special (e.g.~CAPS) parameters
 # - multiple trajectories
 # - dependent trajectories/order
 #
 
 plus_two_fn <- function(a) {
-    return (a + 2)
+    return(a + 2)
 }
 
 all_step_fn <- function(a, step) {
-    return (rep(step, length(a)))
+    return(rep(step, length(a)))
 }
 
 add_fn <- function(a, b) {
-    return (a + b)
+    return(a + b)
 }
 
 get_parms <- function() {
     return(
         parms <- new_parameters(
-          hazards = list(
-            new_hazard(
-              empty_hazard_fn,
-              c("a"),
-              list(
-                new_transition(empty_transition_fn, c("a"), "a")
-              )
-            )
-          ),
-          trajectories = list(
-            new_trajectory(plus_two_fn, c("b"), "b")
-          ),
-          steps = 1
+            hazards = list(
+                new_hazard(
+                    empty_hazard_fn,
+                    c("a"),
+                    list(
+                        new_transition(empty_transition_fn, c("a"), "a")
+                    )
+                )
+            ),
+            trajectories = list(
+                new_trajectory(plus_two_fn, c("b"), "b")
+            ),
+            steps = 1
         )
     )
 }
@@ -55,13 +55,13 @@ test_that("Trajectory function is reflected in results", {
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
     expect_equal(step4$pop$b, rep(8, N))
-    
+
     ## Second: ~STEP->b
     parms$trajectories <- list(new_trajectory(
-              fn = all_step_fn,
-              property="b",
-              args=c("b", "~STEP")
-            ))
+        fn = all_step_fn,
+        states = "b",
+        args = c("b", "~STEP")
+    ))
     # 1 step
     parms$steps = 1
     step1 = run_simulation(initPop, parms)
@@ -70,13 +70,13 @@ test_that("Trajectory function is reflected in results", {
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
     expect_equal(step4$pop$b, rep(3, N))
-    
+
     ## Third: a+b->b
     parms$trajectories <- list(new_trajectory(
-              fn = add_fn,
-              property="b",
-              args=c("b", "a")
-            ))
+        fn = add_fn,
+        states = "b",
+        args = c("b", "a")
+    ))
     initPop$a = rep(3, N)
     # 1 step
     parms$steps = 1
@@ -86,21 +86,21 @@ test_that("Trajectory function is reflected in results", {
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
     expect_equal(step4$pop$b, rep(12, N))
-    
+
     ## Fourth: Two trajectories (combine second and third above tests)
     initPop <- sample_pop3(N)
     initPop$a = rep(4, N)
     parms$trajectories <- list(
         new_trajectory(
-              fn = all_step_fn,
-              property="c",
-              args=c("c", "~STEP")
-            ),
+            fn = all_step_fn,
+            states = "c",
+            args = c("c", "~STEP")
+        ),
         new_trajectory(
-              fn = add_fn,
-              property="b",
-              args=c("b", "a")
-            )
+            fn = add_fn,
+            states = "b",
+            args = c("b", "a")
+        )
     )
     # 1 step
     parms$steps = 1
@@ -114,8 +114,7 @@ test_that("Trajectory function is reflected in results", {
     expect_equal(step4$pop$a, rep(4, N))
     expect_equal(step4$pop$b, rep(16, N))
     expect_equal(step4$pop$c, rep(3, N))
-    
-    
+
     ## Fifth: Repeat the previous test, however the trajectories are dependent
     ## They should execute in the defined order
     initPop <- sample_pop2(N)
@@ -132,14 +131,14 @@ test_that("Multivariate trajectory function is reflected in results", {
     ## First: b->b AND ~STEP->c
     multi_1_fn <- function(a, step) {
         # May want to name them?
-        return (list(a+2, rep(step, length(a))))
+        return(list(a + 2, rep(step, length(a))))
     }
     parms$trajectories <- list(
         new_trajectory(
-              fn = multi_1_fn,
-              property=c("b", "c"),
-              args=c("b", "~STEP")
-            )
+            fn = multi_1_fn,
+            states = c("b", "c"),
+            args = c("b", "~STEP")
+        )
     )
     # 1 step
     parms$steps = 1
@@ -151,18 +150,18 @@ test_that("Multivariate trajectory function is reflected in results", {
     step4 = run_simulation(initPop, parms)
     expect_equal(step4$pop$b, rep(8, N))
     expect_equal(step4$pop$c, rep(3, N))
-        
+
     ## Second: a+b->b AND ~STEP->c
     multi_2_fn <- function(a, b, step) {
         # May want to name them?
-        return (list(a+b, rep(step, length(a))))
+        return(list(a + b, rep(step, length(a))))
     }
     parms$trajectories <- list(
         new_trajectory(
-              fn = multi_2_fn,
-              property=c("b", "c"),
-              args=c("a", "b", "~STEP")
-            )
+            fn = multi_2_fn,
+            states = c("b", "c"),
+            args = c("a", "b", "~STEP")
+        )
     )
     initPop$a = rep(3, N)
     # 1 step
@@ -179,10 +178,10 @@ test_that("Multivariate trajectory function is reflected in results", {
 
 test_that("Scalar upgrade trajectory works correctly", {
     no_arg_trajectory <- function() {
-        return (12.0)
+        return(12.0)
     }
     scalar_trajectory <- function(a, b) {
-        return (13.0)
+        return(13.0)
     }
     N <- 100
     initPop <- sample_pop2(N)
@@ -197,7 +196,11 @@ test_that("Scalar upgrade trajectory works correctly", {
     parms$steps = 4
     step4 = run_simulation(initPop, parms)
     expect_equal(step4$pop$b, rep(12.0, N))
-    parms$trajectories[[1]] <- new_trajectory(scalar_trajectory, c("a", "b"), "b")
+    parms$trajectories[[1]] <- new_trajectory(
+        scalar_trajectory,
+        c("a", "b"),
+        "b"
+    )
     ## First: b->b
     # 1 step
     parms$steps = 1
@@ -214,10 +217,10 @@ test_that("Trajectory function cannot return wrong length", {
     initPop <- sample_pop2(N)
     parms <- get_parms()
     parms$debug = TRUE
-    
+
     # Default runs safely
     expect_no_error(run_simulation(initPop, parms))
-    
+
     # Update with a bad trajectory
     parms$trajectories[[1]]$fn <- bad_len_fn1
     # Running will now produce an error
@@ -226,20 +229,26 @@ test_that("Trajectory function cannot return wrong length", {
     parms$trajectories[[1]]$fn <- bad_len_fn2
     # Running will now produce an error
     expect_error(run_simulation(initPop, parms), "return had wrong length")
-    
+
     # Now test multivariate trajectory returning wrong length
     parms <- get_parms()
-    parms$trajectories[[1]]$property <- c("a", "b")
-    
+    parms$trajectories[[1]]$states <- c("a", "b")
+
     # Function returns 1 value
     parms$trajectories[[1]]$fn <- function(a) {
-        return (sum(a))
+        return(sum(a))
     }
-    expect_error(run_simulation(initPop, parms), "Trajectory function return value contains a different number of properties than expected.")
-    
+    expect_error(
+        run_simulation(initPop, parms),
+        "Trajectory function return value contains a different number of properties than expected."
+    )
+
     # Function returns 3 values
     parms$trajectories[[1]]$fn <- function(a) {
-        return (list(a, a+1, a*2))
+        return(list(a, a + 1, a * 2))
     }
-    expect_error(run_simulation(initPop, parms), "Trajectory function return value contains a different number of properties than expected.")
+    expect_error(
+        run_simulation(initPop, parms),
+        "Trajectory function return value contains a different number of properties than expected."
+    )
 })

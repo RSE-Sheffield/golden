@@ -159,10 +159,10 @@ void Simulation::stepHazards() {
                 SEXP _transition_result = dynamic_call(transition["fn"], call_args);
                 transitionTimers[transition["name"]].stop();
                 // Slightly different path, depending on whether it returns 1 or multiple properties
-                if (Rf_length(transition["state"]) == 1) {
+                if (Rf_length(transition["states"]) == 1) {
                     // Single return value (returned list should be a column)
-                    // Select correct output based on output state type
-                    String ts_name = transition["state"];
+                    // Select correct output based on output states type
+                    String ts_name = transition["states"];
                     if (DEBUG)
                         check_length(step, transition["name"], _transition_result, Rf_length(population[0]));
                     if (Rf_isNumeric(population[ts_name])) {
@@ -186,7 +186,7 @@ void Simulation::stepHazards() {
                 } else {
                     // Multiple return values (returned list, should be a list of columns)
                     List transition_results = _transition_result;
-                    CharacterVector transition_states = transition["state"];
+                    CharacterVector transition_states = transition["states"];
                     if (Rf_length(transition_results) != Rf_length(transition_states))
                         stop("Transition function return value contains a different number of states than expected.");
                     for (int i = 0; i < Rf_length(transition_states); ++i) {
@@ -226,21 +226,21 @@ void Simulation::stepTrajectories() {
         // Currently assumed that trajectories are always active
         // Build arg list to execute trajectory chance
         List call_args = build_args(trajectory["args"], population, step);
-        // Execute trajectory function and store result directly in trajectory's property
+        // Execute trajectory function and store result directly in trajectory's states
         trajectoryTimers[trajectory["name"]].start();
         SEXP trajectory_result = dynamic_call(trajectory["fn"], call_args);
         trajectoryTimers[trajectory["name"]].stop();
         // Slightly different path, depending on whether it returns 1 or multiple properties
-        if (Rf_length(trajectory["property"]) == 1) {
+        if (Rf_length(trajectory["states"]) == 1) {
             // Single return value (returned list should be a column)
-            String trajectory_prop = trajectory["property"];            
+            String trajectory_prop = trajectory["states"];            
             population[trajectory_prop] = trajectory_result;
             if (DEBUG)
                 check_result(step, trajectory["name"], population[trajectory_prop], Rf_length(population[0]));
         } else {
             // Multiple return values (returned list, should be a list of columns)
             List trajectory_returns = trajectory_result;
-            CharacterVector trajectory_properties = trajectory["property"];
+            CharacterVector trajectory_properties = trajectory["states"];
             if (Rf_length(trajectory_properties) != Rf_length(trajectory_returns))
                 stop("Trajectory function return value contains a different number of properties than expected.");
             for (int i = 0; i < Rf_length(trajectory_properties); ++i) {

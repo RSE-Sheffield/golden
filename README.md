@@ -67,7 +67,7 @@ age_update <- function(age, death_time) {
 age_traj <- new_trajectory(
   fn = age_update,          # update function
   args = c("age", "death"), # args for update function
-  property = "age"          # column(s) to be updated
+  states = "age"            # column(s) to be updated
 )
 ```
 
@@ -103,7 +103,7 @@ morthaz <- new_hazard(
   transitions = new_transition(
     fn = transition_fn,          # generic transition
     args = c("death", "~STEP"),  # input cols
-    state = "death"              # output cols
+    states = "death"             # output cols
   )
 )
 ```

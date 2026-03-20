@@ -105,7 +105,7 @@ example_hazard <- new_hazard(
 
 Trajectories represent regularly changing states, such as a patient's age or disease progression. They operate very similar to transitions, however trajectories allow multiple states may be updated simultaneously. Multivariate trajectories can return a list of vectors instead of a single vector, one for each state to be updated.
 
-Each trajectory is created via `new_trajectory()` which requires the trajectory function, it's arguments, and the property or properties to be updated.
+Each trajectory is created via `new_trajectory()` which requires the trajectory function, it's arguments, and the states to be updated.
 
 ```{r, eval = FALSE}
 example_trajectory <- new_trajectory(
@@ -211,7 +211,7 @@ morthaz0 <- new_hazard(
   transitions = new_transition(  # creates a transition
     fn = transition_fn,          # 'kills' by death -1 -> time of death
     args = c("death", "~STEP"),  # args for transition fn
-    state = "death"              # col transition acts on
+    states = "death"             # col transition acts on
   )
 )
 
@@ -305,7 +305,7 @@ As with *hazards*, we will create a *trajectory* using our update function, but 
 age_traj <- new_trajectory(
               fn = age_update,          # update function 
               args = c("age", "death"), # args for update function
-              property = "age"          # column(s) to be updated
+              states = "age"            # column(s) to be updated
             )
 ```
 
@@ -323,7 +323,7 @@ morthaz1 <- new_hazard(
   transitions = new_transition(
     fn = transition_fn,           # generic transition
     args = c("death", "~STEP"),   # input col args
-    state = "death"               # col outputted
+    states = "death"              # col outputted
   )
 )
 ```
@@ -393,7 +393,7 @@ Having defined our update, we can create a trajectory as before, but now with ve
 bptc_traj <- new_trajectory(
   fn = bptc_update,               # trajectory fn
   args = c("sbp", "tc", "death"), # trajectory args
-  property = c("sbp", "tc")       # outputs (list of vectors from fn)
+  states = c("sbp", "tc")         # outputs (list of vectors from fn)
 )
 
 ## make list of trajectories for use below
@@ -495,7 +495,7 @@ trajlist3 <- list(
   new_trajectory(
     fn = treatment_time_update,
     args = c("death", "on_treatment"),
-    property = "on_treatment"
+    states = "on_treatment"
   )
 )
 ```
@@ -527,12 +527,12 @@ hazlist3 <- list(
       new_transition(
         fn = treatment_start_transition,
         args = "on_treatment",
-        state = "on_treatment"
+        states = "on_treatment"
       ),
       new_transition(
         fn = generic_update,
         args = "treatment_counter",
-        state = "treatment_counter"
+        states = "treatment_counter"
       )
     )
   ),
@@ -544,7 +544,7 @@ hazlist3 <- list(
     new_transition(
       fn = treatment_end_transition,
       args = "on_treatment",
-      state = "on_treatment"
+      states = "on_treatment"
     )
   )
 )
@@ -795,7 +795,7 @@ hazlist <- list(
     transitions = new_transition(
       fn = generic_update,     # transition function for event
       args = "cvd_count",      # input args for transition
-      state = "cvd_count"      # vars affected by transition
+      states = "cvd_count"     # vars affected by transition
     )
   ),
   ## deaths
