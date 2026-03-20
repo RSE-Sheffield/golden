@@ -158,3 +158,13 @@ usethis::use_data(
 
 ## document
 devtools::document()
+
+## https://cran.r-project.org/web/packages/rUM/vignettes/aj_write_man.HTML
+## https://r-pkgs.org/data.html#sec-documenting-data
+
+
+## rUM::write_man("lifetable_data")
+## rUM::write_man("globorisk_rf")
+## rUM::write_man("globorisk_coefs")
+## rUM::write_man("globorisk_cvdr")
+## rUM::write_man("bmi_fits")
