@@ -125,9 +125,9 @@
 #' \describe{
 #'   \item{year}{The year of the life table data (`integer`), ranging from 2000 to 2100.}
 #'   \item{age}{The age group for the life table data (`integer`), ranging from 0 to 100.}
-#'   \item{mxM}{Actual mortality for men; age-specific hazard of death (`num`).}
-#'   \item{mxF}{Actual mortality for women; age-specific hazard of death (`num`).}
-#'   \item{mxB}{Actual mortality for both sexes combined; age-specific hazard of death (`num`).}
+#'   \item{mxM}{Actuarial mortality for men; age-specific hazard of death (`num`).}
+#'   \item{mxF}{Actuarial mortality for women; age-specific hazard of death (`num`).}
+#'   \item{mxB}{Actuarial mortality for both sexes combined; age-specific hazard of death (`num`).}
 #' }
 #' @source https://github.com/PPgp/wpp2024
 #' @name lifetable_data
