@@ -3,3 +3,5 @@
 ^Meta$
 ^\.github$
 ^LICENSE\.md$
+^cran-comments\.md$
+^README\.md$
