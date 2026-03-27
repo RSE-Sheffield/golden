@@ -140,7 +140,5 @@ List run_simulation(List initPop, List parameters) {
     }
     // Init and run simulation
     Simulation s(parameters);
-    try {
-    try {
     return s.run(initPop);
 }
