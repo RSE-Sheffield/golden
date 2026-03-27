@@ -131,21 +131,14 @@ List create_cohort(List demog, unsigned int N) {
 //' results <- run_simulation(dt, params)
 // [[Rcpp::export]]
 List run_simulation(List initPop, List parameters) {
-    try {
-        // Call golden::check_parameters()
-        {        
-            Environment golden = Environment::namespace_env("golden");
-            Function check_parameters = golden["check_parameters"];
+    // Call golden::check_parameters()
+    {        
+        Environment golden = Environment::namespace_env("golden");
+        Function check_parameters = golden["check_parameters"];
 
-            check_parameters(parameters, initPop);
-        }
-        // Init and run simulation
-        Simulation s(parameters);
-        return s.run(initPop);
-    } catch (std::exception &e) {
-        forward_exception_to_r(e);
-    } catch(...) {
-        ::Rf_error("Unknown C++ exception within run_simulation()"); 
+        check_parameters(parameters, initPop);
     }
-    return List();
+    // Init and run simulation
+    Simulation s(parameters);
+    return s.run(initPop);
 }
