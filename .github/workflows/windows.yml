@@ -60,9 +60,9 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
-            devtools
             tinytex
           cache: "always"
+          cache-version: 2
           dependencies: "TRUE"
           
       ## Output R version in user
