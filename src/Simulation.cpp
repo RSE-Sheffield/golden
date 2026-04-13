@@ -24,7 +24,7 @@ int initHistoryFreq(List parameters) {
 int initHistoryRows(List parameters) {
     List history = parameters.containsElementNamed("history") ? parameters["history"] : R_NilValue;
     if (history.size())
-        return static_cast<int>(parameters["steps"]) / static_cast<int>(history["frequency"]);
+        return static_cast<int>(ceil(static_cast<int>(parameters["steps"]) / static_cast<double>(static_cast<int>(history["frequency"]))));
     return 0;
 }
 
