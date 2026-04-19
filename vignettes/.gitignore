@@ -2,3 +2,5 @@
 *.R
 *.md
 figure/
+/.quarto/
+**/*.quarto_ipynb
