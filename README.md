@@ -54,6 +54,20 @@ pop0 <- data.frame(
 )
 ```
 
+### IMPORTANT NOTE: use vectorized functions!
+
+Functions defining trajectories, hazards, and transitions are expected to operate on vectors.
+This means, e.g., that standard R 'if-else' control flow may need to be adapted.
+In the examples below, we have tended to use `ifelse(test, x, y)` for clarity.
+Often, patterns like
+
+```r
+ans <- x
+ans[test] <- y
+```
+may be faster than `ifelse` patterns.
+It may also be possible to wrap existing code that works on scalars, e.g. using `Vectorize`.
+
 ### Define trajectories
 
 Ageing can serve as a simple example of a trajectory. We define an update rule and create a trajectory object that knows how to apply the update:

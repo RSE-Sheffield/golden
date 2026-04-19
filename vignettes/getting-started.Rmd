@@ -69,7 +69,16 @@ Within this document, *Note* will preface some remark that explains how an examp
 
 ## Scalar Functions
 
-Currently **golden** assumes that all functions are designed to process vectors, rather than individual scalars. If scalar handling is required, we recommend that you wrap your scalar function inside a parent function which calls the scalar function for each element of the vector arguments.
+Currently **golden** assumes that all functions are **_designed to process vectors_**, rather than individual scalars. This is so that columns in the data objects representing the population are operated on efficiently. If scalar handling is required, we recommend that you wrap your scalar function inside a parent function which calls the scalar function for each element of the vector arguments, e.g. by using `Vectorize`.
+
+In the examples below, we have tended to use `ifelse(test, x, y)` for clarity.
+Often, patterns like
+
+```{r, eval=FALSE}
+ans <- x
+ans[test] <- y
+```
+may be faster than `ifelse` patterns.
 
 ## Understanding the classes
 
