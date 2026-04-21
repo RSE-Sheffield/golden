@@ -4,3 +4,4 @@
 figure/
 /.quarto/
 **/*.quarto_ipynb
+*.pdf
