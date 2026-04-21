@@ -919,3 +919,120 @@ Note though that this information is only printed in interactive mode, but not, 
 
 The `debug` flag passed to `run_simulation()`, which defaults `True`, enables potentially expensive runtime validation. For example if maths within your model returns `NaN`, it will likely propagate and cause dependent values to also equal `NaN`. This behaviour can be difficult to track back to the source. When `debug=True` `NaN` and similar erroneous return values will be detected at return and raise a corresponding exception. Once a model is deemed stable, `debug=False` can be enabled to remove any performance overhead of expensive runtime validation. *No benchmarking has been carried out to estimate the impact of the `debug` flag.*
 
+# Modelling interdependence and constraints
+
+While this was not the motivation for the package, it is possible to model interdependence between patients (rows), for example infection processes, or constrained resources (e.g. hospital beds) that may affect multiple patients simultaneously.
+
+Fundamentally, this is possible because our functions can aggregate over the columns/vectors that are their inputs, allowing individual rates or events to be influenced by the state of other rows. So, e.g., resources could be modelled with explicit columns, with potentially duplicated data (e.g. a bed count that is the le same in each row). Resources could also be represented by rows: there is no reason rows should only represent patients, although not all columns would necessarily be applicable across very different types of represented object. The latter approach may be better-suited to large numbers of separate resources, but would require care to avoid introducing overheads when querying the relevant rows in determining their values. 
+
+Below, we illustrate a simple example of interdependence by implementing a transmission model of an infectious disease, where the rate of infection depends on the overall state of the population.
+
+## An SIR model
+
+In this section, we implement a simple SIR (Susceptible-Infected-Recovered) model to illustrate how interdependence can be modeled: in this case by the dependence of infection rates on the overall infection prevalence in the population. In this model, individuals can transition between three states: susceptible, infected, and recovered. We represent these states by the integers 1, 2, and 3, respectively. Since individuals progress through these states 1->2->3, we need a function to advance their state.
+
+```{r}
+advance <- function(x){
+  x <- x + 1
+  x
+}
+```
+
+We'll also need a history function to record these states over time:
+
+```{r}
+prevs <- new_history(
+  list(
+    new_column(
+      name = "Susceptible",
+      fn = function(x) sum(x == 1) / length(x),
+      args = "state"
+    ),
+    new_column(
+      name = "Infected",
+      fn = function(x) sum(x == 2) / length(x),
+      args = "state"
+    ),
+    new_column(
+      name = "Recovered",
+      fn = function(x) sum(x == 3) / length(x),
+      args = "state"
+    )
+  )
+)
+```
+
+We'll have a recovery rate that only applies to those in state 2 (Infected):
+```{r}
+## recovery hazard
+recrate <- function(x) {
+  ans <- (x == 2) * 1 / 7 # only applies to I
+  ans
+}
+
+## create relevant hazard object
+recover_hazard <- new_hazard(
+  fn = recrate, # function returning hazard
+  args = "state", # arguments for hazard function
+  transitions = new_transition( # creates a transition
+    fn = advance, # 1->2->3
+    args = "state", # args for transition fn
+    states = "state" # col transition acts on
+  )
+)
+```
+
+Then we need an infection process that will be driven by the prevalence of infection in the cohort:
+
+```{r}
+## force of infection hazard
+foi <- function(x) {
+  R0 <- 2
+  beta <- R0 / 7 # R0 * recovery rate
+  foi <- beta * sum(x == 2) / length(x)
+  foi * (x == 1) # only applies to S
+}
+
+
+## as hazard object
+infect_hazard <- new_hazard(
+  fn = foi, # function returning hazard
+  args = "state", # arguments for hazard function
+  transitions = new_transition( # creates a transition
+    fn = advance, # 1->2->3
+    args = "state", # args for transition fn
+    states = "state" # col transition acts on
+  )
+)
+```
+
+Now we can gather these into a parameter object and run:
+
+```{r}
+## parameter object
+parms <- new_parameters(
+  hazards = list(
+    infect_hazard,
+    recover_hazard
+  ),
+  steps = 100,
+  history = prevs,
+  debug = FALSE
+)
+
+## initial population
+N <- 1e3L
+pop <- data.frame(id = seq_len(N), state = rep(1, N))
+pop[1:10, "state"] <- 2 #10 infected individuals
+
+
+## run the simulation
+result <- run_simulation(pop, parms)
+```
+
+And then, finally, plot:
+```{r, fig.dim = c(9, 6), fig.cap = "*SIR dynamics*"}
+## plot the results
+matplot(result$history$`~STEP`, result$history[, -1], type = "l", lty = 1, lwd = 2)
+legend("topright", legend = names(result$history)[-1], col = 1:3, lty = 1, lwd = 2)
+```
