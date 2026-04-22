@@ -196,17 +196,17 @@ prevs <- new_history(
   list(
     new_column(
       name = "Susceptible",
-      fn = function(x) sum(x == 1) / length(x),
+      fn = function(x) mean(x == 1),
       args = "state"
     ),
     new_column(
       name = "Infected",
-      fn = function(x) sum(x == 2) / length(x),
+      fn = function(x) mean(x == 2),
       args = "state"
     ),
     new_column(
       name = "Recovered",
-      fn = function(x) sum(x == 3) / length(x),
+      fn = function(x) mean(x == 3),
       args = "state"
     )
   )
@@ -237,7 +237,7 @@ recover_hazard <- new_hazard(
 foi <- function(x) {
   R0 <- 2
   beta <- R0 / 7 # R0 * recovery rate
-  foi <- beta * sum(x == 2) / length(x)
+  foi <- beta * mean(x == 2)
   foi * (x == 1) # only applies to S
 }
 
