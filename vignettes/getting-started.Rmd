@@ -1,5 +1,5 @@
 ---
-title: "Getting Started"
+title: "Getting Started with golden"
 output: 
   rmarkdown::html_vignette:
       toc: true
