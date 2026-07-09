@@ -203,7 +203,7 @@
 #'
 #' @param fn The name of the function as written in the code
 #' @param name If not empty string, the name the user provided will be returned
-#' @return Name for a function if it can be deduced, else empty string
+#' @return Name for a function if it can be deduced, else "<anonymous>"
 #' @keywords internal
 #' @noRd
 #'
@@ -216,11 +216,13 @@
 #' extracted_name <- .get_name(test_fn, "default_name")
 .get_name <- function(fn, name) {
   if (is.null(name)) {
+    fn <- paste(fn, collapse = " ") #for multiline functions, collapse into a single string
     # Only use t as name if it's a name (e.g. it could be a full function body)
     # A string containing a space is a good sign it's not a variable name
     if (!grepl(" ", fn)) {
-        return (fn)
+      return(fn)
     }
+    return("<anonymous>")
     # If name remains null, it will be addressed at the final check
   }
   return (name)
