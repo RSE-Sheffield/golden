@@ -252,3 +252,25 @@ test_that("Trajectory function cannot return wrong length", {
         "Trajectory function return value contains a different number of properties than expected."
     )
 })
+
+
+test_that("new_trajectory names resolve correctly", {
+  ageup <- function(age, death) ifelse(death == -1, age + 1 / 12, age)
+  expect_equal(new_trajectory(ageup, c("age", "death"), "age")$name, "ageup")
+
+  expect_no_error(
+    new_trajectory(
+      function(age, death) ifelse(death == -1, age + 1 / 12, age),
+      c("age", "death"), "age"
+    )
+  )
+
+  expect_no_error(
+    new_trajectory(
+      function(age, death) {
+        ifelse(death == -1, age + 1 / 12, age)
+      },
+      c("age", "death"), "age"
+    )
+  )
+})
