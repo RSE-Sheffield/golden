@@ -181,7 +181,7 @@ One of the arguments for `run_simulation` is the initial population. **golden** 
 
 ```{r}
 ## initial population
-N <- 1e4L # population size
+N <- 1e3L # population size: small for vignette
 pop0 <- data.table(
   id = 1:N,                       # patient ids
   death = rep(-1, N),             # time of death
