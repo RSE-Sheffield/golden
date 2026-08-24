@@ -1,3 +1,11 @@
+## R CMD check results v0.0.4
+
+There was 1 NOTE:
+
+* This is a resubmission of a previously archived package.
+
+Since archival we have improved syntax to allow multiline anonymous trajectory functions, and used a smaller population in the vignette under the hypothesis this caused a CRAN test timeout previously.
+
 ## R CMD check results v0.0.3
 
 Status: 2 NOTEs
