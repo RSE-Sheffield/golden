@@ -1,8 +1,8 @@
 Package: golden
 Type: Package
 Title: Framework for Patient-Level Microsimulation of Risk Factor Trajectories & Hazard-Based Events
-Version: 0.0.3
-Date: 2026-04-14
+Version: 0.0.4
+Date: 2026-08-24
 Authors@R: c(
     person("Pete", "Dodd",
         role = c("aut", "cre"),
